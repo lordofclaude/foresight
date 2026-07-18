@@ -1828,10 +1828,11 @@ function stopLive() {
   resize(); step();
 
   $('gateEnter').onclick = () => closeGate(true);
-  /* Google via Clerk (also carries Sign-in-with-Solana once enabled in the
-     dashboard). Needs a publishable key: ?clerk_pk=…, window.CLERK_PUBLISHABLE_KEY,
-     or localStorage.foresight_clerk_pk. Without one we say so — no fake OAuth. */
-  const CLERK_PK = qs.get("clerk_pk") || window.CLERK_PUBLISHABLE_KEY || localStorage.getItem("foresight_clerk_pk") || null;
+  /* Clerk sign-in — Google OAuth + Sign-in-with-Solana (web3_solana_signature),
+     both enabled on the Foresight instance (app_3GhA9XHffDlbG5EBxci2463msnp).
+     The publishable key is public by design; override via ?clerk_pk= if needed. */
+  const CLERK_PK = qs.get("clerk_pk") || window.CLERK_PUBLISHABLE_KEY || localStorage.getItem("foresight_clerk_pk")
+    || "pk_test_Y2VydGFpbi1lbXUtNjMuY2xlcmsuYWNjb3VudHMuZGV2JA";
   $('gateGoogle').onclick = async () => {
     if (!CLERK_PK) {
       $('gateNote').innerHTML = `<b style="color:#f5b73d">Google sign-in is Clerk-powered and needs a publishable key</b> — it activates the moment one is configured (<code>?clerk_pk=pk_test_…</code>). No key yet, so no fake login screen: that's the deal here. <u style="cursor:pointer" onclick="$('gateEnter').click()">Enter as guest instead</u>.`;
@@ -1843,7 +1844,10 @@ function stopLive() {
       await new Promise((res, rej) => {
         if (window.Clerk) return res();
         const s = document.createElement("script");
-        s.src = "https://cdn.jsdelivr.net/npm/@clerk/clerk-js@5/dist/clerk.browser.js";
+        let host = null;                       // pk encodes the frontend-API host (public info)
+        try { host = atob(CLERK_PK.replace(/^pk_(test|live)_/, "")).replace(/\$$/, ""); } catch (e) { /* fall back to CDN */ }
+        s.src = host ? "https://" + host + "/npm/@clerk/clerk-js@5/dist/clerk.browser.js"
+          : "https://cdn.jsdelivr.net/npm/@clerk/clerk-js@5/dist/clerk.browser.js";
         s.crossOrigin = "anonymous"; s.onload = res; s.onerror = () => rej(new Error("clerk-js failed to load"));
         document.head.appendChild(s);
       });
