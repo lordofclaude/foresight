@@ -92,6 +92,17 @@ select{flex:1;background:#0f2233;border:1px solid #1d3a52;color:var(--txt);font:
 .tag.api{color:#fbbf24;border-color:#5c4a1d}
 .stratbox{background:#0d1826;border:1px solid #1e2f42;border-radius:6px;padding:.4rem .55rem;margin:.4rem 0;font-size:.7rem}
 .stratbox.priv{border-color:#3a2a1d;background:#130f07;color:#cbb08a}
+/* insight layer: calibration bars (implied ▫ vs actual ▪) */
+.calrow{display:grid;grid-template-columns:3.6rem 1fr 2.6rem 2.2rem;gap:.4rem;align-items:center;font-size:.66rem;margin:.15rem 0}
+.calbar{position:relative;height:9px;background:#0a1220;border:1px solid #1e2f42;border-radius:4px;overflow:hidden}
+.calbar i{position:absolute;left:0;top:0;bottom:0;display:block}
+.calbar .ci{background:#22334a}
+.calbar .ca{height:4px;top:auto}
+.calbar .ca.up{background:#c2f04a}
+.calbar .ca.dn{background:#ff5a74}
+/* market-volatility chip on radar tiles */
+.volchip{margin-left:.4rem;padding:.05rem .35rem;border-radius:4px;font-size:.62rem;font-weight:700;background:#132030;border:1px solid #22334a;color:#7fb3d5}
+.volchip.hot{background:#2b1420;border-color:#5a2432;color:#ff8ba0;animation:pulse 1.6s ease-in-out infinite}
 /* agent builder */
 .abtabs{display:flex;gap:.4rem;margin-bottom:.5rem}
 .abtab{flex:1;text-align:center;padding:.35rem;border:1px solid var(--line);border-radius:6px;cursor:pointer;font-size:.72rem;color:var(--mut)}
@@ -179,6 +190,13 @@ h1 b{color:var(--lime)}
 .hero-score{font-family:var(--fdisp);font-style:italic;font-weight:800;font-size:clamp(2.1rem,6vw,3.4rem);color:var(--white);line-height:.9;white-space:nowrap}
 .hero-min{display:inline-block;margin-top:5px;font-family:var(--fdisp);font-style:italic;font-weight:800;font-size:.86rem;color:var(--lime);border:1.5px solid var(--lime);border-radius:20px;padding:.05rem .75rem}
 .hero-min.ft{color:#0a1322;background:var(--lime)}
+.hero-min.is-live{color:#fff;background:#c0293d;border-color:#c0293d}
+.datatag.is-live{background:#c0293d;color:#fff;animation:livepulse 1.4s ease-in-out infinite}
+.live-badge{display:inline-flex;align-items:center;gap:4px;font-size:.6rem;font-weight:800;color:#c0293d;background:rgba(192,41,61,.12);border:1px solid #c0293d;border-radius:4px;padding:.05rem .35rem;vertical-align:middle;margin-right:.3rem}
+.live-badge .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#c0293d;animation:livepulse 1.2s ease-in-out infinite}
+.tile.is-live{border-color:#c0293d}
+@keyframes livepulse{0%,100%{opacity:1}50%{opacity:.45}}
+@media(prefers-reduced-motion:reduce){.datatag.is-live,.live-badge .dot{animation:none}}
 /* radar tiles as broadcast score rows */
 .radar{display:grid;grid-template-columns:repeat(auto-fit,minmax(232px,1fr));gap:10px;margin:0 16px 14px}
 .tile{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:.7rem .9rem;cursor:pointer;position:relative;transition:border-color .18s,transform .18s,box-shadow .18s}
@@ -295,7 +313,7 @@ footer,footer code,.card,.prow,.commitrow,.receipt,.stratbox,.vd,.abprev{overflo
     <h1>FORE<b>SIGHT</b></h1>
     <div class="tagline">Provable Bragging Rights</div>
   </div>
-  <span class="datatag">Real TxLINE · Replay</span>
+  <span class="datatag" id="datatag">Real TxLINE · Replay</span>
   <span class="fx" id="fixture">—</span>
   <div class="trust">
     <span class="trust-badge"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg>Verifiable</span>
@@ -461,13 +479,18 @@ const FIXTURES = TX_TAPES.filter(Boolean).map(bundle => {
   const tape = SA.buildRealTape(t0.events, t0.oddsTimeline);
   if (!tape) return null;
   const fx = t0.fixture;
+  // A genuinely LIVE, still-updating match (no game_finalised event seen yet)
+  // has no fixed "final whistle" — endT is just "latest data we happen to
+  // have," not a replay length. It always shows NOW, never a scrubbed
+  // position, and can never be marked settled until the real event lands.
+  const liveMatch = !tape.events.some(e => e.type === "game_finalised");
   return {
-    id: fx.FixtureId, fx, tape,
+    id: fx.FixtureId, fx, tape, liveMatch,
     p1: (fx.Participant1 || "HOME").slice(0, 3).toUpperCase(),
     p2: (fx.Participant2 || "AWAY").slice(0, 3).toUpperCase(),
     f1: flagOf(fx.Participant1), f2: flagOf(fx.Participant2),
     moves: SA.detectMoves(tape.ticks, SA.CFG),
-    outcome: FO.outcomeFromTape(tape.events),
+    outcome: liveMatch ? null : FO.outcomeFromTape(tape.events),
     endT: Math.max(tape.ticks[tape.ticks.length - 1].t, tape.events[tape.events.length - 1].t),
     settled: false,
   };
@@ -577,16 +600,34 @@ function selectFixture(i) {
   $('commitBtn').disabled = true; $('commitBtn').textContent = "◆ COMMIT — select a side";
   renderAll();
 }
+/* Per-market volatility (idea from Betflow's rolling-window odds views, minus
+   the Kafka): stddev of tick-to-tick implied-prob changes over the last ~10
+   sim-minutes, in points. "Which market is hot right now" at a glance. */
+function marketVol(F, t) {
+  const ticks = F.tape.ticks;
+  let hi = ticks.length - 1;
+  while (hi > 0 && ticks[hi].t > t) hi--;
+  const lo = Math.max(0, (() => { let i = hi; while (i > 0 && t - ticks[i].t <= 600) i--; return i; })());
+  if (hi - lo < 3) return 0;
+  const ds = [];
+  for (let i = lo + 1; i <= hi; i++) ds.push((ticks[i].home - ticks[i - 1].home) * 100);
+  const mean = ds.reduce((a, b) => a + b, 0) / ds.length;
+  return Math.sqrt(ds.reduce((a, b) => a + (b - mean) * (b - mean), 0) / ds.length);
+}
 function renderRadar() {
   $('radar').innerHTML = FIXTURES.map((F, i) => {
-    const r = FO.upsetRisk(F.tape.ticks, F.tape.events, fxT(F));
-    const done = simT >= F.endT;
+    const t = fxT(F);
+    const r = FO.upsetRisk(F.tape.ticks, F.tape.events, t);
+    const done = !F.liveMatch && simT >= F.endT;                 // a live match is NEVER "done"
     const col = r.risk > 55 ? "var(--red)" : r.risk > 30 ? "var(--amber)" : "var(--green)";
-    const ev = F.tape.events.filter(e => e.t <= fxT(F));
+    const ev = F.tape.events.filter(e => e.t <= t);
     const st = ev.length ? ev[ev.length - 1].stats : { g1: 0, g2: 0 };
-    return `<div class="tile${i === sel ? " sel" : ""}" onclick="selectFixture(${i})">
-      <div class="m">${F.f1} ${F.p1} ${st.g1}–${st.g2} ${F.p2} ${F.f2}</div>
-      <div class="sc">${done ? '<span class="ft">FT · SETTLED ' + F.outcome.g1 + "–" + F.outcome.g2 + " (90')</span>" : "UPSET RISK · " + Math.floor(fxT(F) / 60) + "'"}</div>
+    const liveBadge = F.liveMatch ? '<span class="live-badge"><span class="dot"></span> LIVE</span> ' : '';
+    const vol = done ? 0 : marketVol(F, t);
+    const volChip = vol >= 0.15 ? `<span class="volchip${vol >= 0.8 ? " hot" : ""}" title="market volatility — stddev of implied-prob changes, last 10 min">σ ${vol.toFixed(1)}</span>` : "";
+    return `<div class="tile${i === sel ? " sel" : ""}${F.liveMatch ? " is-live" : ""}" onclick="selectFixture(${i})">
+      <div class="m">${liveBadge}${F.f1} ${F.p1} ${st.g1}–${st.g2} ${F.p2} ${F.f2}</div>
+      <div class="sc">${done ? '<span class="ft">FT · SETTLED ' + F.outcome.g1 + "–" + F.outcome.g2 + " (90')</span>" : F.liveMatch ? Math.floor(t / 60) + "' · real-time TxLINE, not replay" : "UPSET RISK · " + Math.floor(t / 60) + "'"}${volChip}</div>
       <div class="rk" style="color:${col}">${done ? "✓" : r.risk}</div>
       <div class="bar"><i style="width:${r.risk}%"></i></div></div>`;
   }).join('');
@@ -815,14 +856,46 @@ function renderFeed() {
     : 'Commit on any match, run the replay — goals, cards, VAR, big market moves, commits and settlements print here live, across all matches.';
 }
 const evIcon = { goal: "⚽", red: "🟥", var: "📺", verdict: "✅" };
+/* ---------------- pundit lane (idea borrowed from Golazo's PunditBot — ours is
+   deterministic templates, no LLM, so it never claims AI it doesn't have) ---- */
+let punditN = 0;
+const PUNDIT = {
+  goal: [
+    t => `GOLAZO! ${t} strike — now watch the consensus chase what already happened.`,
+    t => `${t} score, and somewhere a favorite-backer quietly closes the app.`,
+    t => `That's why you commit BEFORE the goal — ${t} just repriced the whole board.`,
+  ],
+  red: [
+    t => `${t} down to ten. The radar saw the pressure before the referee did.`,
+    t => `A red changes everything — trust the radar, not your gut.`,
+  ],
+  move: [
+    () => `Market's moving with no event attached… somebody knows something.`,
+    () => `Big reprice, no goal on the tape — that's the "market knows" signal.`,
+  ],
+  settle: [
+    () => `Full time. Receipts printed — no arguments, no edited histories.`,
+    () => `Settled from the anchored statKeys. The chain doesn't do hot takes.`,
+  ],
+};
+function punditLine(kind, team) {
+  const arr = PUNDIT[kind]; if (!arr) return null;
+  return `<div class="feeditem pundit"><span class="fmin">🎙</span> <b>PUNDIT</b> <span class="mut">${arr[punditN++ % arr.length](team)}</span></div>`;
+}
+/* ---------------- desktop notifications (idea borrowed from 0xjuanma/golazo's
+   TUI notifications — a second-screen product should ping the FIRST screen) --- */
+function notifyLive(title, body) {
+  if (!("Notification" in window) || Notification.permission !== "granted") return;
+  try { new Notification(title, { body, tag: "foresight-live", silent: false }); } catch (e) { /* blocked — fine */ }
+}
 function tickFeed(prevT) {
   const block = [];
   for (const F of FIXTURES) {
     for (const e of F.tape.events) {
       if (e.t <= prevT || e.t > simT) continue;
       const team = e.team === 1 ? F.p1 : e.team === 2 ? F.p2 : null;
-      if (e.type === "goal") block.push(`<div class="feeditem goal"><span class="fmin">${fmtMin(e.t)}</span> ⚽ <b>GOAL — ${team}</b> <span class="mut">${e.stats.g1}–${e.stats.g2} · ${F.p1}-${F.p2}</span></div>`);
-      else if (e.type === "card" && e.detail === "Red") block.push(`<div class="feeditem card"><span class="fmin">${fmtMin(e.t)}</span> 🟥 <b>RED CARD — ${team}</b> <span class="mut">${F.p1}-${F.p2}</span></div>`);
+      if (e.type === "goal") { block.push(`<div class="feeditem goal"><span class="fmin">${fmtMin(e.t)}</span> ⚽ <b>GOAL — ${team}</b> <span class="mut">${e.stats.g1}–${e.stats.g2} · ${F.p1}-${F.p2}</span></div>`); block.push(punditLine("goal", team)); }
+      else if (e.type === "card" && e.detail === "Red") { block.push(`<div class="feeditem card"><span class="fmin">${fmtMin(e.t)}</span> 🟥 <b>RED CARD — ${team}</b> <span class="mut">${F.p1}-${F.p2}</span></div>`); block.push(punditLine("red", team)); }
       else if (e.type === "var") block.push(`<div class="feeditem var"><span class="fmin">${fmtMin(e.t)}</span> 📺 <b>VAR REVIEW</b> <span class="mut">${F.p1}-${F.p2}</span></div>`);
       else if (e.type === "var_verdict") block.push(`<div class="feeditem var"><span class="fmin">${fmtMin(e.t)}</span> ✅ <b>VAR verdict</b> <span class="mut">${F.p1}-${F.p2}</span></div>`);
     }
@@ -830,9 +903,18 @@ function tickFeed(prevT) {
       const tm = mv.emittedT != null ? mv.emittedT : mv.t;
       if (tm <= prevT || tm > simT || mv.magnitude < 0.05) continue;
       block.push(`<div class="feeditem move"><span class="fmin">${fmtMin(tm)}</span> 📈 <b>market move</b> ${mv.dir > 0 ? "+" : "−"}${(mv.magnitude * 100).toFixed(1)}pt <span class="mut">${F.p1}-${F.p2}</span></div>`);
+      // Polymarket/agents pattern (MIT), reimplemented deterministically:
+      // an UNEXPLAINED move looks for a time-proximate, team-relevant headline
+      // as its candidate driver — keyword/recency ranked, never claimed as AI.
+      const cls = SA.classifyMove(mv, F.tape.events);
+      if (cls.label === "UNEXPLAINED") {
+        const drv = typeof newsDriverFor === "function" ? newsDriverFor(mv, F) : null;
+        if (drv) block.push(`<div class="feeditem news"><span class="fmin">🔎</span> <b>possible driver</b> <span class="mut">"${(drv.title || "").replace(/</g, "&lt;")}" · ${drv.source} · ${drv.agoMin}m before the move (keyword+recency match, not certainty)</span></div>`);
+        else if (mv.magnitude >= 0.08) block.push(punditLine("move"));
+      }
     }
   }
-  pushFeedBlock(block);
+  pushFeedBlock(block.filter(Boolean));
 }
 /* ---------------- per-fixture settlement (L3 + L4) ---------------- */
 function settleFixture(F) {
@@ -868,19 +950,22 @@ function renderStats() {
   const p = league.profile("@you");
   $('sScore').textContent = p.n ? (p.pnl >= 0 ? "+$" : "−$") + Math.abs(p.pnl).toFixed(0) : "—";
   $('sScore').className = "v " + (p.pnl >= 0 ? "v2" : "r");
-  $('fixture').textContent = `${F.fx.Competition || "World Cup"} · fixture ${F.id}`;
+  $('fixture').textContent = `${F.fx.Competition || "World Cup"} · fixture ${F.id}${F.liveMatch ? " · LIVE, not replay" : ""}`;
   $('tapeTitle').textContent = `${F.p1} v ${F.p2} — probability tape`;
   $('n1').textContent = F.p1; $('n2').textContent = F.p2;
   // HERO band — the selected match, broadcast scale
-  const ev = F.tape.events.filter(e => e.t <= fxT(F));
+  const t = fxT(F);
+  const ev = F.tape.events.filter(e => e.t <= t);
   const sc = ev.length ? ev[ev.length - 1].stats : { g1: 0, g2: 0 };
-  const done = simT >= F.endT;
+  const done = !F.liveMatch && simT >= F.endT;                   // a live match is NEVER "done"
   $('heroFlag1').textContent = F.f1; $('heroFlag2').textContent = F.f2;
   $('heroName1').textContent = F.p1; $('heroName2').textContent = F.p2;
   $('heroScore').textContent = `${done ? F.outcome.g1 : sc.g1} – ${done ? F.outcome.g2 : sc.g2}`;
   const hm = $('heroMin');
-  hm.textContent = done ? "FT · 90'" : fmtMin(fxT(F));
-  hm.className = "hero-min" + (done ? " ft" : "");
+  hm.textContent = done ? "FT · 90'" : F.liveMatch ? "🔴 LIVE · " + fmtMin(t) : fmtMin(t);
+  hm.className = "hero-min" + (done ? " ft" : F.liveMatch ? " is-live" : "");
+  $('datatag').textContent = F.liveMatch ? "Real TxLINE · LIVE" : "Real TxLINE · Replay";
+  $('datatag').className = "datatag" + (F.liveMatch ? " is-live" : "");
 }
 function renderPicks() {
   const F = FIXTURES[sel];
@@ -931,6 +1016,60 @@ function liveLeaderboard(minN = 1) {
       allSettled: resolved === n && n > 0 };
   }).filter(p => p.n >= minN).sort((a, b) => b.shrunk - a.shrunk);
 }
+/* ---------------- insight layer: streaks + calibration + edge ----------------
+   Streak (idea borrowed from SolanaStreaks — the mechanic, not the custody):
+   consecutive GRADED wins; a BURNED commit breaks the streak (reveal-or-burn
+   counts as a loss everywhere, including here). Calibration (standard
+   prediction-market analytics): bucket resolved picks by the de-vigged implied
+   probability you committed AT, then compare actual win rate — above the
+   diagonal = repeatable edge, not luck. */
+function streakOf(wallet) {
+  const resolved = league.commits
+    .filter(c => c.wallet === wallet && (c.status === "GRADED" || c.status === "BURNED"))
+    .sort((a, b) => a.tCommit - b.tCommit);
+  let cur = 0, best = 0;
+  for (const c of resolved) {
+    const won = c.status === "GRADED" && c.grade && c.grade.won;
+    cur = won ? cur + 1 : 0;
+    if (cur > best) best = cur;
+  }
+  return { cur, best };
+}
+function calibrationOf(wallet) {
+  const rows = league.commits.filter(c => c.wallet === wallet && c.status === "GRADED" && c.pick);
+  const buckets = [[0, .25], [.25, .4], [.4, .6], [.6, 1.01]].map(([lo, hi]) => ({ lo, hi, n: 0, w: 0, sumQ: 0 }));
+  for (const c of rows) {
+    const q = FO.devig(c.mktAtCommit)[FO.PICK_SIDE[c.pick]];
+    const b = buckets.find(x => q >= x.lo && q < x.hi);
+    if (b) { b.n++; b.sumQ += q; if (c.grade.won) b.w++; }
+  }
+  return buckets.filter(b => b.n > 0).map(b => ({ ...b, impl: b.sumQ / b.n, act: b.w / b.n }));
+}
+function insightHtml(wallet) {
+  const cal = calibrationOf(wallet);
+  const graded = league.commits.filter(c => c.wallet === wallet && (c.status === "GRADED" || c.status === "BURNED"))
+    .sort((a, b) => a.tCommit - b.tCommit);
+  if (!graded.length) return '';
+  // edge sparkline: cumulative $-vs-market across resolved picks (inline SVG)
+  let cum = 0; const pts = [0].concat(graded.map(c => cum += (c.grade && c.grade.won ? c.grade.pnl : -100)));
+  const w = 220, h = 36, lo = Math.min(...pts, 0), hi = Math.max(...pts, 1);
+  const xy = pts.map((v, i) => `${(i / (pts.length - 1) * w).toFixed(1)},${(h - (v - lo) / (hi - lo || 1) * h).toFixed(1)}`).join(' ');
+  const zero = h - (0 - lo) / (hi - lo || 1) * h;
+  const spark = `<svg width="${w}" height="${h}" style="display:block;margin:.25rem 0">
+    <line x1="0" y1="${zero.toFixed(1)}" x2="${w}" y2="${zero.toFixed(1)}" stroke="#22334a" stroke-dasharray="3 3"/>
+    <polyline points="${xy}" fill="none" stroke="${cum >= 0 ? '#c2f04a' : '#ff5a74'}" stroke-width="1.6"/></svg>`;
+  const calRows = cal.map(b => {
+    const edge = b.act - b.impl;
+    return `<div class="calrow"><span class="mut">${(b.lo * 100).toFixed(0)}–${(Math.min(b.hi, 1) * 100).toFixed(0)}%</span>
+      <span class="calbar"><i style="width:${(b.impl * 100).toFixed(0)}%" class="ci"></i><i style="width:${(b.act * 100).toFixed(0)}%" class="ca ${edge >= 0 ? 'up' : 'dn'}"></i></span>
+      <span class="${edge >= 0 ? 'g' : 'r'}">${edge >= 0 ? '+' : ''}${(edge * 100).toFixed(0)}pt</span>
+      <span class="mut">n=${b.n}</span></div>`;
+  }).join('');
+  return `<div class="stratbox" style="margin-top:.6rem"><b>📊 Insight</b>
+    <div class="small mut" style="margin:.2rem 0">cumulative $-vs-market, pick by pick (${graded.length} resolved → ${cum >= 0 ? '+' : '−'}$${Math.abs(cum).toFixed(0)})</div>${spark}
+    ${cal.length ? `<div class="small mut" style="margin:.3rem 0 .15rem">calibration — implied price you took (▫) vs how often you actually won (▪); above = edge, not luck</div>${calRows}` : ''}
+  </div>`;
+}
 function renderBoard() {
   let board = liveLeaderboard(1);
   if (boardFilter === "human") board = board.filter(p => p.by === "human");
@@ -942,7 +1081,7 @@ function renderBoard() {
   $('board').innerHTML = board.length ? board.map((p, i) => `<div class="prophet${p.wallet === "@you" ? " you" : ""}" onclick="openProfile('${p.wallet}')" title="click for full record">
     <span class="rank">${i + 1}</span><span class="name">${following[p.wallet] ? "⭐ " : tracking[p.wallet] ? "👁 " : ""}${p.wallet}${tierOf(p.wallet).mode === "paid" ? " 💎" : ""}${kindBadge(p)}</span>
     <span class="${p.shrunk >= 0 ? 'g' : 'r'}">${p.shrunk >= 0 ? "+" : ""}${p.shrunk.toFixed(0)}</span>
-    <span class="mut">${p.wins}/${p.resolved || 0}${p.resolved < p.n ? "·" + (p.n - p.resolved) + " open" : ""}${p.burned ? " 🔥" + p.burned : ""}${p.upsetsLanded ? " ⚡" + p.upsetsLanded : ""}</span></div>`).join('')
+    <span class="mut">${p.wins}/${p.resolved || 0}${p.resolved < p.n ? "·" + (p.n - p.resolved) + " open" : ""}${p.burned ? " 🔥" + p.burned : ""}${p.upsetsLanded ? " ⚡" + p.upsetsLanded : ""}${(s => s.cur >= 2 ? ` <span class="g" title="win streak — ${s.cur} graded wins in a row (best ${s.best})">🎯${s.cur}</span>` : "")(streakOf(p.wallet))}</span></div>`).join('')
     : `<div class="mut small">${league.commits.length ? "no " + (boardFilter === "human" ? "humans" : "agents") + " on the board" : "field is loading…"}</div>`;
 }
 /* ---------------- real on-chain anchor (proof the mechanism is not a mock) ---------------- */
@@ -1001,7 +1140,9 @@ function openProfile(wallet) {
       <div><b class="${p.pnl >= 0 ? 'g' : 'r'}">${p.pnl >= 0 ? "+$" : "−$"}${Math.abs(p.pnl).toFixed(0)}</b>$-vs-market</div>
       <div><b>⚡${p.upsetsLanded}</b>upsets landed</div>
       <div><b>🔥${p.burned}</b>burned</div>
+      ${(s => `<div><b class="${s.cur >= 2 ? 'g' : ''}">🎯${s.cur}${s.best > s.cur ? "/" + s.best : ""}</b>streak${s.best > s.cur ? " (best)" : ""}</div>`)(streakOf(wallet))}
     </div>`;
+  const insight = insightHtml(wallet);
   const picksHtml = `<div>${rows || '<div class="mut small">no picks yet</div>'}</div>`;
   let actionHtml;
   if (isYou) {
@@ -1032,7 +1173,7 @@ function openProfile(wallet) {
     }
   }
   $('modalbox').innerHTML = `<h4>${wallet} ${kindLine}${tierOf(wallet).mode === 'paid' && !isYou ? ' <span class="tag api">💎 premium</span>' : ''} <span onclick="document.getElementById('modal').classList.remove('open')">✕ close</span></h4>
-    ${strat}${stats}${picksHtml}${actionHtml}
+    ${strat}${stats}${insight}${picksHtml}${actionHtml}
     <div class="small mut" style="margin-top:.4rem">Every row is a hash-verified commit run through the same pipeline as yours. No external "best trader" data is imported — every record here was earned inside Foresight.</div>`;
   $('modal').classList.add('open');
 }
@@ -1275,7 +1416,7 @@ $('verifyBtn').onclick = () => {
 };
 $('forgeBtn').onclick = () => {
   const F = FIXTURES[sel];
-  const fake = FO.commitHash(FO.canonicalPick({ wallet: "@forger", fixtureId: F.id, pick: F.outcome.winner, mkt: oddsAt(F, 0), oddsTs: 0 }), "hindsight");
+  const fake = FO.commitHash(FO.canonicalPick({ wallet: "@forger", fixtureId: F.id, pick: (F.outcome ? F.outcome.winner : "part1"), mkt: oddsAt(F, 0), oddsTs: 0 }), "hindsight");
   $('verifyOut').innerHTML = `<div class="vd bad"><h4>✗ forgery rejected</h4>
     forged "called it!" payload for the known ${F.p1}–${F.p2} result<pre>${fake}</pre>
     chain lookup at any slot before the outcome… <b class="r">NO COMMITMENT FOUND</b>.<br>You cannot attest into the past — that is the entire reputation.</div>`;
@@ -1349,6 +1490,149 @@ function toast(txt, bad, cls) {
 window.addEventListener("resize", () => { sizeCanvas(); drawChart(); });
 window.selectFixture = selectFixture;
 window.toggleInfo = id => { const el = $(id); el.classList.toggle('open'); };
+
+/* ================= LIVE SSE via relay (true push, no reload) =================
+   Consumes the SAME real TxLINE SSE the relay proxies (creds stay server-side),
+   accumulates new score/odds messages into the France–England bundle, rebuilds
+   that ONE fixture's tape with the identical buildTape pipeline every replay
+   uses, and re-renders — plus a football-news lane merged into the feed. */
+const LIVE_FIXTURE_ID = 18257865;                       // France v England, tonight
+const qs = new URLSearchParams(location.search);
+let RELAY_BASE = (qs.get("relay") || window.FORESIGHT_RELAY || localStorage.getItem("foresight_relay")
+  || "https://foresight-relay.lordofclaude.workers.dev").replace(/\/$/, "");  // ?relay=http://127.0.0.1:8799 for local wrangler dev
+let liveOn = false, liveHandles = [], newsTimer = null, liveStat = { scores: 0, odds: 0, news: 0 };
+const liveAccum = { seenSeq: {}, seenOdds: {}, historical: [], odds: [] };
+const LIVE_KEEP = new Set(["goal","yellow_card","red_card","corner","shot","free_kick","penalty",
+  "penalty_outcome","var","var_end","substitution","kickoff","halftime_finalised","game_finalised",
+  "additional_time","action_amend","suspend"]);
+const liveBundle = () => (window.TX_TAPES || []).find(b => b && b.fixture && b.fixture.FixtureId === LIVE_FIXTURE_ID);
+const liveEntry = () => FIXTURES.find(F => F.id === LIVE_FIXTURE_ID);
+(function seedLiveDedup() {                              // never double-count what's already on the tape
+  const b = liveBundle(); if (!b) return;
+  (b.historical || []).forEach(e => { liveAccum.seenSeq[(e.Seq ?? "") + ":" + (e.Ts || "") + ":" + (e.Action || "")] = true; });
+  (b.odds || []).forEach(o => { liveAccum.seenOdds[o.MessageId || (o.Ts + ":" + o.SuperOddsType)] = true; });
+})();
+function liveMergeScore(e) {
+  const k = (e.Seq ?? "") + ":" + (e.Ts || "") + ":" + (e.Action || "");
+  if (liveAccum.seenSeq[k]) return false; liveAccum.seenSeq[k] = true;
+  if (LIVE_KEEP.has(e.Action)) { liveAccum.historical.push(e); return true; } return false;
+}
+function liveIsConsensus1x2(o) {
+  return o.BookmakerId === 10021 && o.MarketPeriod == null && o.SuperOddsType === "1X2_PARTICIPANT_RESULT"
+    && Array.isArray(o.Pct) && o.Pct[0] !== "NA" && o.Pct[0] != null;
+}
+function liveMergeOdds(o) {
+  const k = o.MessageId || (o.Ts + ":" + o.SuperOddsType);
+  if (liveAccum.seenOdds[k]) return false; liveAccum.seenOdds[k] = true;
+  if (liveIsConsensus1x2(o)) { liveAccum.odds.push({ Ts: o.Ts, SuperOddsType: o.SuperOddsType, PriceNames: o.PriceNames, Pct: o.Pct }); return true; } return false;
+}
+let liveRebuildQueued = false;
+function liveRebuildSoon() { if (liveRebuildQueued) return; liveRebuildQueued = true; setTimeout(liveRebuild, 400); }
+function liveRebuild() {
+  liveRebuildQueued = false;
+  const b = liveBundle(), F = liveEntry(); if (!b || !F) return;
+  const merged = { fixture: b.fixture, historical: b.historical.concat(liveAccum.historical), odds: b.odds.concat(liveAccum.odds) };
+  const t0 = TxReal.buildTape(merged);
+  const tape = SA.buildRealTape(t0.events, t0.oddsTimeline); if (!tape) return;
+  F.tape = tape;
+  F.liveMatch = !tape.events.some(e => e.type === "game_finalised");
+  F.moves = SA.detectMoves(tape.ticks, SA.CFG);
+  F.outcome = F.liveMatch ? null : FO.outcomeFromTape(tape.events);
+  F.endT = Math.max(tape.ticks[tape.ticks.length - 1].t, tape.events[tape.events.length - 1].t);
+  if (liveOn) { sel = FIXTURES.indexOf(F); simT = F.endT; }       // pin to the live edge
+  liveSetStatus();
+  renderAll();
+}
+function liveSetStatus(msg) {
+  const el = $('liveStatus'); if (!el) return;
+  el.innerHTML = liveOn
+    ? `<span class="dot"></span> LIVE · ${liveStat.scores} score · ${liveStat.odds} odds · ${liveStat.news} news`
+    : (msg || "relay idle");
+}
+let newsCache = [];                                      // full lane, for move-driver matching
+async function fetchNewsOnce() {
+  try {
+    const r = await fetch(`${RELAY_BASE}/api/news?teams=France,England`).then(x => x.json());
+    newsCache = r.items || [];
+    newsCache.slice(0, 8).forEach(it => {
+      const key = "news:" + (it.link || it.title);
+      if (liveAccum.seenSeq[key]) return; liveAccum.seenSeq[key] = true; liveStat.news++;
+      pushFeed(`<div class="feeditem news"><span class="fmin">${it.emoji || "📰"}</span> <b>${(it.title || "").replace(/</g, "&lt;")}</b> <span class="mut">${it.tag && it.tag !== "news" ? it.tag + " · " : ""}${it.source || "news"}</span></div>`);
+    });
+    liveSetStatus();
+  } catch (e) { /* relay not reachable — leave feed as-is */ }
+}
+/* Candidate driver for an UNEXPLAINED move (live fixture only — replay matches
+   have no archival news, and we won't fake it): headlines published up to 45min
+   before the move, scored by team keywords + football-risk terms + recency. */
+function newsDriverFor(mv, F) {
+  if (!liveOn || F.id !== LIVE_FIXTURE_ID || !newsCache.length) return null;
+  const teams = [F.fx.Participant1, F.fx.Participant2].map(s => String(s || "").toLowerCase()).filter(Boolean);
+  const RISK = ["injur", "lineup", "line-up", "team news", "penalty", "var", "red card", "goal", "substitut", "suspend"];
+  const kick = Date.parse(F.fx.StartTime) || F.fx.StartTime || 0;
+  const wall = kick + mv.t * 1000;                       // tape seconds → wall clock
+  let best = null, bestScore = 0;
+  for (const it of newsCache) {
+    if (!it.ts) continue;
+    const dt = wall - it.ts;                             // >0 = published before the move
+    if (dt < -5 * 60000 || dt > 45 * 60000) continue;
+    const txt = (it.title + " " + (it.desc || "")).toLowerCase();
+    let score = 0;
+    teams.forEach(k => { if (txt.includes(k)) score += 2; });
+    RISK.forEach(k => { if (txt.includes(k)) score += 1; });
+    if (it.tag === "injury" || it.tag === "lineup") score += 1;  // team-news moves markets pre-event
+    if (!score) continue;
+    score += Math.max(0, 1 - dt / (45 * 60000));         // fresher = better
+    if (score > bestScore) { bestScore = score; best = { ...it, agoMin: Math.max(0, Math.round(dt / 60000)) }; }
+  }
+  return bestScore >= 2 ? best : null;                   // needs at least a team match
+}
+function goLive() {
+  if (liveOn) return;
+  if (!liveEntry()) { toast("France–England tape not loaded yet", true); return; }
+  liveOn = true;
+  if (timer) stopReplay("▶ RUN REPLAY (all 3 fixtures)");        // hand the stage to live
+  if ("Notification" in window && Notification.permission === "default") Notification.requestPermission();
+  TxReal.configure({ host: RELAY_BASE, jwt: "relay", apiToken: "relay" }); // dummy creds → skip guest-auth; relay injects real ones
+  liveHandles.push(TxReal.streamLive("scores", { fixtureId: LIVE_FIXTURE_ID, onMessage: m => { const d = m.data; if (d && typeof d === "object") { if (liveMergeScore(d)) { liveStat.scores++; liveRebuildSoon();
+    if (d.Action === "goal") notifyLive("⚽ GOAL — France v England", "The tape is repricing. Open Foresight.");
+    else if (d.Action === "red_card") notifyLive("🟥 RED CARD — France v England", "Upset radar climbing.");
+    else if (d.Action === "var") notifyLive("📺 VAR review — France v England", "The market front-runs verdicts. Watch the tape.");
+  } } }, onStatus: s => { if (s.state === "error") liveSetStatus("reconnecting…"); } }));
+  liveHandles.push(TxReal.streamLive("odds", { fixtureId: LIVE_FIXTURE_ID, onMessage: m => { const d = m.data; if (d && typeof d === "object") { if (liveMergeOdds(d)) { liveStat.odds++; liveRebuildSoon(); } } } }));
+  fetchNewsOnce(); newsTimer = setInterval(fetchNewsOnce, 60000);
+  sel = FIXTURES.indexOf(liveEntry()); simT = liveEntry().endT;
+  const btn = $('goLiveBtn'); if (btn) { btn.textContent = "■ STOP LIVE"; btn.classList.add("on"); }
+  toast("🔴 LIVE — streaming France–England from the relay");
+  liveSetStatus(); renderAll();
+}
+function stopLive() {
+  liveOn = false; liveHandles.forEach(h => h && h.stop && h.stop()); liveHandles = [];
+  if (newsTimer) { clearInterval(newsTimer); newsTimer = null; }
+  const btn = $('goLiveBtn'); if (btn) { btn.textContent = "🔴 GO LIVE"; btn.classList.remove("on"); }
+  liveSetStatus("relay idle");
+}
+(function injectLiveControl() {
+  const s = document.createElement("style");
+  s.textContent = `#liveCtl{position:fixed;top:10px;right:10px;z-index:60;background:#0c1622;border:1px solid #22c55e33;border-radius:10px;padding:8px 10px;font:600 11px system-ui,sans-serif;color:#cfe;box-shadow:0 6px 24px #0008;max-width:min(92vw,320px)}
+    #liveCtl .row{display:flex;gap:6px;align-items:center}#liveCtl button{cursor:pointer;border:0;border-radius:7px;padding:6px 10px;font-weight:800;background:#22c55e;color:#04140a}
+    #liveCtl button.on{background:#ff5a74;color:#1a0208}#liveCtl input{flex:1;min-width:0;background:#081019;border:1px solid #ffffff1a;color:#9fb;border-radius:6px;padding:5px 7px;font:600 10px monospace}
+    #liveStatus{margin-top:6px;color:#7fe6a6;font-weight:700}#liveStatus .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#22c55e;margin-right:4px;animation:pulse 1.4s infinite}
+    .feeditem.news{background:#10233a;border-left:3px solid #3b8bf5}
+    .feeditem.pundit{background:#170f26;border-left:3px solid #c084fc;font-style:italic}`;
+  document.head.appendChild(s);
+  const el = document.createElement("div"); el.id = "liveCtl";
+  el.innerHTML = `<div class="row"><button id="goLiveBtn">🔴 GO LIVE</button>
+    <input id="relayUrl" value="${RELAY_BASE}" spellcheck="false" title="relay base URL"></div>
+    <div id="liveStatus">checking relay…</div>`;
+  document.body.appendChild(el);
+  $('goLiveBtn').onclick = () => liveOn ? stopLive() : goLive();
+  $('relayUrl').onchange = e => { RELAY_BASE = e.target.value.replace(/\/$/, ""); localStorage.setItem("foresight_relay", RELAY_BASE); };
+  fetch(`${RELAY_BASE}/health`).then(r => r.json()).then(h => {
+    liveSetStatus(h && h.ok ? "relay ✓ ready — click GO LIVE" : "relay unreachable");
+    if (h && h.ok && qs.get("live") === "1") goLive();            // ?live=1 auto-starts
+  }).catch(() => liveSetStatus("relay unreachable — start it: wrangler dev"));
+})();
 
 resetLeague();
 renderAnchor();

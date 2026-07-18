@@ -9,3 +9,6 @@ real-data/*.live-state.json
 
 # Node
 node_modules/
+
+.vercel
+.env*

@@ -1,0 +1,12 @@
+name = "foresight-relay"
+main = "worker.js"
+compatibility_date = "2026-07-01"
+
+# Secrets (NOT stored here). Set for production with:
+#   wrangler secret put TXLINE_JWT
+#   wrangler secret put TXLINE_API_TOKEN
+#   wrangler secret put TXLINE_HOST      # optional; defaults to devnet host
+# Local dev reads them from relay/.dev.vars (gitignored).
+
+[observability]
+enabled = true
