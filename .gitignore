@@ -1,0 +1,11 @@
+# Credentials + secrets — never commit
+.txline.json
+shared/.txline.json
+_keys/*.json
+!_keys/.gitkeep
+
+# Local live-poll accumulator state (large, regenerable, not the compact tape)
+real-data/*.live-state.json
+
+# Node
+node_modules/

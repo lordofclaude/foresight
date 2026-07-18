@@ -1,0 +1,19 @@
+{
+  "name": "foresight",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Provable prediction reputation on TxLINE + Solana — verified prediction league for the TxODDS World Cup Hackathon.",
+  "main": "foresight.js",
+  "scripts": {
+    "test": "node test.js",
+    "anchor": "node anchor-commit.js",
+    "verify-wallet-flow": "node verify-wallet-flow.js",
+    "live-poll": "node shared/live-poll.js"
+  },
+  "dependencies": {
+    "@solana/web3.js": "^1.95.3"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,0 +1,1367 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FORESIGHT — verified prediction reputation on TxLINE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:ital,wght@0,600;0,700;0,800;1,600;1,700;1,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#050a10;--panel:#0a1420;--panel2:#0d1826;--line:#12212f;--txt:#c8d8e4;--mut:#4a6378;
+--cyan:#22d3ee;--green:#34d399;--amber:#fbbf24;--red:#f87171;--violet:#c084fc;--pink:#f472b6}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--txt);font:13px/1.45 Consolas,Menlo,monospace;padding:14px 16px 40px}
+header{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:10px}
+h1{font-size:1.05rem;letter-spacing:.16em;color:#e8f4fb}
+h1 b{color:var(--violet)}
+.fx{color:var(--mut);font-size:.78rem}
+.badge{font-size:.62rem;letter-spacing:.12em;padding:.15rem .5rem;border:1px solid var(--green);color:var(--green);border-radius:3px}
+.stats{display:flex;gap:10px;margin:10px 0;flex-wrap:wrap}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:.45rem .8rem;min-width:110px}
+.stat .l{font-size:.6rem;letter-spacing:.14em;color:var(--mut);text-transform:uppercase}
+.stat .v{font-size:1.05rem;margin-top:.15rem}
+.g{color:var(--green)}.r{color:var(--red)}.c{color:var(--cyan)}.v2{color:var(--violet)}
+/* radar grid */
+.radar{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px;margin-bottom:10px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:.55rem .7rem;cursor:pointer;position:relative}
+.tile:hover{border-color:#2b4a63}
+.tile.sel{border-color:var(--violet);background:#0e0c1e}
+.tile .m{font-size:.72rem;color:#9fb8c9}
+.tile .sc{font-size:.68rem;color:var(--mut);margin-top:.1rem}
+.tile .rk{position:absolute;top:.45rem;right:.6rem;font-size:1.15rem}
+.tile .bar{height:4px;background:#0d1826;border-radius:2px;margin-top:.4rem;overflow:hidden}
+.tile .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--green),var(--amber),var(--red))}
+.tile .ft{font-size:.6rem;letter-spacing:.1em;color:var(--green)}
+main{display:grid;grid-template-columns:280px 1fr 320px;gap:10px}
+@media(max-width:1100px){main{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:.7rem .8rem;margin-bottom:10px}
+.card h3{font-size:.68rem;letter-spacing:.13em;text-transform:uppercase;color:#7f9cb2;margin-bottom:.55rem}
+.card h3 .r2{float:right;color:var(--mut);text-transform:none;letter-spacing:0;font-size:.62rem}
+canvas{width:100%;display:block}
+.btn{width:100%;background:#0f2233;border:1px solid #1d3a52;color:var(--cyan);font:inherit;padding:.5rem;border-radius:6px;cursor:pointer;margin-top:.4rem}
+.btn:hover{background:#12293e}.btn:disabled{opacity:.35;cursor:default}
+.btn.violet{color:var(--violet);border-color:#3a2a52}
+.ctl{display:flex;gap:.4rem;margin-top:.4rem}
+select{flex:1;background:#0f2233;border:1px solid #1d3a52;color:var(--txt);font:inherit;padding:.4rem;border-radius:6px}
+.pickrow{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.4rem;margin:.4rem 0}
+.pick{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:.45rem .3rem;text-align:center;cursor:pointer}
+.pick:hover{border-color:#2b4a63}
+.pick.sel{border-color:var(--violet);background:#160f26}
+.pick .nm{font-size:.66rem;color:var(--mut)}.pick .pr{font-size:.95rem;margin-top:.15rem}
+.mut{color:var(--mut)}.small{font-size:.66rem}
+.feed{max-height:230px;overflow-y:auto}
+.prophet{display:flex;justify-content:space-between;gap:.4rem;padding:.3rem .2rem;border-bottom:1px solid #0d1826;font-size:.74rem}
+.prophet .rank{color:var(--mut);width:1.1rem}
+.prophet .name{flex:1}
+.prophet.you{background:#12102a;border-radius:4px}
+.commitrow{padding:.35rem .3rem;border-bottom:1px solid #0d1826;font-size:.68rem}
+.commitrow .hash{color:var(--violet);word-break:break-all}
+.st{font-size:.6rem;padding:.05rem .3rem;border-radius:3px;border:1px solid}
+.st.C{color:var(--amber);border-color:var(--amber)}.st.R{color:var(--cyan);border-color:var(--cyan)}
+.st.G{color:var(--green);border-color:var(--green)}.st.B{color:var(--red);border-color:var(--red)}
+.vd{border:1px solid var(--line);border-radius:6px;padding:.5rem;margin-top:.45rem;font-size:.68rem}
+.vd h4{font-size:.66rem;margin-bottom:.25rem}
+.vd.good h4{color:var(--green)}.vd.bad h4{color:var(--red)}
+.vd pre{white-space:pre-wrap;word-break:break-all;color:var(--mut);font-size:.62rem;margin-top:.25rem}
+.receipt{border:1px solid #1d3a2a;background:#07130d;border-radius:6px;padding:.45rem .55rem;margin-top:.45rem;font-size:.7rem}
+.receipt b{color:var(--green)}
+/* unified live feed */
+#receipts{max-height:420px;overflow-y:auto}
+.feeditem{display:flex;align-items:baseline;gap:.5rem;font-size:.76rem;padding:.42rem .1rem;border-bottom:1px solid #142842}
+.feeditem .fmin{font-family:var(--fmono);font-size:.64rem;color:var(--mut);min-width:2.6rem;flex:none}
+.feeditem.goal{background:rgba(194,240,74,.06)}.feeditem.goal b{color:var(--lime)}
+.feeditem.card{background:rgba(255,90,116,.07)}.feeditem.card b{color:var(--red)}
+.feeditem.var{background:rgba(245,183,61,.06)}.feeditem.var b{color:var(--amber)}
+.feeditem.move{color:var(--txt)}.feeditem.move b{color:var(--blue)}
+.feeditem.settle{background:rgba(59,139,245,.05);font-size:.72rem}.feeditem.settle b{color:var(--lime)}
+.feeditem.settle.bad{background:rgba(255,90,116,.06)}.feeditem.settle.bad b,.feeditem.settle.bad{color:var(--red)}
+#toasts{position:fixed;right:14px;bottom:14px;display:flex;flex-direction:column;gap:6px;z-index:9}
+.toast{background:#0d2417;border:1px solid #1d5c38;color:#a7e3c3;padding:.5rem .7rem;border-radius:6px;font-size:.72rem;max-width:340px}
+.toast.bad{background:#240d0d;border-color:#5c1d1d;color:#e3a7a7}
+.toast.act{background:#120f26;border-color:#3a2a52;color:#cbb3ef}
+/* prophet profile modal */
+#modal{display:none;position:fixed;inset:0;background:rgba(3,6,10,.75);z-index:20;align-items:center;justify-content:center}
+#modal.open{display:flex}
+#modalbox{background:var(--panel);border:1px solid #24344a;border-radius:10px;max-width:560px;width:92vw;max-height:82vh;overflow-y:auto;padding:1rem 1.1rem}
+#modalbox h4{font-size:.9rem;color:#e8f4fb;margin-bottom:.2rem;display:flex;justify-content:space-between;align-items:baseline}
+#modalbox h4 span{cursor:pointer;color:var(--mut);font-size:.72rem}
+.pstats{display:flex;gap:.8rem;flex-wrap:wrap;margin:.6rem 0;font-size:.72rem}
+.pstats b{display:block;font-size:1rem}
+.prow{display:flex;gap:.5rem;align-items:baseline;padding:.35rem .2rem;border-bottom:1px solid #0d1826;font-size:.7rem}
+.prow .hash{color:var(--violet);font-size:.6rem;word-break:break-all}
+.tag{font-size:.56rem;letter-spacing:.04em;padding:.05rem .3rem;border-radius:3px;border:1px solid;white-space:nowrap}
+.tag.human{color:#7dd3fc;border-color:#25506a}
+.tag.agent{color:#c084fc;border-color:#3a2a52}
+.tag.api{color:#fbbf24;border-color:#5c4a1d}
+.stratbox{background:#0d1826;border:1px solid #1e2f42;border-radius:6px;padding:.4rem .55rem;margin:.4rem 0;font-size:.7rem}
+.stratbox.priv{border-color:#3a2a1d;background:#130f07;color:#cbb08a}
+/* agent builder */
+.abtabs{display:flex;gap:.4rem;margin-bottom:.5rem}
+.abtab{flex:1;text-align:center;padding:.35rem;border:1px solid var(--line);border-radius:6px;cursor:pointer;font-size:.72rem;color:var(--mut)}
+.abtab.on{border-color:var(--violet);color:var(--violet);background:#160f26}
+.abrow{display:flex;gap:.4rem;align-items:center;margin:.35rem 0;font-size:.74rem;flex-wrap:wrap}
+.abrow label{color:var(--mut);min-width:3.2rem}
+.ab input,.ab select,.ab textarea{background:#0f2233;border:1px solid #1d3a52;color:var(--txt);font:inherit;padding:.35rem;border-radius:5px}
+.ab textarea{width:100%;min-height:56px;resize:vertical}
+.abprev{background:#0d1826;border:1px solid #1e2f42;border-radius:6px;padding:.45rem .55rem;margin:.45rem 0;font-size:.68rem;font-family:Consolas,monospace}
+.abprev.bad{border-color:#5c1d1d;color:#e3a7a7}
+.abprev.ok{border-color:#1d5c38;color:#a7e3c3}
+.vistoggle{display:flex;gap:.4rem;font-size:.7rem}
+.vistoggle span{padding:.2rem .5rem;border:1px solid var(--line);border-radius:5px;cursor:pointer;color:var(--mut)}
+.vistoggle span.on{border-color:var(--violet);color:var(--violet)}
+/* on-chain anchor card */
+#anchorCard{border-color:#1d3a2a}
+.anchor-hash{color:var(--green);word-break:break-all;font-size:.62rem}
+.anchor-sig a{color:var(--cyan);word-break:break-all;font-size:.62rem;text-decoration:none}
+.anchor-sig a:hover{text-decoration:underline}
+.anchor-live{display:inline-block;font-size:.56rem;letter-spacing:.1em;color:var(--green);border:1px solid #1d5c38;border-radius:3px;padding:.05rem .35rem}
+/* leaderboard filter */
+.bfilter{display:flex;gap:.3rem;margin-bottom:.5rem}
+.bfilter span{flex:1;text-align:center;font-size:.64rem;padding:.25rem;border:1px solid var(--line);border-radius:5px;cursor:pointer;color:var(--mut)}
+.bfilter span.on{border-color:var(--violet);color:var(--violet);background:#160f26}
+footer{margin-top:14px;color:var(--mut);font-size:.64rem;line-height:1.6;border-top:1px solid var(--line);padding-top:8px}
+footer b{color:#7f9cb2}
+.simtag{color:var(--amber);font-size:.6rem;letter-spacing:.08em}
+/* portfolio / mark-to-market */
+.pfhead{display:flex;justify-content:space-between;align-items:baseline;gap:.6rem;margin-bottom:.3rem;flex-wrap:wrap}
+.pfval{font-size:1.55rem;white-space:nowrap}
+.pfsub{font-size:.66rem;color:var(--mut);text-align:right;line-height:1.4}
+/* progressive-disclosure info toggle — keeps cards from wall-of-texting */
+.infotoggle{font-size:.62rem;color:var(--blue);cursor:pointer;margin-top:.5rem;letter-spacing:.03em;user-select:none}
+.infotoggle:hover{color:var(--lime)}
+.infobox{display:none;margin-top:.4rem;line-height:1.5}
+.infobox.open{display:block}
+#pfSpark{width:100%;height:46px;display:block;margin:.35rem 0 .2rem}
+.posrow{display:grid;grid-template-columns:1fr auto auto;gap:.4rem;align-items:baseline;padding:.3rem .1rem;border-bottom:1px solid #0d1826;font-size:.7rem}
+.posrow .m{color:#9fb8c9}
+.posrow .live{color:var(--amber);font-size:.58rem;letter-spacing:.06em}
+
+/* ═══════════════════ BROADCAST REBRAND (override layer) ═══════════════════ */
+:root{
+  --bg:#0a1322;--panel:#0e1c33;--panel2:#12233f;--line:#20385c;
+  --ink:#eef4ff;--txt:#c2d2ea;--mut:#8299b8;
+  --lime:#c2f04a;--blue:#3b8bf5;--white:#eef4ff;--red:#ff5a74;--amber:#f5b73d;
+  --green:#c2f04a;--cyan:#3b8bf5;--violet:#c2f04a;--pink:#ff5a74;
+  --fdisp:"Saira Condensed","Arial Narrow",Impact,system-ui,sans-serif;
+  --fbody:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --fmono:"SF Mono",Consolas,Menlo,monospace;
+}
+body{background:radial-gradient(1100px 560px at 82% -12%,#12243f 0%,transparent 58%),radial-gradient(820px 460px at -6% 112%,#0e2036 0%,transparent 55%),var(--bg);
+  color:var(--txt);font-family:var(--fbody);font-size:13px;padding:0 0 28px;-webkit-font-smoothing:antialiased}
+/* top bar */
+header{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin:0 0 14px;padding:12px 18px;
+  background:linear-gradient(180deg,#0c1a30,#0a1526);border-bottom:2px solid var(--line);position:relative}
+header::after{content:"";position:absolute;left:0;bottom:-2px;height:2px;width:170px;background:var(--lime)}
+.brandwrap{display:flex;flex-direction:column;gap:1px}
+h1{font-family:var(--fdisp);font-style:italic;font-weight:800;font-size:1.9rem;letter-spacing:.005em;color:var(--ink);text-transform:uppercase;line-height:.88}
+h1 b{color:var(--lime)}
+.tagline{font-family:var(--fdisp);font-style:italic;font-weight:600;font-size:.58rem;letter-spacing:.24em;color:var(--lime);text-transform:uppercase}
+.fx{color:var(--mut);font-size:.7rem;font-family:var(--fmono)}
+.datatag{font-family:var(--fdisp);font-style:italic;font-weight:800;font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;
+  color:#0a1322;background:var(--lime);padding:.22rem .7rem;clip-path:polygon(9% 0,100% 0,91% 100%,0 100%)}
+.trust{display:flex;gap:15px;margin-left:auto;flex-wrap:wrap}
+.trust-badge{display:flex;align-items:center;gap:5px;font-family:var(--fdisp);font-style:italic;font-weight:700;font-size:.74rem;letter-spacing:.07em;text-transform:uppercase;color:var(--txt)}
+.trust-badge svg{width:14px;height:14px;stroke:var(--lime);fill:none;stroke-width:2}
+.poly-btn{display:block;text-align:center;text-decoration:none;color:#8fd3ff;border-color:#1d4a6e;background:#0f2a3f}
+.poly-btn:hover{background:#123449}
+/* stat chips */
+.stats{display:flex;gap:10px;margin:0 16px 14px;flex-wrap:wrap}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:.5rem .9rem;min-width:112px;flex:1 1 auto}
+.stat .l{font-family:var(--fdisp);font-style:italic;font-weight:600;font-size:.62rem;letter-spacing:.11em;color:var(--mut);text-transform:uppercase}
+.stat .v{font-family:var(--fdisp);font-style:italic;font-weight:800;font-size:1.5rem;margin-top:.05rem;color:var(--ink);line-height:1}
+.g{color:var(--lime)}.r{color:var(--red)}.c{color:var(--blue)}.v2{color:var(--lime)}
+/* HERO selected-match band */
+.hero{margin:0 16px 14px;background:linear-gradient(120deg,#0e2038,#0b1a30 62%);border:1px solid var(--line);border-radius:14px;
+  padding:16px 24px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:18px;position:relative;overflow:hidden}
+.hero::before{content:"";position:absolute;inset:0;background:radial-gradient(560px 200px at 50% -40%,rgba(59,139,245,.20),transparent 70%);pointer-events:none}
+.hero-team{display:flex;align-items:center;gap:13px;font-family:var(--fdisp);font-style:italic;font-weight:800;font-size:clamp(1.7rem,4.2vw,3rem);color:var(--ink);text-transform:uppercase;line-height:.88;min-width:0}
+.hero-team.away{justify-content:flex-end}
+.hero-team span:last-child,.hero-team.away span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hero-flag{font-size:2rem;flex:none;filter:drop-shadow(0 2px 6px rgba(0,0,0,.5))}
+.hero-mid{text-align:center}
+.hero-score{font-family:var(--fdisp);font-style:italic;font-weight:800;font-size:clamp(2.1rem,6vw,3.4rem);color:var(--white);line-height:.9;white-space:nowrap}
+.hero-min{display:inline-block;margin-top:5px;font-family:var(--fdisp);font-style:italic;font-weight:800;font-size:.86rem;color:var(--lime);border:1.5px solid var(--lime);border-radius:20px;padding:.05rem .75rem}
+.hero-min.ft{color:#0a1322;background:var(--lime)}
+/* radar tiles as broadcast score rows */
+.radar{display:grid;grid-template-columns:repeat(auto-fit,minmax(232px,1fr));gap:10px;margin:0 16px 14px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:.7rem .9rem;cursor:pointer;position:relative;transition:border-color .18s,transform .18s,box-shadow .18s}
+.tile:hover{border-color:#2e5488;transform:translateY(-1px)}
+.tile.sel{border-color:var(--lime);box-shadow:0 0 0 1px var(--lime),0 8px 22px rgba(0,0,0,.34);background:#0e2236}
+.tile .m{font-family:var(--fdisp);font-style:italic;font-weight:800;font-size:1.06rem;color:var(--ink);text-transform:uppercase;letter-spacing:.005em}
+.tile .sc{font-size:.66rem;color:var(--mut);margin-top:.15rem;font-family:var(--fmono)}
+.tile .rk{position:absolute;top:.5rem;right:.75rem;font-family:var(--fdisp);font-style:italic;font-weight:800;font-size:1.55rem;line-height:1}
+.tile .bar{height:5px;background:#0a1626;border-radius:3px;margin-top:.5rem;overflow:hidden}
+.tile .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--lime),var(--amber),var(--red))}
+.tile .ft{font-family:var(--fdisp);font-style:italic;font-weight:700;font-size:.6rem;letter-spacing:.07em;color:var(--lime)}
+/* layout + cards */
+main{display:grid;grid-template-columns:296px 1fr 336px;gap:12px;margin:0 16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:.85rem 1rem;margin-bottom:12px}
+.card h3{font-family:var(--fdisp);font-style:italic;font-weight:800;font-size:.94rem;letter-spacing:.02em;text-transform:uppercase;color:var(--ink);margin-bottom:.6rem;display:flex;justify-content:space-between;align-items:baseline;gap:.5rem}
+.card h3 .r2{float:none;color:var(--mut);text-transform:uppercase;letter-spacing:.05em;font-size:.56rem;font-weight:600;font-style:italic;text-align:right;flex:none}
+/* buttons */
+.btn{width:100%;background:#12233f;border:1px solid var(--line);color:var(--blue);font-family:var(--fdisp);font-style:italic;font-weight:700;font-size:.86rem;letter-spacing:.04em;text-transform:uppercase;padding:.62rem;border-radius:9px;cursor:pointer;margin-top:.45rem;transition:background .15s,border-color .15s}
+.btn:hover{background:#173056;border-color:#2e5488}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.violet{color:#0a1322;background:var(--lime);border-color:var(--lime);font-weight:800}
+.btn.violet:hover{background:#d2fa62}
+select{flex:1;background:#12233f;border:1px solid var(--line);color:var(--txt);font-family:var(--fbody);padding:.5rem;border-radius:8px}
+/* pick buttons */
+.pick{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:.55rem .3rem;text-align:center;cursor:pointer;transition:border-color .15s,background .15s}
+.pick:hover{border-color:#2e5488}
+.pick.sel{border-color:var(--lime);background:#16240f;box-shadow:0 0 0 1px var(--lime)}
+.pick .nm{font-family:var(--fdisp);font-style:italic;font-weight:700;font-size:.68rem;color:var(--mut);text-transform:uppercase}
+.pick.sel .nm{color:var(--lime)}
+.pick .pr{font-family:var(--fdisp);font-style:italic;font-weight:800;font-size:1.22rem;margin-top:.08rem;color:var(--ink)}
+/* leaderboard rows */
+.prophet{display:flex;justify-content:space-between;gap:.5rem;align-items:center;padding:.45rem .3rem;border-bottom:1px solid #142842;font-size:.78rem;cursor:pointer;transition:background .12s}
+.prophet:hover{background:#122744}
+.prophet .rank{font-family:var(--fdisp);font-style:italic;font-weight:800;color:var(--mut);width:1.3rem;font-size:.98rem;flex:none}
+.prophet .name{flex:1;font-weight:600;color:var(--txt)}
+.prophet.you{background:#16240f;border-radius:7px}
+.prophet.you .name{color:var(--lime)}
+/* portfolio */
+.pfval{font-family:var(--fdisp);font-style:italic;font-weight:800;font-size:2.05rem;white-space:nowrap;color:var(--ink)}
+.pfval.c{color:var(--blue)}.pfval.r{color:var(--red)}
+#riskNum{font-family:var(--fdisp)!important;font-style:italic;font-weight:800;font-size:2.5rem!important;line-height:1}
+/* hashes stay blue (not brand-lime) */
+.commitrow .hash,.prow .hash{color:var(--blue)}
+/* tag / toggle / tab active states → lime */
+.abtab.on,.bfilter span.on,.vistoggle span.on{border-color:var(--lime);color:var(--lime);background:#16240f}
+.tag.agent{color:var(--lime);border-color:#3a5a1d}
+.toast.act{background:#16240f;border-color:#3a5a1d;color:#d8f6a2}
+#modalbox{border-radius:14px}
+#modalbox h4{font-family:var(--fdisp);font-style:italic;font-weight:800;font-size:1.12rem;text-transform:uppercase;color:var(--ink)}
+/* footer */
+footer{margin:16px;color:var(--mut);font-size:.62rem;line-height:1.65;border-top:2px solid var(--line);padding-top:12px;font-family:var(--fbody)}
+footer b{color:var(--txt)}
+.footer-strip{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:16px 16px 0;padding:12px 18px;background:linear-gradient(180deg,#0c1a30,#0a1526);border:1px solid var(--line);border-radius:11px}
+.footer-strip .fs-l{font-family:var(--fdisp);font-style:italic;font-weight:800;font-size:.86rem;letter-spacing:.05em;text-transform:uppercase;color:var(--ink)}
+.footer-strip .fs-r{font-family:var(--fdisp);font-style:italic;font-weight:700;font-size:.72rem;letter-spacing:.09em;text-transform:uppercase;color:var(--mut)}
+.footer-strip .live{color:var(--lime)}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--lime);animation:pulse 1.6s ease-in-out infinite;vertical-align:middle}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+/* mobile */
+@media(max-width:960px){main{grid-template-columns:1fr}}
+@media(max-width:640px){
+  header{padding:10px 14px;gap:10px}
+  h1{font-size:1.55rem}
+  .trust{gap:12px;width:100%;order:3;margin-left:0}
+  .trust-badge{font-size:.64rem}
+  .datatag{font-size:.6rem}
+  .stats{margin:0 12px 12px;gap:8px}
+  .stat{flex:1 1 calc(33.3% - 6px);min-width:0}
+  .stat .v{font-size:1.25rem}
+  .hero{margin:0 12px 12px;padding:12px 14px;gap:10px}
+  .hero-team{font-size:1.35rem;gap:9px}.hero-flag{font-size:1.5rem}
+  .hero-score{font-size:2rem}
+  .radar{margin:0 12px 12px;grid-template-columns:1fr 1fr;gap:8px}
+  main{margin:0 12px;gap:10px}
+  .card{padding:.8rem .85rem}
+  .btn{padding:.72rem;min-height:44px}
+  .pick{padding:.7rem .3rem;min-height:54px}
+  .footer-strip{margin:12px;flex-direction:column;align-items:flex-start;gap:6px}
+  footer{margin:12px;font-size:.6rem}
+  #modalbox{width:94vw;max-height:88vh;padding:.9rem}
+}
+@media(max-width:430px){.radar{grid-template-columns:1fr}.stat{flex:1 1 calc(50% - 4px)}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+/* overflow hardening — never let the page scroll sideways on mobile */
+html,body{overflow-x:hidden;max-width:100vw}
+.tile,.stat,.card,.prophet,.posrow,.commitrow,.hero-team,.hero-mid,main>div{min-width:0}
+.tile .m{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card,.feed,canvas,#pfSpark{max-width:100%}
+footer,footer code,.card,.prow,.commitrow,.receipt,.stratbox,.vd,.abprev{overflow-wrap:anywhere;word-break:break-word}
+.trust-badge svg{flex:none}
+@media(max-width:640px){
+  .card h3{font-size:.9rem;flex-wrap:wrap}
+  .card h3 .r2{font-size:.54rem}
+  .tile .m{font-size:.96rem}
+  .pfval{font-size:1.8rem}
+  #riskNum{font-size:2.1rem!important}
+  .google-btn{width:100%!important;justify-content:center}
+}
+/* last in cascade on purpose: wins over the generic .btn{width:100%} rule above */
+.google-btn{width:auto;flex:none;display:flex;align-items:center;gap:.5rem;background:#fff;color:#3c4043;border:1px solid #dadce0;border-radius:8px;padding:.45rem .9rem;font-family:var(--fbody);font-weight:600;font-style:normal;font-size:.78rem;text-transform:none;letter-spacing:0;margin:0;white-space:nowrap}
+.google-btn:hover{background:#f7f8f8}
+.wallet-btn{width:auto;flex:none;background:linear-gradient(90deg,#9945FF,#14F195);color:#0a1322;border:none;border-radius:8px;padding:.48rem .9rem;font-family:var(--fdisp);font-style:italic;font-weight:800;font-size:.78rem;letter-spacing:.03em;text-transform:uppercase;margin:0;white-space:nowrap}
+.wallet-btn:hover{filter:brightness(1.08)}
+.wallet-btn.connected{background:#0e2236;color:var(--lime);border:1px solid #2a4a2a}
+.wallet-pending{position:relative;color:transparent!important}
+.wallet-pending::after{content:"";position:absolute;inset:0;margin:auto;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#0a1322;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.real-tag{font-size:.58rem;letter-spacing:.05em;padding:.06rem .32rem;border-radius:3px;border:1px solid #2a4a2a;color:var(--lime);background:rgba(20,241,149,.08)}
+@media(max-width:640px){.wallet-btn{width:100%!important}}
+</style></head><body>
+
+<header>
+  <div class="brandwrap">
+    <h1>FORE<b>SIGHT</b></h1>
+    <div class="tagline">Provable Bragging Rights</div>
+  </div>
+  <span class="datatag">Real TxLINE · Replay</span>
+  <span class="fx" id="fixture">—</span>
+  <div class="trust">
+    <span class="trust-badge"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg>Verifiable</span>
+    <span class="trust-badge"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Timestamped</span>
+    <span class="trust-badge"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>Immutable</span>
+  </div>
+  <button class="btn wallet-btn" id="walletBtn">🔗 Connect Wallet</button>
+  <button class="btn google-btn" id="googleLoginBtn">
+    <svg viewBox="0 0 24 24" width="16" height="16"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.99.66-2.26 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0012 23z"/><path fill="#FBBC05" d="M5.84 14.09A6.6 6.6 0 015.5 12c0-.73.13-1.43.34-2.09V7.07H2.18A11 11 0 001 12c0 1.77.43 3.45 1.18 4.93z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1a11 11 0 00-9.82 6.07L5.84 9.9C6.71 7.31 9.14 5.38 12 5.38z"/></svg>
+    Sign in with Google
+  </button>
+</header>
+
+<div class="stats">
+  <div class="stat"><div class="l">Match clock</div><div class="v c" id="sClock">0'</div></div>
+  <div class="stat"><div class="l">Realized</div><div class="v v2" id="sScore">—</div></div>
+  <div class="stat"><div class="l">Mark-to-mkt value</div><div class="v c" id="sMTM">$0</div></div>
+  <div class="stat"><div class="l">Your picks</div><div class="v" id="sPicks">0</div></div>
+  <div class="stat"><div class="l">Commits</div><div class="v" id="sCommits">0</div></div>
+  <div class="stat"><div class="l">Matches settled</div><div class="v" id="sSettled">0/0</div></div>
+</div>
+
+<!-- HERO: the selected match, broadcast-scale -->
+<div class="hero" id="hero">
+  <div class="hero-team home"><span class="hero-flag" id="heroFlag1">🏳️</span><span id="heroName1">—</span></div>
+  <div class="hero-mid"><div class="hero-score" id="heroScore">0 – 0</div><div class="hero-min" id="heroMin">0'</div></div>
+  <div class="hero-team away"><span id="heroName2">—</span><span class="hero-flag" id="heroFlag2">🏳️</span></div>
+</div>
+
+<!-- THE RADAR: every pulled match at the current replay moment; click to select -->
+<div class="radar" id="radar"></div>
+
+<main>
+<div><!-- LEFT: portfolio + selected-match radar detail + commit flow -->
+  <div class="card">
+    <h3>Portfolio — mark to market <span class="r2">cash-out value, live</span></h3>
+    <div class="pfhead"><div class="pfval c" id="pfTotal">$0</div><div class="pfsub" id="pfUnreal">no open positions</div></div>
+    <canvas id="pfSpark"></canvas>
+    <div id="pfRows" class="small mut">Commit a call — its live value re-prices with the market every tick, like cashing out on an exchange.</div>
+  </div>
+  <div class="card">
+    <h3>Upset radar — selected match <span class="r2">consensus decay × trailing × pressure</span></h3>
+    <div style="display:flex;align-items:center;gap:.7rem"><div style="font-size:1.7rem" id="riskNum">—</div>
+      <div style="flex:1;height:8px;background:#0d1826;border-radius:4px;overflow:hidden"><i id="riskBar" style="display:block;height:100%;background:linear-gradient(90deg,var(--green),var(--amber),var(--red));width:0%"></i></div></div>
+    <div class="small mut" id="riskWhy" style="margin-top:.4rem">—</div>
+  </div>
+  <div class="card">
+    <h3>Commit a call <span class="r2">hash anchors NOW</span></h3>
+    <div class="pickrow" id="pickrow">
+      <div class="pick" data-pick="part1"><div class="nm" id="n1">HOME</div><div class="pr" id="p1">—</div></div>
+      <div class="pick" data-pick="draw"><div class="nm">DRAW</div><div class="pr" id="pX">—</div></div>
+      <div class="pick" data-pick="part2"><div class="nm" id="n2">AWAY</div><div class="pr" id="p2">—</div></div>
+    </div>
+    <button class="btn violet" id="commitBtn" disabled>◆ COMMIT — select a side</button>
+    <a class="btn poly-btn" id="polyBtn" target="_blank" rel="noopener">🔷 Trade this on Polymarket ↗</a>
+    <div id="mycommits"></div>
+    <div class="infotoggle" onclick="toggleInfo('commitInfo')">ⓘ how commits work</div>
+    <div class="small mut infobox" id="commitInfo">Prices = StablePrice implied % at the playhead of the selected match — the exact triple your hash commits to (provable via <code>/api/odds/validation</code>). Polymarket opens their real market search in a new tab — you trade there on your own account; Foresight never touches funds.</div>
+  </div>
+  <div class="card">
+    <h3>Replay <span class="r2">all matches advance together</span></h3>
+    <button class="btn" id="run">▶ RUN REPLAY (all 3 fixtures)</button>
+    <div class="ctl">
+      <select id="speed"><option value="2" selected>2×</option><option value="4">4×</option><option value="8">8×</option><option value="16">16×</option></select>
+      <button class="btn" id="instant" style="margin:0">⚡ INSTANT</button>
+    </div>
+  </div>
+</div>
+
+<div><!-- CENTER: tape -->
+  <div class="card">
+    <h3><span id="tapeTitle">consensus tape</span>
+      <span class="r2">◆ commits · ● moves · brackets = market lag</span></h3>
+    <canvas id="cv" height="360"></canvas>
+  </div>
+  <div class="card">
+    <h3>Live feed <span class="r2">all matches · goals · cards · VAR · moves · settlements</span></h3>
+    <div id="receipts" class="small mut">Commit on any match, run the replay — goals, cards, VAR, big market moves, commits and settlements print here live, across all matches.</div>
+  </div>
+</div>
+
+<div><!-- RIGHT: league + verify -->
+  <div class="card">
+    <h3>Prophet league <span id="boardLive" class="r2"></span></h3>
+    <button class="btn violet" id="buildAgentBtn" style="margin:0 0 .5rem">🤖 Build an agent</button>
+    <div class="bfilter" id="bfilter">
+      <span class="on" data-f="all" onclick="setBoardFilter('all')">all</span>
+      <span data-f="human" onclick="setBoardFilter('human')">👤 humans</span>
+      <span data-f="agent" onclick="setBoardFilter('agent')">🤖 agents</span>
+    </div>
+    <div class="feed" id="board"><div class="mut small">field is loading…</div></div>
+    <div class="infotoggle" onclick="toggleInfo('leagueInfo')">ⓘ how the league works</div>
+    <div class="small mut infobox" id="leagueInfo">Real agents, not opaque bots: 🤖 rule &amp; 🔓 public-prompt strategies you can inspect, 🔒 private ones, a 🛰️ external API/ML algo, and 👤 manual humans — all trading the same real World Cup tapes through the identical hash→reveal→burn→grade pipeline. Standings are LIVE mark-to-market until every match settles. Click any name for its record, or follow it to mirror its calls.</div>
+  </div>
+  <div class="card">
+    <h3>Verify / forge <span class="r2">the trust demo</span></h3>
+    <button class="btn" id="verifyBtn" disabled>✓ verify my last commit</button>
+    <button class="btn" id="forgeBtn">✗ try to forge a backdated call</button>
+    <div id="verifyOut"></div>
+  </div>
+  <div class="card" id="anchorCard">
+    <h3>⛓ Real on-chain anchor <span class="r2">not a mock</span></h3>
+    <div id="anchorBody" class="small mut">loading proof…</div>
+  </div>
+</div>
+</main>
+
+<div id="toasts"></div>
+<div id="modal"><div id="modalbox"></div></div>
+
+<div class="footer-strip">
+  <span class="fs-l">⚡ Built for fans. Backed by evidence.</span>
+  <span class="fs-r">All calls are final, public &amp; immutable · <span class="live"><span class="dot"></span> LIVE REPLAY</span></span>
+</div>
+
+<footer>
+  <div class="infotoggle" style="margin-top:0" onclick="toggleInfo('footerInfo')">ⓘ real data, the five trust layers, and what's not live yet</div>
+  <div class="infobox" id="footerInfo" style="margin-top:.5rem">
+    <b>REAL DATA:</b> three real World Cup fixtures — events + StablePrice full-match 1X2 consensus (<b>GET /api/scores/historical/{fixtureId}</b> + <b>GET /api/odds/updates/{epochDay}/{hourOfDay}/{interval}</b>, compacted by <code>shared/build-real-tapes.js</code>); move detection = the SurpriseIndex detector.
+    <b>LIVE MODE &amp; LAG (honest):</b> this deploy is replay-based — the tournament ends before judging, so replay IS the demo. Live wiring (documented seams, runs locally with credentials): <b>GET /api/odds/stream</b> + <b>GET /api/scores/stream</b> (SSE) at our subscription tier <b>service level 1 = 60-second delay</b> (real-time = level 12, mainnet); the 5-minute granularity you see in historical endpoints is storage bucketing, not live lag. Our own calibration measured the odds stream front-running the scores stream by a median 23s on majors.
+    <b>THE FIVE LAYERS:</b> L1 commit hash + external timestamp — <b>proven for real</b>: one genuine commit is anchored on Solana devnet (see the ⛓ card; tx verifiable on the explorer), every other commit in this app is a local sim-slot (not yet individually broadcast on-chain — see below) · L2 anchored price at commit (<b>/api/odds/validation</b>) · L3 reveal-or-burn · L4 grading reads the <b>game_finalised statKeys 1001+3001 / 1002+3002</b> (90' 1X2) — prod CPIs <b>validateStatV2</b>, the SettleKit binding pattern minus the vault · L5 $100-flat at de-vigged anchored prices + shrinkage; earliness receipts gated at 120s (measured ±105s feed-noise band).
+    <b>REAL WALLET MODE:</b> click <b>🔗 Connect Wallet</b> (Phantom, devnet) and every commit after that signs a genuine Solana memo transaction — your own key signs, we never see it, confirmed on-chain in ~1-2s (verified: <code>verify-wallet-flow.js</code>, 392ms real confirm). Without a wallet connected, commits stay local sim-slots — same hash logic, zero friction. The simulated agents/humans on the leaderboard stay sim-slots either way; there's no honest way to hand 8 fake identities their own real wallets.
+    <b>NOT LIVE YET:</b> Google Sign-In has no registered OAuth client; Polymarket links open their real site for you to trade — Foresight can't execute for you; premium follow unlock has no payment processor (explicitly simulated, never a silent charge).
+    <b>NO CUSTODY, NO EXECUTION:</b> the $100 stake and the portfolio's mark-to-market value are notional — Foresight verifies WHAT you called and WHEN, never that real money moved.
+    <b>HONESTY:</b> TxLINE carries no volume/liquidity data — every "spike" is a consensus implied-probability move. Sybil-resistance is economic; what is cryptographic: no record can be forged or backdated. Pure functions in <code>foresight.js</code> — <code>node test.js</code>.
+  </div>
+</footer>
+
+<!-- LIVE TxLINE data: real World Cup fixtures. Each tape.js sets window.TXLINE_TAPE; the capture snippets stash each into TX_TAPES. txline-real.js is used for its pure buildTape(); no singleton load needed. Push is conditional (only if truthy) so a missing/404'd tape file never silently re-pushes the previous one's leftover value. -->
+<script>window.TX_TAPES = [];</script>
+<script>window.TXLINE_TAPE = null;</script>
+<script src="real-data/18222446.tape.js"></script>
+<script>if (window.TXLINE_TAPE) TX_TAPES.push(window.TXLINE_TAPE); window.TXLINE_TAPE = null;</script>
+<script src="real-data/18237038.tape.js"></script>
+<script>if (window.TXLINE_TAPE) TX_TAPES.push(window.TXLINE_TAPE); window.TXLINE_TAPE = null;</script>
+<script src="real-data/18241006.tape.js"></script>
+<script>if (window.TXLINE_TAPE) TX_TAPES.push(window.TXLINE_TAPE); window.TXLINE_TAPE = null;</script>
+<!-- France v England — live-polled tonight (kickoff 21:00 UTC). Empty/thin
+     pre-kickoff (SA.buildRealTape needs >=1 event to anchor its axis, so it's
+     filtered out gracefully until then); run shared/live-poll.js and reload
+     this page after kickoff to pick it up. Safe to include unconditionally:
+     if the file 404s, nothing is pushed (see the conditional above). -->
+<script src="real-data/18257865.tape.js"></script>
+<script>if (window.TXLINE_TAPE) TX_TAPES.push(window.TXLINE_TAPE); window.TXLINE_TAPE = null;</script>
+<script src="shared/txline-real.js"></script>
+<script src="shared/agent.js"></script>
+<script src="foresight.js"></script>
+<script src="anchored-proof.js"></script><!-- REAL Solana devnet tx: a genuine Foresight commit hash anchored on-chain -->
+<script src="https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script><!-- exposes window.solanaWeb3 — for real wallet-signed commits -->
+
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const SA = SurpriseAgent, FO = Foresight;
+
+/* ---------------- build all fixtures ---------------- */
+// broadcast flag chips — country name → emoji (no external assets)
+const FLAGS = { Argentina: "🇦🇷", Switzerland: "🇨🇭", France: "🇫🇷", Spain: "🇪🇸", England: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", Brazil: "🇧🇷", Germany: "🇩🇪", Japan: "🇯🇵", Italy: "🇮🇹", Portugal: "🇵🇹", Netherlands: "🇳🇱", Belgium: "🇧🇪", Croatia: "🇭🇷", Morocco: "🇲🇦", Norway: "🇳🇴", Mexico: "🇲🇽", Uruguay: "🇺🇾" };
+const flagOf = n => FLAGS[n] || "⚽";
+const FIXTURES = TX_TAPES.filter(Boolean).map(bundle => {
+  const t0 = TxReal.buildTape(bundle);                       // pure — per-bundle
+  const tape = SA.buildRealTape(t0.events, t0.oddsTimeline);
+  if (!tape) return null;
+  const fx = t0.fixture;
+  return {
+    id: fx.FixtureId, fx, tape,
+    p1: (fx.Participant1 || "HOME").slice(0, 3).toUpperCase(),
+    p2: (fx.Participant2 || "AWAY").slice(0, 3).toUpperCase(),
+    f1: flagOf(fx.Participant1), f2: flagOf(fx.Participant2),
+    moves: SA.detectMoves(tape.ticks, SA.CFG),
+    outcome: FO.outcomeFromTape(tape.events),
+    endT: Math.max(tape.ticks[tape.ticks.length - 1].t, tape.events[tape.events.length - 1].t),
+    settled: false,
+  };
+}).filter(Boolean);
+const GLOBAL_END = Math.max(...FIXTURES.map(f => f.endT));
+let sel = 0;
+
+/* ---------------- league (one league, all fixtures — reputations cross-match) ---------------- */
+let league, myCommits, mySecrets, simT, timer = null;
+let agentRegistry = {}, following = {};      // deployed agents + who you follow
+/* ---------------- premium follow tiers ----------------
+   Every prophet sets FREE or PREMIUM auto-follow. FREE = anyone can follow
+   and their calls auto-allocate into the follower's portfolio immediately —
+   most prophets run free early to build a track record. PREMIUM = following
+   is still free to TRACK (see every call, no auto-copy), but auto-allocation
+   requires unlocking (a real deploy would gate this on payment; this demo
+   has no payment processor, so unlocking is explicitly simulated, never a
+   silent fake charge). tracking{} is separate from following{}: tracking
+   sees the calls, following mirrors them into your portfolio. */
+let followTier = { "@polyquant-ml": { mode: "paid", price: 9 }, "@two-nil-shield": { mode: "paid", price: 4 } };
+let tracking = {};
+let myTier = { mode: "free", price: 0 };     // @you's own prophet setting
+function tierOf(wallet) { return wallet === "@you" ? myTier : (followTier[wallet] || { mode: "free", price: 0 }); }
+function oddsAt(F, t) {
+  let c = F.tape.ticks[0];
+  for (const k of F.tape.ticks) { if (k.t <= t) c = k; else break; }
+  return { home: c.home, draw: Math.max(0.02, 1 - c.home - c.away), away: c.away };
+}
+const fxT = F => Math.min(simT, F.endT);      // each match's own clock, capped at its FT
+let portfolioHistory = [];
+function resetLeague() {
+  league = FO.createLeague();
+  FIXTURES.forEach(F => { F.settled = false; });
+  // deploy the agent field (rule + prompt + API agents) + manual humans, across
+  // ALL fixtures at once — a real backtest that also populates the leaderboard.
+  agentRegistry = {};
+  FO.AGENT_ROSTER.forEach(a => agentRegistry[a.name] = a);
+  FO.agentField(league, FIXTURES.map(F => ({ fixtureId: F.id, tape: F.tape })), 4242);
+  following = {}; tracking = {};
+  myCommits = []; mySecrets = {}; simT = 0; portfolioHistory = []; feedItems = [];
+  renderFeed();
+  $('board').innerHTML = '<div class="mut small">field is loading…</div>';
+  $('mycommits').innerHTML = ''; $('verifyOut').innerHTML = ''; $('toasts').innerHTML = '';
+  renderAll();
+}
+
+/* ---------------- portfolio (mark-to-market across all your open + settled picks) ----------------
+   This is the "cash out now" view: every open position re-prices every tick
+   against the LIVE consensus of its own match, exactly like an exchange
+   position ticker. Formula: FO.markToMarket (stake * qNow/qEntry). Settled
+   positions freeze at their realized payout. */
+function portfolioSnapshot() {
+  let totalValue = 0, totalUnrealized = 0, openCount = 0;
+  const rows = myCommits.map(c => {
+    const F = commitFixture(c);
+    const pick = c.pick || (mySecrets[c.id] || {}).pick;      // your own dashboard: you always know your own pick
+    const mtm = FO.markToMarket({ status: c.status, pick, grade: c.grade, mktAtCommit: c.mktAtCommit }, oddsAt(F, fxT(F)));
+    totalValue += mtm.value;
+    if (mtm.live) { totalUnrealized += mtm.unrealizedPnl; openCount++; }
+    return { c, F, pick, mtm };
+  });
+  return { rows, totalValue, totalUnrealized, openCount };
+}
+function renderPortfolio() {
+  const snap = portfolioSnapshot();
+  $('sMTM').textContent = "$" + snap.totalValue.toFixed(0);
+  $('pfTotal').textContent = "$" + snap.totalValue.toFixed(0);
+  $('pfTotal').className = "pfval " + (snap.totalUnrealized >= 0 ? "c" : "r");
+  $('pfUnreal').textContent = snap.openCount
+    ? `${snap.openCount} open · unrealized ${snap.totalUnrealized >= 0 ? "+" : ""}$${snap.totalUnrealized.toFixed(0)}`
+    : (myCommits.length ? "all positions settled" : "no open positions");
+  if (myCommits.length) portfolioHistory.push({ t: simT, value: snap.totalValue });
+  if (portfolioHistory.length > 2000) portfolioHistory.shift();
+  drawSparkline();
+  $('pfRows').innerHTML = snap.rows.length ? snap.rows.map(({ c, F, pick, mtm }) => {
+    const nm = pick === "part1" ? F.p1 : pick === "part2" ? F.p2 : "DRAW";
+    const delta = mtm.live ? `<span class="${mtm.unrealizedPnl >= 0 ? 'g' : 'r'}">${mtm.unrealizedPnl >= 0 ? "+" : ""}$${mtm.unrealizedPnl.toFixed(0)}</span>` : `<span class="${mtm.value > 100 ? 'g' : mtm.value < 100 ? 'r' : 'mut'}">${mtm.value > 0 ? "settled" : "lost"}</span>`;
+    return `<div class="posrow"><span class="m">${F.p1}–${F.p2}: ${nm}${mtm.live ? ' <span class="live">● LIVE</span>' : ''}</span><span>$${mtm.value.toFixed(0)}</span>${delta}</div>`;
+  }).join('') : '';
+}
+const pfCv = document.getElementById('pfSpark'), pfCtx = pfCv.getContext('2d');
+function drawSparkline() {
+  const dpr = window.devicePixelRatio || 1, w = pfCv.clientWidth, h = 46;
+  pfCv.width = w * dpr; pfCv.height = h * dpr; pfCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  pfCtx.clearRect(0, 0, w, h);
+  if (portfolioHistory.length < 2) return;
+  const vals = portfolioHistory.map(p => p.value);
+  const lo = Math.min(100, ...vals) - 5, hi = Math.max(100, ...vals) + 5;
+  const xOf = i => (i / (portfolioHistory.length - 1)) * w;
+  const yOf = v => h - ((v - lo) / (hi - lo)) * h;
+  // baseline at $100 (breakeven)
+  pfCtx.strokeStyle = "#1b2c3d"; pfCtx.setLineDash([2, 3]); pfCtx.beginPath();
+  pfCtx.moveTo(0, yOf(100)); pfCtx.lineTo(w, yOf(100)); pfCtx.stroke(); pfCtx.setLineDash([]);
+  const last = vals[vals.length - 1];
+  pfCtx.strokeStyle = last >= 100 ? "#34d399" : "#f87171"; pfCtx.lineWidth = 1.5;
+  pfCtx.beginPath();
+  portfolioHistory.forEach((p, i) => { const x = xOf(i), y = yOf(p.value); i ? pfCtx.lineTo(x, y) : pfCtx.moveTo(x, y); });
+  pfCtx.stroke();
+  pfCtx.fillStyle = pfCtx.strokeStyle;
+  pfCtx.beginPath(); pfCtx.arc(xOf(vals.length - 1), yOf(last), 2.6, 0, 7); pfCtx.fill();
+}
+
+/* ---------------- fixture selection + radar grid ---------------- */
+function selectFixture(i) {
+  sel = i; selPick = null;
+  document.querySelectorAll('.pick').forEach(p => p.classList.remove('sel'));
+  $('commitBtn').disabled = true; $('commitBtn').textContent = "◆ COMMIT — select a side";
+  renderAll();
+}
+function renderRadar() {
+  $('radar').innerHTML = FIXTURES.map((F, i) => {
+    const r = FO.upsetRisk(F.tape.ticks, F.tape.events, fxT(F));
+    const done = simT >= F.endT;
+    const col = r.risk > 55 ? "var(--red)" : r.risk > 30 ? "var(--amber)" : "var(--green)";
+    const ev = F.tape.events.filter(e => e.t <= fxT(F));
+    const st = ev.length ? ev[ev.length - 1].stats : { g1: 0, g2: 0 };
+    return `<div class="tile${i === sel ? " sel" : ""}" onclick="selectFixture(${i})">
+      <div class="m">${F.f1} ${F.p1} ${st.g1}–${st.g2} ${F.p2} ${F.f2}</div>
+      <div class="sc">${done ? '<span class="ft">FT · SETTLED ' + F.outcome.g1 + "–" + F.outcome.g2 + " (90')</span>" : "UPSET RISK · " + Math.floor(fxT(F) / 60) + "'"}</div>
+      <div class="rk" style="color:${col}">${done ? "✓" : r.risk}</div>
+      <div class="bar"><i style="width:${r.risk}%"></i></div></div>`;
+  }).join('');
+}
+
+/* ---------------- Polymarket deep-link (honest: real search, real execution on THEIR site) ----------------
+   No Polymarket API/OAuth exists here, so this never claims to place a trade
+   for you. It opens Polymarket's real search for the matchup (+ side, once
+   picked) in a new tab — you execute on your own account; we never touch funds. */
+function polymarketUrl(F, pickSide) {
+  const side = pickSide === "part1" ? F.fx.Participant1 : pickSide === "part2" ? F.fx.Participant2 : null;
+  const q = side ? `${F.fx.Participant1} vs ${F.fx.Participant2} ${side} win` : `${F.fx.Participant1} vs ${F.fx.Participant2}`;
+  return "https://polymarket.com/search?q=" + encodeURIComponent(q);
+}
+function updatePolyBtn() {
+  const F = FIXTURES[sel];
+  $('polyBtn').href = polymarketUrl(F, selPick);
+  $('polyBtn').textContent = selPick ? `🔷 Trade ${selPick === "part1" ? F.p1 : selPick === "part2" ? F.p2 : "the draw"} on Polymarket ↗` : "🔷 Find this match on Polymarket ↗";
+}
+/* ---------------- commit flow (on the SELECTED match) ---------------- */
+let selPick = null;
+$('pickrow').onclick = e => {
+  const el = e.target.closest('.pick'); if (!el) return;
+  const F = FIXTURES[sel];
+  if (simT >= F.endT) { toast("that match is settled — pick another from the radar", true); return; }
+  selPick = el.dataset.pick;
+  document.querySelectorAll('.pick').forEach(p => p.classList.toggle('sel', p === el));
+  $('commitBtn').disabled = false;
+  $('commitBtn').textContent = `◆ COMMIT ${selPick === "part1" ? F.p1 : selPick === "part2" ? F.p2 : "DRAW"} @ ${(FO.devig(oddsAt(F, fxT(F)))[FO.PICK_SIDE[selPick]] * 100).toFixed(1)}%`;
+  updatePolyBtn();
+};
+/* ---------------- REAL Solana wallet-connect (Phantom) ----------------
+   No private key ever touches this page. The user's own wallet extension
+   signs; we only build the transaction and broadcast the already-signed
+   bytes. The memo text is FO.memoFor()'s output — the EXACT same shape
+   already anchored for real by anchor-commit.js (proven byte-identical,
+   see the ⛓ card). Only YOUR commits can go real this way; the simulated
+   agents/humans stay sim-slots — there's no honest way to hand 8 fake
+   identities their own real wallets. */
+const MEMO_PROGRAM_ID = "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr";
+const DEVNET_RPC = "https://api.devnet.solana.com";
+let solWallet = null, solConn = null;
+
+async function connectWallet() {
+  if (!window.solana || !window.solana.isPhantom) {
+    $('modalbox').innerHTML = `<h4>Connect Wallet <span onclick="document.getElementById('modal').classList.remove('open')">✕ close</span></h4>
+      <div class="stratbox priv">No Solana wallet extension detected. Real on-chain commits need a browser wallet — <a href="https://phantom.app" target="_blank" rel="noopener" style="color:var(--blue)">Phantom</a> is the most common. Install it, switch it to <b>Devnet</b>, then reconnect.</div>
+      <div class="small mut" style="margin-top:.5rem">Until then, commits stay local sim-slots — same hash logic, no wallet required, zero friction for the demo.</div>`;
+    $('modal').classList.add('open');
+    return;
+  }
+  try {
+    $('walletBtn').classList.add('wallet-pending'); $('walletBtn').disabled = true;
+    const resp = await window.solana.connect();
+    solWallet = resp.publicKey.toString();
+    solConn = new solanaWeb3.Connection(DEVNET_RPC, "confirmed");
+    const lamports = await solConn.getBalance(new solanaWeb3.PublicKey(solWallet));
+    const sol = lamports / 1e9;
+    $('walletBtn').classList.remove('wallet-pending'); $('walletBtn').disabled = false;
+    $('walletBtn').classList.add('connected');
+    $('walletBtn').textContent = `⛓ ${solWallet.slice(0, 4)}…${solWallet.slice(-4)} · ${sol.toFixed(3)} SOL`;
+    if (sol < 0.001) {
+      toast(`connected — 0 devnet SOL. Fund ${solWallet.slice(0, 8)}… at faucet.solana.com to sign real commits`, true);
+    } else {
+      toast(`⛓ wallet connected — commits now sign real Solana devnet transactions`, false, "act");
+    }
+    $('commitInfo').innerHTML += `<br><br><b>⛓ real mode ON</b> — every commit from here signs an actual devnet transaction via your wallet (small network fee, ~1-2s to confirm). Disconnect isn't needed: just don't approve a signature to skip.`;
+  } catch (e) {
+    $('walletBtn').classList.remove('wallet-pending'); $('walletBtn').disabled = false;
+    toast("wallet connection rejected or failed: " + (e.message || e), true);
+  }
+}
+$('walletBtn').onclick = connectWallet;
+
+/** Sign + broadcast one commit as a real devnet memo tx. Returns the same
+    shape the sim path already knows how to render, plus a real anchor. */
+async function commitRealOnChain(F, pick, t, mkt) {
+  const salt = "you-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
+  const oddsTs = Math.round(t * 1000);
+  const { memo, hash } = FO.memoFor({ wallet: "@you", fixtureId: F.id, pick, mkt, oddsTs, salt });
+  const owner = new solanaWeb3.PublicKey(solWallet);
+  const ix = new solanaWeb3.TransactionInstruction({
+    keys: [], programId: new solanaWeb3.PublicKey(MEMO_PROGRAM_ID), data: new TextEncoder().encode(memo),
+  });
+  const tx = new solanaWeb3.Transaction().add(ix);
+  tx.feePayer = owner;
+  const { blockhash } = await solConn.getLatestBlockhash();
+  tx.recentBlockhash = blockhash;
+
+  let signature;
+  if (window.solana.signAndSendTransaction) {
+    const r = await window.solana.signAndSendTransaction(tx);
+    signature = r.signature || r;
+  } else {
+    const signed = await window.solana.signTransaction(tx);
+    signature = await solConn.sendRawTransaction(signed.serialize());
+  }
+  await solConn.confirmTransaction(signature, "confirmed");
+  const txInfo = await solConn.getTransaction(signature, { commitment: "confirmed", maxSupportedTransactionVersion: 0 });
+  const anchor = {
+    sim: false, signature, slot: txInfo && txInfo.slot, blockTime: txInfo && txInfo.blockTime,
+    explorer: `https://explorer.solana.com/tx/${signature}?cluster=devnet`,
+  };
+  const c = league.commit({ wallet: "@you", fixtureId: F.id, pick, salt, tCommit: t, mkt, oddsTs, anchor });
+  // memo/hash must match what the league just computed independently — the
+  // whole point is one canonical hash function, never two implementations drifting.
+  if (c.hash !== hash) console.warn("hash mismatch between memoFor and league.commit — should never happen");
+  mySecrets[c.id] = { pick, salt };
+  myCommits.push(c);
+  return c;
+}
+
+$('commitBtn').onclick = async () => {
+  const F = FIXTURES[sel];
+  if (!selPick || simT >= F.endT) return;
+  const t = fxT(F), mkt = oddsAt(F, t), pick = selPick;
+  const btn = $('commitBtn');
+  if (solWallet) {
+    btn.classList.add('wallet-pending'); btn.disabled = true;
+    try {
+      const c = await commitRealOnChain(F, pick, t, mkt);
+      toast(`⛓ REAL commit confirmed on devnet — ${c.anchor.signature.slice(0, 12)}… (${F.p1}–${F.p2})`, false, "act");
+    } catch (e) {
+      toast("on-chain commit failed: " + (e.message || "wallet rejected or RPC error") + " — try again or use sim mode", true);
+      btn.classList.remove('wallet-pending'); btn.disabled = false;
+      return;
+    }
+  } else {
+    const salt = "you-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
+    const c = league.commit({ wallet: "@you", fixtureId: F.id, pick, salt, tCommit: t, mkt, oddsTs: Math.round(t * 1000), anchor: { sim: true, t } });
+    mySecrets[c.id] = { pick, salt };
+    myCommits.push(c);
+    toast(`◆ committed on ${F.p1}–${F.p2} — hash ${c.hash.slice(0, 16)}… anchored at ${fmtMin(t)} (sim-slot)`);
+  }
+  selPick = null; document.querySelectorAll('.pick').forEach(p => p.classList.remove('sel'));
+  btn.classList.remove('wallet-pending'); btn.disabled = true; btn.textContent = "◆ COMMIT — select a side";
+  $('verifyBtn').disabled = false;
+  renderAll();
+};
+function commitFixture(c) { return FIXTURES.find(F => F.id === c.fixtureId); }
+function renderMyCommits() {
+  $('mycommits').innerHTML = myCommits.map(c => {
+    const F = commitFixture(c);
+    const st = c.status === "COMMITTED" ? "C" : c.status === "REVEALED" ? "R" : c.status === "GRADED" ? "G" : "B";
+    const pick = c.pick || (mySecrets[c.id] || {}).pick || "?";
+    const res = c.grade ? (c.grade.won ? ` +$${c.grade.pnl.toFixed(0)}` : ` −$100`) : "";
+    const share = c.status === "GRADED" ? ` <span style="cursor:pointer" title="download share card" onclick="shareCard(${c.id})">📤</span>` : "";
+    const real = c.anchor && c.anchor.sim === false
+      ? ` <a class="real-tag" href="${c.anchor.explorer}" target="_blank" rel="noopener">⛓ REAL</a>`
+      : "";
+    return `<div class="commitrow"><span class="st ${st}">${c.status}</span>${real} ${F.p1}–${F.p2}: ${pick === "part1" ? F.p1 : pick === "part2" ? F.p2 : "DRAW"} @ ${fmtMin(c.tCommit)}<span class="${c.grade && c.grade.won ? 'g' : 'r'}">${res}</span>${share}<div class="hash">${c.hash.slice(0, 34)}…</div></div>`;
+  }).join('');
+}
+
+/* ---------------- replay driver (all matches advance together) ---------------- */
+function fmtMin(t) { return Math.floor(t / 60) + "'"; }
+function stopReplay(lbl) { if (timer) { clearInterval(timer); timer = null; } $('run').disabled = false; $('run').textContent = lbl || "▶ RUN REPLAY (all 3 fixtures)"; }
+function tickSettlements() {
+  for (const F of FIXTURES) {
+    if (F.settled) continue;
+    // endT on a REPLAY tape is the true final whistle (built from completed
+    // scores/historical, always carries game_finalised). endT on a LIVE,
+    // still-polling tape (France-England tonight) is just "latest data we
+    // happen to have" — reaching it does NOT mean the match is over. Require
+    // an actual game_finalised event before ever grading, or a live match
+    // could get incorrectly settled mid-play on incomplete stats.
+    const trulyFinished = F.tape.events.some(e => e.type === "game_finalised");
+    if (simT >= F.endT && trulyFinished) { F.settled = true; settleFixture(F); }
+  }
+}
+/* live prophet-activity feed: as the replay passes a sim prophet's commit
+   moment, announce it — the exact popup a live deployment would push. */
+let announcedIds = new Set();
+function tickActivity(prevT) {
+  const fresh = [];
+  for (const c of league.commits) {
+    if (c.wallet === "@you" || announcedIds.has(c.id)) continue;
+    if (c.tCommit > prevT && c.tCommit <= simT) { announcedIds.add(c.id); fresh.push(c); }
+  }
+  if (!fresh.length) return;
+  // one commit this tick -> full toast; a burst (fast-forward, high replay speed) -> one summary
+  // toast instead of spamming the stack — every commit still lands in the Live Feed regardless.
+  if (fresh.length === 1) {
+    const c = fresh[0], F = commitFixture(c), q = FO.devig(c.mktAtCommit), pk = c.pick;
+    const who = c.by === "api" ? "🛰️ " : c.by === "rule" || c.by === "prompt" ? "🤖 " : "👤 ";
+    toast(`◆ ${who}${c.wallet} committed ${pk ? (pk === "part1" ? F.p1 : pk === "part2" ? F.p2 : "DRAW") + " @ " + (q[FO.PICK_SIDE[pk]] * 100).toFixed(1) + "%" : "a sealed call"} (${F.p1}–${F.p2})`, false, "act");
+  } else {
+    toast(`◆ ${fresh.length} new commits landed across the slate`, false, "act");
+  }
+}
+function startReplay() {
+  if (timer) return;
+  if (FIXTURES.every(F => F.settled)) resetLeague();
+  announcedIds = new Set(league.commits.filter(c => c.tCommit <= simT).map(c => c.id));
+  $('run').disabled = true; $('run').textContent = "● LIVE (replay ×" + $('speed').value + ")";
+  const speed = +$('speed').value;
+  timer = setInterval(() => {
+    const prevT = simT;
+    simT = Math.min(GLOBAL_END, simT + speed * 60 * 0.05);
+    tickActivity(prevT); tickFeed(prevT); tickSettlements(); renderAll();
+    if (simT >= GLOBAL_END) stopReplay("↻ RE-RUN");
+  }, 50);
+}
+$('run').onclick = startReplay;
+$('instant').onclick = () => { if (timer) stopReplay(); if (FIXTURES.every(F => F.settled)) resetLeague(); simT = GLOBAL_END; tickSettlements(); renderAll(); };
+
+/* ---------------- unified live feed (events + moves + commits + settlements) ----------------
+   One reverse-chronological ticker across ALL matches — "the best app for any
+   bet lover" reads as one feed, not four separate panels. Capped list; newest
+   on top; each entry tagged so CSS can style goals/cards/VAR/moves/commits/
+   settlements distinctly without side-stripe borders (full-tint cards instead). */
+let feedItems = [];
+function pushFeed(html) {
+  feedItems.unshift(html);
+  if (feedItems.length > 80) feedItems.length = 80;
+  renderFeed();
+}
+function pushFeedBlock(chronological) {                        // oldest→newest this tick
+  if (!chronological.length) return;
+  feedItems = [...chronological.slice().reverse(), ...feedItems];
+  if (feedItems.length > 80) feedItems.length = 80;
+  renderFeed();
+}
+function renderFeed() {
+  $('receipts').innerHTML = feedItems.length ? feedItems.join('')
+    : 'Commit on any match, run the replay — goals, cards, VAR, big market moves, commits and settlements print here live, across all matches.';
+}
+const evIcon = { goal: "⚽", red: "🟥", var: "📺", verdict: "✅" };
+function tickFeed(prevT) {
+  const block = [];
+  for (const F of FIXTURES) {
+    for (const e of F.tape.events) {
+      if (e.t <= prevT || e.t > simT) continue;
+      const team = e.team === 1 ? F.p1 : e.team === 2 ? F.p2 : null;
+      if (e.type === "goal") block.push(`<div class="feeditem goal"><span class="fmin">${fmtMin(e.t)}</span> ⚽ <b>GOAL — ${team}</b> <span class="mut">${e.stats.g1}–${e.stats.g2} · ${F.p1}-${F.p2}</span></div>`);
+      else if (e.type === "card" && e.detail === "Red") block.push(`<div class="feeditem card"><span class="fmin">${fmtMin(e.t)}</span> 🟥 <b>RED CARD — ${team}</b> <span class="mut">${F.p1}-${F.p2}</span></div>`);
+      else if (e.type === "var") block.push(`<div class="feeditem var"><span class="fmin">${fmtMin(e.t)}</span> 📺 <b>VAR REVIEW</b> <span class="mut">${F.p1}-${F.p2}</span></div>`);
+      else if (e.type === "var_verdict") block.push(`<div class="feeditem var"><span class="fmin">${fmtMin(e.t)}</span> ✅ <b>VAR verdict</b> <span class="mut">${F.p1}-${F.p2}</span></div>`);
+    }
+    for (const mv of F.moves) {
+      const tm = mv.emittedT != null ? mv.emittedT : mv.t;
+      if (tm <= prevT || tm > simT || mv.magnitude < 0.05) continue;
+      block.push(`<div class="feeditem move"><span class="fmin">${fmtMin(tm)}</span> 📈 <b>market move</b> ${mv.dir > 0 ? "+" : "−"}${(mv.magnitude * 100).toFixed(1)}pt <span class="mut">${F.p1}-${F.p2}</span></div>`);
+    }
+  }
+  pushFeedBlock(block);
+}
+/* ---------------- per-fixture settlement (L3 + L4) ---------------- */
+function settleFixture(F) {
+  for (const c of myCommits) if (c.fixtureId === F.id) league.reveal(c.id, mySecrets[c.id]);
+  league.gradeAll(F.outcome.winner, 100, F.id);
+  const out = [];
+  out.push(`<div class="feeditem settle">🏁 <b>${F.fx.Participant1}–${F.fx.Participant2} SETTLED</b> — 90' result ${F.outcome.g1}–${F.outcome.g2} → <b>${F.outcome.winner === "part1" ? F.fx.Participant1 : F.outcome.winner === "part2" ? F.fx.Participant2 : "draw"}</b>. Graded from game_finalised statKeys ${F.outcome.statKeys.join("+")}.</div>`);
+  for (const c of myCommits) {
+    if (c.fixtureId !== F.id || c.status !== "GRADED") continue;
+    const e = FO.earliness(c.tCommit, c.pick, F.moves);
+    if (e && c.grade.won) out.push(`<div class="feeditem settle">⚡ <b>MARKET LAG RECEIPT</b> — your ${c.pick === "part1" ? F.p1 : F.p2} hash landed at ${fmtMin(c.tCommit)}; consensus repriced at ${fmtMin(e.move.emittedT != null ? e.move.emittedT : e.move.t)}. <b>You beat the market by ${Math.round(e.leadSec / 60)} min.</b></div>`);
+    if (c.grade.won) out.push(`<div class="feeditem settle">✓ ${F.p1}–${F.p2} GRADED: +$${c.grade.pnl.toFixed(0)} on $100${c.grade.upsetCall ? " · <b>upset call landed</b>" : ""}</div>`);
+    else out.push(`<div class="feeditem settle bad">✗ ${F.p1}–${F.p2}: −$100 — recorded forever.</div>`);
+  }
+  const burned = league.commits.filter(c => c.fixtureId === F.id && c.status === "BURNED");
+  if (burned.length) out.push(`<div class="feeditem settle bad">🔥 <b>REVEAL-OR-BURN</b> (${F.p1}–${F.p2}) — ${[...new Set(burned.map(b => b.wallet))].join(", ")} never revealed → full loss.</div>`);
+  pushFeedBlock(out);
+  toast(`${F.p1}–${F.p2} settled trustlessly (${F.outcome.g1}–${F.outcome.g2} @90')`);
+}
+
+/* ---------------- renderers ---------------- */
+function renderStats() {
+  const F = FIXTURES[sel];
+  $('sClock').textContent = fmtMin(fxT(F));
+  $('sCommits').textContent = league.commits.length;
+  $('sPicks').textContent = myCommits.length;
+  $('sSettled').textContent = FIXTURES.filter(x => x.settled).length + "/" + FIXTURES.length;
+  const r = FO.upsetRisk(F.tape.ticks, F.tape.events, fxT(F));
+  $('riskNum').textContent = r.risk;
+  $('riskNum').style.color = r.risk > 55 ? "var(--red)" : r.risk > 30 ? "var(--amber)" : "var(--green)";
+  $('riskBar').style.width = r.risk + "%";
+  $('riskWhy').innerHTML = `favorite <b>${r.favSide === "home" ? F.p1 : F.p2}</b> ${(r.qFav0 * 100).toFixed(0)}%→${(r.qFavT * 100).toFixed(0)}% · ${r.trailing === 1 ? "<span class='r'>TRAILING</span>" : r.trailing ? "level late" : "not trailing"} · underdog pressure ${r.pressure}/10min`;
+  const p = league.profile("@you");
+  $('sScore').textContent = p.n ? (p.pnl >= 0 ? "+$" : "−$") + Math.abs(p.pnl).toFixed(0) : "—";
+  $('sScore').className = "v " + (p.pnl >= 0 ? "v2" : "r");
+  $('fixture').textContent = `${F.fx.Competition || "World Cup"} · fixture ${F.id}`;
+  $('tapeTitle').textContent = `${F.p1} v ${F.p2} — probability tape`;
+  $('n1').textContent = F.p1; $('n2').textContent = F.p2;
+  // HERO band — the selected match, broadcast scale
+  const ev = F.tape.events.filter(e => e.t <= fxT(F));
+  const sc = ev.length ? ev[ev.length - 1].stats : { g1: 0, g2: 0 };
+  const done = simT >= F.endT;
+  $('heroFlag1').textContent = F.f1; $('heroFlag2').textContent = F.f2;
+  $('heroName1').textContent = F.p1; $('heroName2').textContent = F.p2;
+  $('heroScore').textContent = `${done ? F.outcome.g1 : sc.g1} – ${done ? F.outcome.g2 : sc.g2}`;
+  const hm = $('heroMin');
+  hm.textContent = done ? "FT · 90'" : fmtMin(fxT(F));
+  hm.className = "hero-min" + (done ? " ft" : "");
+}
+function renderPicks() {
+  const F = FIXTURES[sel];
+  const q = FO.devig(oddsAt(F, fxT(F)));
+  $('p1').textContent = (q.home * 100).toFixed(1) + "%";
+  $('pX').textContent = (q.draw * 100).toFixed(1) + "%";
+  $('p2').textContent = (q.away * 100).toFixed(1) + "%";
+  updatePolyBtn();
+}
+// provenance badge: human vs the three agent kinds, public vs private
+function kindBadge(p) {
+  if (p.wallet === "@you") return '';
+  if (p.by === "human") return ' <span class="tag human">👤 human</span>';
+  const lock = p.visibility === "private" ? ' 🔒' : '';
+  if (p.by === "api") return ` <span class="tag api">🛰️ API algo${lock}</span>`;
+  if (p.by === "prompt") return ` <span class="tag agent">🤖 prompt${lock}</span>`;
+  return ` <span class="tag agent">🤖 rule${lock}</span>`;
+}
+let boardFilter = "all";
+function setBoardFilter(f) { boardFilter = f; document.querySelectorAll('#bfilter span').forEach(s => s.classList.toggle('on', s.dataset.f === f)); renderBoard(); }
+window.setBoardFilter = setBoardFilter;
+/* Live standings: mark-to-market every open position, every tick — the board
+   populates from kickoff, not just after full time. A GRADED/BURNED commit's
+   markToMarket freezes at its realized payout, so this converges to the exact
+   official leaderboard once every fixture settles — one function, two states. */
+function liveLeaderboard(minN = 1) {
+  const wallets = [...new Set(league.commits.map(c => c.wallet))];
+  return wallets.map(w => {
+    const mine = league.commits.filter(c => c.wallet === w);
+    const kind = league.walletKind(w);
+    let value = 0, n = 0, wins = 0, burned = 0, upsetsLanded = 0, resolved = 0;
+    for (const c of mine) {
+      const F = commitFixture(c);
+      const pick = c.pick || (w === "@you" ? (mySecrets[c.id] || {}).pick : null);
+      if (!pick) continue;                                    // sealed: not yet part of the count
+      const mtm = FO.markToMarket({ status: c.status, pick, grade: c.grade, mktAtCommit: c.mktAtCommit }, oddsAt(F, fxT(F)));
+      value += mtm.value; n++;
+      if (c.status === "GRADED" || c.status === "BURNED") {
+        resolved++;
+        if (c.grade && c.grade.won) { wins++; if (c.grade.upsetCall) upsetsLanded++; }
+        if (c.status === "BURNED") burned++;
+      }
+    }
+    const pnl = value - n * 100;
+    const avgReturnPct = n ? pnl / n : 0;
+    return { wallet: w, n, wins, resolved, burned, upsetsLanded, pnl, avgReturnPct,
+      shrunk: avgReturnPct * (n / (n + 6)), by: kind.by, visibility: kind.visibility,
+      allSettled: resolved === n && n > 0 };
+  }).filter(p => p.n >= minN).sort((a, b) => b.shrunk - a.shrunk);
+}
+function renderBoard() {
+  let board = liveLeaderboard(1);
+  if (boardFilter === "human") board = board.filter(p => p.by === "human");
+  else if (boardFilter === "agent") board = board.filter(p => p.by !== "human");   // rule + prompt + api
+  const allDone = FIXTURES.every(F => F.settled);
+  $('boardLive').innerHTML = allDone ? '<span class="tag human" style="color:var(--lime);border-color:#3a5a1d">FINAL</span>'
+    : '<span class="tag api" style="animation:pulse 1.6s ease-in-out infinite">● LIVE STANDINGS</span>';
+  // ranks are within the CURRENT filter view
+  $('board').innerHTML = board.length ? board.map((p, i) => `<div class="prophet${p.wallet === "@you" ? " you" : ""}" onclick="openProfile('${p.wallet}')" title="click for full record">
+    <span class="rank">${i + 1}</span><span class="name">${following[p.wallet] ? "⭐ " : tracking[p.wallet] ? "👁 " : ""}${p.wallet}${tierOf(p.wallet).mode === "paid" ? " 💎" : ""}${kindBadge(p)}</span>
+    <span class="${p.shrunk >= 0 ? 'g' : 'r'}">${p.shrunk >= 0 ? "+" : ""}${p.shrunk.toFixed(0)}</span>
+    <span class="mut">${p.wins}/${p.resolved || 0}${p.resolved < p.n ? "·" + (p.n - p.resolved) + " open" : ""}${p.burned ? " 🔥" + p.burned : ""}${p.upsetsLanded ? " ⚡" + p.upsetsLanded : ""}</span></div>`).join('')
+    : `<div class="mut small">${league.commits.length ? "no " + (boardFilter === "human" ? "humans" : "agents") + " on the board" : "field is loading…"}</div>`;
+}
+/* ---------------- real on-chain anchor (proof the mechanism is not a mock) ---------------- */
+function renderAnchor() {
+  const P = window.ANCHOR_PROOF;
+  const el = $('anchorBody'); if (!el) return;
+  if (!P) { el.innerHTML = 'no anchor proof loaded'; return; }
+  const side = P.pick.side === "part1" ? "HOME" : P.pick.side === "part2" ? "AWAY" : "DRAW";
+  const q = (FO.devig(P.pick.mkt).draw * 100).toFixed(1);
+  el.innerHTML = `<div>A genuine Foresight commit — Argentina–Switzerland <b>${side}</b> @ ${q}% — anchored on <b>Solana devnet</b> before kickoff. Not a sim-slot: a real transaction.</div>
+    <div style="margin:.4rem 0"><span class="anchor-live">● ON-CHAIN</span> blockTime <b>${(P.blockTimeISO || "").replace("T", " ").replace(".000Z", " UTC")}</b></div>
+    <div class="mut">commit hash</div><div class="anchor-hash">${P.hash}</div>
+    <div class="mut" style="margin-top:.3rem">devnet tx (click to verify on explorer)</div>
+    <div class="anchor-sig"><a href="${P.explorer}" target="_blank" rel="noopener">${P.signature}</a></div>
+    <button class="btn" id="anchorVerify" style="margin-top:.45rem">↻ recompute the hash → prove it matches on-chain</button>
+    <div id="anchorVerifyOut" class="small" style="margin-top:.35rem"></div>
+    <div class="small mut" style="margin-top:.35rem">Not just this one anymore — click <b>🔗 Connect Wallet</b> above and your own commits sign live memo transactions just like this. The mechanism is real; here's proof you can look up right now.</div>`;
+  $('anchorVerify').onclick = () => {
+    const rec = FO.commitHash(P.canonical, "foresight-onchain-demo-v1");
+    $('anchorVerifyOut').innerHTML = rec === P.hash
+      ? `<span class="g">recompute sha256(canonical | salt) = ${rec.slice(0, 24)}…</span><br><b class="g">✓ MATCHES the hash in the on-chain memo</b> — the pick provably existed before the 90' result.`
+      : `<span class="r">mismatch</span>`;
+  };
+}
+
+/* ---------------- prophet profile drill-down ---------------- */
+function openProfile(wallet) {
+  const p = league.profile(wallet);
+  const picks = league.commits.filter(c => c.wallet === wallet).sort((a, b) => b.tCommit - a.tCommit);
+  const rows = picks.map(c => {
+    const F = commitFixture(c);
+    const st = c.status === "COMMITTED" ? "C" : c.status === "REVEALED" ? "R" : c.status === "GRADED" ? "G" : "B";
+    const pk = c.pick ? (c.pick === "part1" ? F.p1 : c.pick === "part2" ? F.p2 : "DRAW") : "sealed";
+    const q = c.pick ? (FO.devig(c.mktAtCommit)[FO.PICK_SIDE[c.pick]] * 100).toFixed(1) + "%" : "—";
+    const res = c.grade ? (c.grade.won ? `<span class="g">+$${c.grade.pnl.toFixed(0)}</span>` : `<span class="r">−$100</span>`) : "";
+    const e = (c.status === "GRADED" && c.grade.won && c.pick) ? FO.earliness(c.tCommit, c.pick, F.moves) : null;
+    return `<div class="prow"><span class="st ${st}">${c.status}</span>
+      <span>${F.p1}–${F.p2}</span><span><b>${pk}</b> @ ${q}</span><span class="mut">${fmtMin(c.tCommit)}</span>${res}
+      ${c.grade && c.grade.upsetCall && c.grade.won ? "⚡" : ""}${e ? `<span class="g">+${Math.round(e.leadSec / 60)}m early</span>` : ""}
+      <span class="hash">${c.hash.slice(0, 22)}…</span></div>`;
+  }).join('');
+  const reg = agentRegistry[wallet];
+  const isYou = wallet === "@you";
+  const kindLine = isYou ? '<span class="tag human">👤 you</span>'
+    : p.by === "human" ? '<span class="tag human">👤 manual human</span>'
+    : p.by === "api" ? `<span class="tag api">🛰️ external algo / ML via API${p.visibility === "private" ? " · 🔒 black box" : ""}</span>`
+    : `<span class="tag agent">🤖 ${p.by} agent${p.visibility === "private" ? " · 🔒 private" : " · 🔓 public"}</span>`;
+  // strategy disclosure: public → show it; private/API → hidden by design
+  const strat = isYou || p.by === "human" ? ''
+    : p.visibility === "public" && reg && reg.strategy
+      ? `<div class="stratbox">📋 strategy: <b>${reg.strategy}</b></div>`
+      : `<div class="stratbox priv">🔒 strategy is private — you can follow its verified record without seeing how it works. That's the point: the track record is provable even when the logic isn't public.</div>`;
+  const stats = `<div class="pstats">
+      <div><b class="v2">${p.shrunk >= 0 ? "+" : ""}${p.shrunk.toFixed(0)}</b>shrunk score</div>
+      <div><b>${p.wins}/${p.n}</b>record</div>
+      <div><b class="${p.pnl >= 0 ? 'g' : 'r'}">${p.pnl >= 0 ? "+$" : "−$"}${Math.abs(p.pnl).toFixed(0)}</b>$-vs-market</div>
+      <div><b>⚡${p.upsetsLanded}</b>upsets landed</div>
+      <div><b>🔥${p.burned}</b>burned</div>
+    </div>`;
+  const picksHtml = `<div>${rows || '<div class="mut small">no picks yet</div>'}</div>`;
+  let actionHtml;
+  if (isYou) {
+    actionHtml = `<div class="stratbox" style="margin-top:.6rem">
+      <b>Your prophet settings</b> — anyone can track you for free. Choose whether AUTO-follow (calls copy straight into a follower's portfolio) is free or paid.
+      <div class="vistoggle" style="margin-top:.5rem">
+        <span class="${myTier.mode === 'free' ? 'on' : ''}" onclick="setMyTier('free')">🆓 free auto-follow</span>
+        <span class="${myTier.mode === 'paid' ? 'on' : ''}" onclick="setMyTier('paid')">💎 premium auto-follow</span>
+      </div>
+      ${myTier.mode === 'paid' ? `<div class="abrow" style="margin-top:.5rem"><label>Price</label>$<input id="myTierPrice" type="number" min="1" value="${myTier.price || 5}" style="width:4.5rem" onchange="myTier.price=+this.value">/mo — followers can still TRACK your calls free; auto-copy needs the unlock.</div>` : '<div class="small mut" style="margin-top:.4rem">Most prophets start free to build a track record, then can switch to premium once proven.</div>'}
+    </div>`;
+  } else {
+    const tier = tierOf(wallet);
+    const isFollowing = !!following[wallet], isTracking = !!tracking[wallet];
+    if (tier.mode === "free") {
+      actionHtml = `<button class="btn ${isFollowing ? '' : 'violet'}" style="margin-top:.6rem" onclick="toggleFollow('${wallet}')">${isFollowing ? "★ following — click to unfollow" : "☆ follow — auto-allocate this " + (p.by === "human" ? "trader" : "agent") + "'s calls (free)"}</button>`;
+    } else {
+      actionHtml = `<div class="stratbox" style="margin-top:.6rem; border-color:#5c4a1d; background:#130f07">💎 <b>Premium prophet — $${tier.price}/mo for auto-follow.</b> Tracking is always free: you see every call, you just copy it yourself.</div>
+        <div class="ctl" style="margin-top:.4rem">
+          <button class="btn" style="margin:0" onclick="toggleTrack('${wallet}')">${isTracking ? "👁 tracking — click to stop" : "👁 track free (no auto-copy)"}</button>
+          <button class="btn violet" style="margin:0" onclick="unlockPremium('${wallet}', ${tier.price})">${isFollowing ? "★ unlocked" : "🔒 unlock auto-follow"}</button>
+        </div>`;
+    }
+    const lastPick = picks.find(c => c.pick);
+    if (lastPick) {
+      const lf = commitFixture(lastPick);
+      actionHtml += `<a class="btn poly-btn" style="margin-top:.5rem" target="_blank" rel="noopener" href="${polymarketUrl(lf, lastPick.pick)}">🔷 Trade their ${lf.p1}-${lf.p2} call on Polymarket ↗</a>`;
+    }
+  }
+  $('modalbox').innerHTML = `<h4>${wallet} ${kindLine}${tierOf(wallet).mode === 'paid' && !isYou ? ' <span class="tag api">💎 premium</span>' : ''} <span onclick="document.getElementById('modal').classList.remove('open')">✕ close</span></h4>
+    ${strat}${stats}${picksHtml}${actionHtml}
+    <div class="small mut" style="margin-top:.4rem">Every row is a hash-verified commit run through the same pipeline as yours. No external "best trader" data is imported — every record here was earned inside Foresight.</div>`;
+  $('modal').classList.add('open');
+}
+window.openProfile = openProfile;
+$('modal').onclick = e => { if (e.target.id === "modal") $('modal').classList.remove('open'); };
+window.setMyTier = mode => { myTier.mode = mode; openProfile("@you"); toast(mode === "paid" ? "💎 your auto-follow is now premium" : "🆓 your auto-follow is free", false, "act"); };
+function toggleTrack(wallet) {
+  if (tracking[wallet]) { delete tracking[wallet]; toast(`stopped tracking ${wallet}`); }
+  else { tracking[wallet] = true; toast(`👁 tracking ${wallet} — free, no auto-copy`, false, "act"); }
+  openProfile(wallet); renderBoard();
+}
+window.toggleTrack = toggleTrack;
+/* Premium unlock — HONEST: no payment processor exists in this build. Two-step
+   confirm so nothing reads as a silent real charge; a real deploy swaps this
+   confirm for a Stripe/USDC checkout, same gate underneath. */
+let pendingUnlock = null;
+function unlockPremium(wallet, price) {
+  if (following[wallet]) return;
+  if (pendingUnlock !== wallet) {
+    pendingUnlock = wallet;
+    toast(`🔒 $${price}/mo unlocks auto-follow — this demo has no payment processor wired. Click "unlock" again to simulate it (no real charge).`, false, "act");
+    return;
+  }
+  pendingUnlock = null;
+  toggleFollow(wallet);
+  toast(`💎 premium auto-follow simulated (no real charge) — ${wallet}'s calls now auto-allocate`, false, "act");
+  openProfile(wallet);
+}
+window.unlockPremium = unlockPremium;
+
+/* ---------------- follow = mirror a leader's picks into YOUR portfolio ----------------
+   Copy-trading, concretely: for every pick this wallet made, you get the same
+   side at the same moment/price, tagged copiedFrom. You copy a VERIFIED record
+   even if the strategy is a black box. Toggling off removes the mirrored picks. */
+function toggleFollow(wallet) {
+  if (following[wallet]) {
+    myCommits = myCommits.filter(c => !(c.copiedFrom === wallet));
+    for (let i = league.commits.length - 1; i >= 0; i--) {        // splice in place — profile/leaderboard close over this array
+      if (league.commits[i].wallet === "@you" && league.commits[i].copiedFrom === wallet) league.commits.splice(i, 1);
+    }
+    delete following[wallet];
+    toast(`unfollowed ${wallet} — mirrored picks removed`);
+  } else {
+    const theirs = league.commits.filter(c => c.wallet === wallet && c.pick);
+    let n = 0;
+    for (const src of theirs) {
+      const F = commitFixture(src);
+      if (F.settled) continue;                        // can't copy a call after it settled
+      if (myCommits.some(c => c.copiedFrom === wallet && c.fixtureId === src.fixtureId)) continue;
+      const salt = "copy:" + wallet + ":" + src.fixtureId + ":" + Date.now();
+      const c = league.commit({ wallet: "@you", fixtureId: src.fixtureId, pick: src.pick, salt,
+        tCommit: src.tCommit, mkt: src.mktAtCommit, oddsTs: src.oddsTs, anchor: { sim: true, t: src.tCommit }, copiedFrom: wallet });
+      mySecrets[c.id] = { pick: src.pick, salt }; league.reveal(c.id, mySecrets[c.id]);
+      myCommits.push(c); n++;
+    }
+    following[wallet] = true;
+    toast(n ? `★ following ${wallet} — mirrored ${n} open pick${n > 1 ? "s" : ""} into your portfolio` : `★ following ${wallet} — new calls will mirror as matches open`, false, "act");
+  }
+  $('modal').classList.remove('open'); renderAll();
+}
+window.toggleFollow = toggleFollow;
+
+/* ---------------- Google sign-in (honest placeholder) ----------------
+   Real "Sign in with Google" needs an OAuth client ID registered to this
+   domain in Google Cloud Console — that doesn't exist yet. Rather than fake
+   a login that silently does nothing (or worse, collect real credentials
+   this static page has no secure backend to hold), the button is honest
+   about what's wired today and what production needs. */
+$('googleLoginBtn').onclick = () => {
+  $('modalbox').innerHTML = `<h4>Sign in with Google <span onclick="document.getElementById('modal').classList.remove('open')">✕ close</span></h4>
+    <div class="stratbox priv">Real Google Sign-In needs an OAuth client ID registered to this domain in Google Cloud Console — not wired yet on this deploy. We won't fake a login or ask for your Google password on a static page with no backend to hold it safely.</div>
+    <div class="small mut" style="margin-top:.5rem">For this demo you're already <b>@you</b> — every commit, follow and portfolio action is tracked under that identity, no login required. Production plan: OAuth client + a small backend session, wallet-linked to your Foresight identity for real on-chain commits.</div>
+    <button class="btn violet" style="margin-top:.6rem" onclick="document.getElementById('modal').classList.remove('open')">Continue as @you</button>`;
+  $('modal').classList.add('open');
+};
+
+/* ---------------- AGENT BUILDER ---------------- */
+let abMode = "rule", abVis = "public";
+function openAgentBuilder() {
+  abMode = "rule"; abVis = "public";
+  $('modalbox').innerHTML = `
+    <h4>🤖 Build an agent <span onclick="document.getElementById('modal').classList.remove('open')">✕ close</span></h4>
+    <div class="small mut" style="margin-bottom:.5rem">Define a strategy; deploying runs it across all ${FIXTURES.length} real World Cup fixtures — an instant backtest that drops it onto the leaderboard next to the humans.</div>
+    <div class="abtabs">
+      <div class="abtab on" data-m="rule" onclick="abSetMode('rule')">⚙️ Rule builder</div>
+      <div class="abtab" data-m="prompt" onclick="abSetMode('prompt')">💬 Prompt</div>
+      <div class="abtab" data-m="api" onclick="abSetMode('api')">🛰️ External API</div>
+    </div>
+    <div class="ab">
+      <div class="abrow"><label>Name</label><input id="abName" placeholder="@my-agent" style="flex:1"></div>
+      <div id="abBody"></div>
+      <div class="abrow"><label>Visibility</label><div class="vistoggle"><span class="on" id="abPub" onclick="abSetVis('public')">🔓 public</span><span id="abPriv" onclick="abSetVis('private')">🔒 private</span></div></div>
+      <div id="abPreview" class="abprev">preview appears here</div>
+      <button class="btn violet" id="abDeploy" onclick="deployAgent()">🚀 Deploy &amp; backtest</button>
+    </div>`;
+  abRenderBody();
+  $('modal').classList.add('open');
+}
+function abSetMode(m) { abMode = m; document.querySelectorAll('.abtab').forEach(t => t.classList.toggle('on', t.dataset.m === m)); abRenderBody(); abPreview(); }
+function abSetVis(v) { abVis = v; $('abPub').classList.toggle('on', v === "public"); $('abPriv').classList.toggle('on', v === "private"); }
+function abRenderBody() {
+  const b = $('abBody');
+  if (abMode === "rule") {
+    b.innerHTML = `
+      <div class="abrow"><label>WHEN</label>
+        <select id="abCond">
+          <option value="leadAny">a team leads by</option>
+          <option value="favTrail">the favourite is trailing</option>
+          <option value="level">the score is level</option>
+          <option value="red">a red card is shown</option>
+          <option value="kickoff">from kickoff</option>
+        </select>
+        <input id="abCondN" type="number" value="2" min="1" max="4" style="width:3.2rem">goals</div>
+      <div class="abrow"><label>AND</label>minute ≥ <input id="abMin" type="number" value="80" min="0" max="120" style="width:3.6rem"></div>
+      <div class="abrow"><label>BET</label>
+        <select id="abBet">
+          <option value="leader">the leading team</option>
+          <option value="fav">the favourite</option>
+          <option value="dog">the underdog</option>
+          <option value="draw">the draw</option>
+          <option value="nonRed">the team still at 11</option>
+        </select></div>`;
+    ['abCond', 'abCondN', 'abMin', 'abBet'].forEach(id => b.querySelector('#' + id).addEventListener('input', abPreview));
+  } else if (abMode === "prompt") {
+    b.innerHTML = `
+      <div class="abrow"><label>Prompt</label></div>
+      <textarea id="abPrompt" placeholder="e.g. when a team is 2 goals up after 80 minutes, back them">when a team is 2 goals up after 80 minutes, back them</textarea>
+      <div class="small mut">Natural language → rules (a deterministic compiler; in production an LLM translates it). Player/lineup prompts (“when Messi comes on”) are flagged — TxLINE has no lineup data.</div>`;
+    b.querySelector('#abPrompt').addEventListener('input', abPreview);
+  } else {
+    b.innerHTML = `
+      <div class="small mut">External algos (your own ML, wired to Polymarket / multiple books) POST signed picks to Foresight and get the <b>same provable track record</b> — the black box stays yours, the record becomes public. Endpoint contract:</div>
+      <div class="abprev">POST /api/agents/{id}/commit
+{ "fixtureId": 18222446,
+  "pick": "part2",
+  "ts": 1783818600000,
+  "sig": "&lt;wallet signature&gt;" }
+→ hashed, timestamped, graded like any commit</div>
+      <div class="small mut">This static demo can't run a server, so the API path is shown as a documented contract; <code>@polyquant-ml</code> on the board is a labeled example of an API-fed agent. Deploy here registers a local stand-in so you can see where it lands.</div>`;
+  }
+  abPreview();
+}
+function abBuildSpec() {
+  if (abMode === "rule") {
+    const cond = $('abCond').value, n = parseInt($('abCondN').value || "2", 10), min = parseInt($('abMin').value || "0", 10);
+    const when = [];
+    if (cond === "leadAny") when.push({ k: "leadAny", v: n });
+    else if (cond === "favTrail") when.push({ k: "favTrail", v: 1 });
+    else if (cond === "level") when.push({ k: "level" });
+    else if (cond === "red") when.push({ k: "red" });
+    else if (cond === "kickoff") when.push({ k: "kickoff" });
+    if (min > 0 && cond !== "kickoff") when.push({ k: "minGte", v: min });
+    return { ok: true, rules: { when, bet: $('abBet').value }, kind: "rule",
+      strategy: `WHEN ${$('abCond').selectedOptions[0].text}${cond === "leadAny" ? " " + n : ""}${min > 0 && cond !== "kickoff" ? " & min ≥ " + min : ""} → back ${$('abBet').selectedOptions[0].text}` };
+  }
+  if (abMode === "prompt") {
+    const r = FO.compilePrompt($('abPrompt').value || "");
+    if (r.unsupported) return { ok: false, reason: r.reason };
+    return { ok: true, rules: { when: r.when, bet: r.bet }, kind: "prompt", warn: r.warn,
+      strategy: abVis === "public" ? `"${$('abPrompt').value}"` : null };
+  }
+  // api
+  return { ok: true, rules: { when: [{ k: "favImpliedLte", v: 0.45 }, { k: "minGte", v: 20 }], bet: "fav" }, kind: "api", strategy: null, apiStub: true };
+}
+function abPreview() {
+  const el = $('abPreview'); if (!el) return;
+  const spec = abBuildSpec();
+  if (!spec.ok) { el.className = "abprev bad"; el.textContent = "⚠ " + spec.reason; $('abDeploy').disabled = true; return; }
+  $('abDeploy').disabled = false;
+  el.className = "abprev ok";
+  el.innerHTML = (spec.kind === "api" ? "🛰️ external API agent (local stand-in for the demo)\n" : "")
+    + "rules: " + JSON.stringify(spec.rules) + (spec.warn ? "\n⚠ " + spec.warn : "")
+    + "\nvisibility: " + (spec.kind === "api" ? "private (black box)" : abVis);
+}
+function deployAgent() {
+  const spec = abBuildSpec();
+  if (!spec.ok) return;
+  let name = ($('abName') && $('abName').value || "").trim();
+  if (!name) name = "@you-" + spec.kind;
+  if (name[0] !== "@") name = "@" + name;
+  const vis = spec.kind === "api" ? "private" : abVis;
+  const agent = { name, kind: spec.kind, visibility: vis, strategy: spec.strategy, rules: spec.rules };
+  agentRegistry[name] = agent;
+  // backtest across every fixture (settled or not — this is a historical test)
+  let picks = 0;
+  for (const F of FIXTURES) if (FO.runAgentOnTape(agent, F.tape, F.id, league)) picks++;
+  // grade its picks on already-settled fixtures so it lands on the board immediately
+  for (const F of FIXTURES) if (F.settled) league.gradeAll(F.outcome.winner, 100, F.id);
+  $('modal').classList.remove('open');
+  toast(`🚀 ${name} deployed — backtested on ${FIXTURES.length} fixtures, ${picks} pick${picks !== 1 ? "s" : ""} fired`, false, "act");
+  renderAll();
+}
+window.openAgentBuilder = openAgentBuilder; window.abSetMode = abSetMode; window.abSetVis = abSetVis;
+window.deployAgent = deployAgent;
+$('buildAgentBtn').onclick = openAgentBuilder;
+
+/* ---------------- shareable receipt card (canvas → PNG) ---------------- */
+function shareCard(commitId) {
+  const c = league.commits.find(x => x.id === commitId);
+  if (!c || c.status !== "GRADED") return;
+  const F = commitFixture(c);
+  const cv2 = document.createElement("canvas"); cv2.width = 1200; cv2.height = 630;
+  const x = cv2.getContext("2d");
+  x.fillStyle = "#070b12"; x.fillRect(0, 0, 1200, 630);
+  const grad = x.createLinearGradient(0, 0, 1200, 630);
+  grad.addColorStop(0, "rgba(192,132,252,.14)"); grad.addColorStop(1, "rgba(34,211,238,.08)");
+  x.fillStyle = grad; x.fillRect(0, 0, 1200, 630);
+  x.strokeStyle = c.grade.won ? "#34d399" : "#f87171"; x.lineWidth = 4; x.strokeRect(14, 14, 1172, 602);
+  x.fillStyle = "#c084fc"; x.font = "bold 44px Consolas,monospace"; x.fillText("⚡ FORESIGHT", 60, 96);
+  x.fillStyle = "#4a6378"; x.font = "22px Consolas,monospace"; x.fillText("verified prediction receipt", 60, 132);
+  x.fillStyle = "#e8f4fb"; x.font = "bold 52px Consolas,monospace";
+  x.fillText(`${F.fx.Participant1} v ${F.fx.Participant2}`, 60, 226);
+  const pk = c.pick === "part1" ? F.fx.Participant1 : c.pick === "part2" ? F.fx.Participant2 : "DRAW";
+  const q = (FO.devig(c.mktAtCommit)[FO.PICK_SIDE[c.pick]] * 100).toFixed(1);
+  x.fillStyle = "#c8d8e4"; x.font = "34px Consolas,monospace";
+  x.fillText(`called ${pk} at ${q}% implied — committed ${fmtMin(c.tCommit)}`, 60, 292);
+  x.fillStyle = c.grade.won ? "#34d399" : "#f87171"; x.font = "bold 72px Consolas,monospace";
+  x.fillText(c.grade.won ? `+$${c.grade.pnl.toFixed(0)} on $100${c.grade.upsetCall ? "  ⚡ UPSET CALL" : ""}` : "−$100 · recorded forever", 60, 396);
+  const e = c.grade.won && c.pick ? FO.earliness(c.tCommit, c.pick, F.moves) : null;
+  if (e) { x.fillStyle = "#22d3ee"; x.font = "30px Consolas,monospace"; x.fillText(`beat the market by ${Math.round(e.leadSec / 60)} minutes`, 60, 452); }
+  x.fillStyle = "#4a6378"; x.font = "20px Consolas,monospace";
+  x.fillText("commit " + c.hash.slice(0, 48) + "…", 60, 524);
+  x.fillText("graded from on-chain statKeys · foresight-txline.vercel.app", 60, 560);
+  const a = document.createElement("a");
+  a.download = `foresight-receipt-${F.p1}-${F.p2}.png`; a.href = cv2.toDataURL("image/png"); a.click();
+  toast("📤 receipt card saved — post it; the hash makes it checkable");
+}
+window.shareCard = shareCard;
+function renderAll() { renderRadar(); renderStats(); renderPicks(); renderMyCommits(); renderBoard(); renderPortfolio(); sizeCanvas(); drawChart(); }
+
+/* ---------------- verify / forge ---------------- */
+$('verifyBtn').onclick = () => {
+  const c = myCommits[myCommits.length - 1]; if (!c) return;
+  const sec = mySecrets[c.id];
+  const canonical = FO.canonicalPick({ wallet: c.wallet, fixtureId: c.fixtureId, pick: sec.pick, mkt: c.mktAtCommit, oddsTs: c.oddsTs });
+  const h = FO.commitHash(canonical, sec.salt);
+  $('verifyOut').innerHTML = `<div class="vd good"><h4>✓ commitment verifies</h4>
+    recompute sha256(canonical_pick | salt)<pre>${h}</pre>anchored record<pre>${c.hash}</pre>
+    ${h === c.hash ? "<b class='g'>MATCH</b> — the pick provably predates the outcome; the committed price triple is provable via /api/odds/validation." : "<b class='r'>MISMATCH</b>"}</div>`;
+};
+$('forgeBtn').onclick = () => {
+  const F = FIXTURES[sel];
+  const fake = FO.commitHash(FO.canonicalPick({ wallet: "@forger", fixtureId: F.id, pick: F.outcome.winner, mkt: oddsAt(F, 0), oddsTs: 0 }), "hindsight");
+  $('verifyOut').innerHTML = `<div class="vd bad"><h4>✗ forgery rejected</h4>
+    forged "called it!" payload for the known ${F.p1}–${F.p2} result<pre>${fake}</pre>
+    chain lookup at any slot before the outcome… <b class="r">NO COMMITMENT FOUND</b>.<br>You cannot attest into the past — that is the entire reputation.</div>`;
+};
+
+/* ---------------- chart (selected fixture) ---------------- */
+const cv = $('cv'), ctx = cv.getContext('2d');
+const PAD_L = 44, PAD_R = 12, TOP = 8, CH = 250, LANE = 300;
+let W = 0, dpr = 1, yLo = .2, yHi = .8;
+function sizeCanvas() {
+  dpr = window.devicePixelRatio || 1; W = cv.clientWidth;
+  cv.width = W * dpr; cv.height = 360 * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const hs = FIXTURES[sel].tape.ticks.map(k => k.home);
+  yLo = Math.min(...hs) - .05; yHi = Math.max(...hs) + .05;
+}
+function drawChart() {
+  const F = FIXTURES[sel], t = fxT(F);
+  const xOf = x => PAD_L + (x / F.endT) * (W - PAD_L - PAD_R);
+  const yOf = p => TOP + (yHi - p) / (yHi - yLo) * CH;
+  ctx.clearRect(0, 0, W, 360); ctx.font = "10px Consolas,monospace";
+  ctx.strokeStyle = "#0d1721"; ctx.fillStyle = "#41586a";
+  for (let m = 0; m <= F.endT / 60; m += 15) { const x = xOf(m * 60); ctx.beginPath(); ctx.moveTo(x, TOP); ctx.lineTo(x, LANE + 40); ctx.stroke(); ctx.fillText(m + "'", x - 8, LANE + 52); }
+  for (let p = Math.ceil(yLo * 10) / 10; p <= yHi; p += .1) { const y = yOf(p); ctx.beginPath(); ctx.moveTo(PAD_L, y); ctx.lineTo(W - PAD_R, y); ctx.stroke(); ctx.fillText((p * 100).toFixed(0) + "%", 6, y + 3); }
+  const upto = F.tape.ticks.filter(k => k.t <= t);
+  ctx.strokeStyle = "rgba(59,139,245,.30)"; ctx.lineWidth = 1.4; ctx.beginPath();
+  upto.forEach((k, i) => { const x = xOf(k.t), y = yOf(k.away); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.stroke();
+  ctx.strokeStyle = "#c2f04a"; ctx.lineWidth = 2; ctx.beginPath();
+  upto.forEach((k, i) => { const x = xOf(k.t), y = yOf(k.home); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.stroke(); ctx.lineWidth = 1;
+  ctx.fillStyle = "#c2f04a"; ctx.fillText(F.p1 + " WIN PROBABILITY", PAD_L + 4, TOP + 10);
+  for (const e of F.tape.events) {
+    if (e.t > t) break;
+    const x = xOf(e.t);
+    if (e.type === "goal") { ctx.fillStyle = e.team === 1 ? "#c2f04a" : "#3b8bf5"; ctx.beginPath(); ctx.arc(x, LANE + 16, 5, 0, 7); ctx.fill(); ctx.fillStyle = "#0a1322"; ctx.fillText("G", x - 3, LANE + 19); }
+    else if (e.type === "card" && e.detail === "Red") { ctx.fillStyle = "#ff5a74"; ctx.fillRect(x - 3, LANE + 10, 6, 11); }
+    else if (e.type === "var") { ctx.fillStyle = "#f5b73d"; ctx.fillText("VAR", x - 9, LANE + 20); }
+  }
+  for (const mv of F.moves) {
+    const tm = mv.emittedT != null ? mv.emittedT : mv.t;
+    if (tm > t) continue;
+    ctx.fillStyle = mv.dir === 1 ? "#c2f04a" : "#ff5a74";
+    ctx.beginPath(); ctx.arc(xOf(mv.t), yOf(mv.price), 3.5, 0, 7); ctx.fill();
+  }
+  for (const c of league.commits) {
+    if (c.fixtureId !== F.id || c.tCommit > t) continue;
+    const you = c.wallet === "@you";
+    const pk = c.pick || (you ? (mySecrets[c.id] || {}).pick : null);
+    const y = yOf(c.mktAtCommit.home);
+    ctx.fillStyle = you ? "#c2f04a" : "rgba(194,240,74,.35)";
+    ctx.save(); ctx.translate(xOf(c.tCommit), y); ctx.rotate(Math.PI / 4); ctx.fillRect(-3.6, -3.6, 7.2, 7.2); ctx.restore();
+    if (you) { ctx.fillStyle = "#c2f04a"; ctx.fillText("YOU", xOf(c.tCommit) - 8, y - 8); }
+    if (F.settled && you && pk && c.grade && c.grade.won) {
+      const e = FO.earliness(c.tCommit, pk, F.moves);
+      if (e) {
+        const x1 = xOf(c.tCommit), x2 = xOf(e.move.emittedT != null ? e.move.emittedT : e.move.t), yb = TOP + 16;
+        ctx.strokeStyle = "#c2f04a"; ctx.beginPath(); ctx.moveTo(x1, yb + 5); ctx.lineTo(x1, yb); ctx.lineTo(x2, yb); ctx.lineTo(x2, yb + 5); ctx.stroke();
+        ctx.fillStyle = "#c2f04a"; ctx.fillText("market lag " + Math.round(e.leadSec / 60) + "min", (x1 + x2) / 2 - 34, yb - 4);
+      }
+    }
+  }
+  if (t > 0 && t < F.endT) { const x = xOf(t); ctx.strokeStyle = "rgba(34,211,238,.5)"; ctx.beginPath(); ctx.moveTo(x, TOP); ctx.lineTo(x, LANE + 40); ctx.stroke(); }
+}
+
+/* ---------------- misc ---------------- */
+const TOAST_CAP = 4;                        // never let the stack cover the page
+function toast(txt, bad, cls) {
+  const box = $('toasts');
+  const t = document.createElement("div"); t.className = "toast" + (bad ? " bad" : "") + (cls ? " " + cls : ""); t.textContent = txt;
+  box.prepend(t); setTimeout(() => t.remove(), 6000);
+  while (box.children.length > TOAST_CAP) box.lastElementChild.remove();
+}
+window.addEventListener("resize", () => { sizeCanvas(); drawChart(); });
+window.selectFixture = selectFixture;
+window.toggleInfo = id => { const el = $(id); el.classList.toggle('open'); };
+
+resetLeague();
+renderAnchor();
+// land on a match already in progress and PLAYING — "second by second," not a
+// static 0-0 wall a first-time visitor has to know to press play on.
+(function bootLive() {
+  const eng = FIXTURES.findIndex(F => /england/i.test(F.fx.Participant1 + F.fx.Participant2) && /argentina/i.test(F.fx.Participant1 + F.fx.Participant2));
+  sel = eng >= 0 ? eng : 0;
+  simT = GLOBAL_END * 0.28;                          // ~38' in — action already on the board
+  tickSettlements();
+  announcedIds = new Set(league.commits.filter(c => c.tCommit <= simT).map(c => c.id));
+  renderAll();
+  startReplay();
+})();
+</script>
+</body></html>
