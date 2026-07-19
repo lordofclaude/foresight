@@ -415,7 +415,10 @@ throws(() => F.gradePick("part1", { home: 0.5, draw: 0.3, away: 0.2 }, "part1", 
 }
 
 async function runAsyncIntegrityTests() {
-  const TxReal = require("./shared/txline-real.js");
+  // layout-aware, same convention as the real-tape section above
+  const TxReal = fs.existsSync(path.join(__dirname, "shared", "txline-real.js"))
+    ? require(path.join(__dirname, "shared", "txline-real.js"))
+    : require(path.join(__dirname, "..", "shared", "txline-real.js"));
 
   TxReal._reset();
   TxReal.configure({ fixtureId: 7, jwt: "test", apiToken: "test", fetchImpl: () => Promise.reject(new Error("offline")) });
