@@ -679,9 +679,9 @@ body.detail-open>.workspace-nav,body.detail-open>#tickerbar,body.detail-open>.de
         <p class="gate-headline">Every match signal. <em>One decisive view.</em></p>
         <p class="gate-sub" id="gateSub">Live odds, market divergence, news, key match events and the moves of top traders—unified in one World Cup command center. Make the call, then prove exactly when you made it.</p>
         <div class="gate-cta">
-          <button type="button" id="gateGoogle"><svg aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg> Continue with Google <span aria-hidden="true">→</span></button>
+          <button type="button" id="gateGoogle"><span aria-hidden="true">◇</span> Sign in to Foresight <span aria-hidden="true">→</span></button>
         </div>
-        <div class="gate-note" id="gateNote">Authentication required. Clerk secures access; Foresight never sees or stores your Google password.</div>
+        <div class="gate-note" id="gateNote">Authentication required. Clerk secures access with Google, email or Solana; Foresight never sees or stores your password.</div>
         <div class="gate-trust" aria-label="Foresight data layers">
           <span>TxLINE odds + events</span><span>Polymarket comparison</span><span>Verifiable receipts</span>
         </div>
@@ -729,8 +729,7 @@ body.detail-open>.workspace-nav,body.detail-open>#tickerbar,body.detail-open>.de
   <button type="button" class="btn wallet-btn" id="walletBtn">🔗 Connect Wallet</button>
   <span class="identity-chip" id="identityState" role="status" aria-live="polite" data-state="GUEST" data-linked="0"><span>Guest · wallet unlinked</span><button type="button" id="unlinkIdentityBtn">unlink</button></span>
   <button type="button" class="btn google-btn" id="googleLoginBtn">
-    <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" width="16" height="16"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.99.66-2.26 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0012 23z"/><path fill="#FBBC05" d="M5.84 14.09A6.6 6.6 0 015.5 12c0-.73.13-1.43.34-2.09V7.07H2.18A11 11 0 001 12c0 1.77.43 3.45 1.18 4.93z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1a11 11 0 00-9.82 6.07L5.84 9.9C6.71 7.31 9.14 5.38 12 5.38z"/></svg>
-    Sign in with Google
+    <span aria-hidden="true">◇</span> Clerk account
   </button>
   <details class="live-ctl" id="liveCtl"><summary>Live / diagnostics</summary><div class="live-panel"><div class="row"><button id="goLiveBtn" type="button">🔴 GO LIVE</button><input id="relayUrl" aria-label="Allowed TxLINE relay URL"></div><div id="liveStatus">Checking relay…</div></div></details>
 </header>
@@ -2059,11 +2058,11 @@ async function followAction(wallet, action) {
 }
 window.followAction = followAction;
 
-/* ---------------- Google sign-in (header shortcut) ----------------
+/* ---------------- Clerk account (header shortcut) ----------------
    The real sign-in lives on the landing gate. This static dashboard keeps no
    durable account-wallet record, so the header routes back to that surface. */
 $('googleLoginBtn').onclick = () => {
-  $('modalbox').innerHTML = `<h4>Sign in with Google <button type="button" class="modal-close" onclick="closeModal()">✕ close</button></h4>
+  $('modalbox').innerHTML = `<h4>Clerk account <button type="button" class="modal-close" onclick="closeModal()">✕ close</button></h4>
     <div class="stratbox">Dashboard access is Clerk-authenticated. Google, Solana and email options live on the landing gate; Foresight never asks for or stores your password.</div>
     <div class="small mut" style="margin-top:.5rem">Clerk sessions use the real immutable <code>user.id</code>. Wallet linking requires an expiring nonce signature and backend verification; without that backend, the UI stays explicitly session-only and pending.</div>
     <button class="btn violet" style="margin-top:.6rem" onclick="location.reload()">↩ Return to secure sign-in</button>`;

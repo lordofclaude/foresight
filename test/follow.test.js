@@ -105,7 +105,7 @@ let clock = 2_000_000_000_000;
   const html = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
   ok(html.includes('src="shared/follow.js"') && html.includes("LOCAL DEMO · NOT PERSISTED"), "browser loads shared semantics and discloses local unpersisted state");
   ok(!/premium auto-follow|unlock auto-follow|auto-allocate|copiedFrom|mirrored picks/i.test(html), "browser contains no legacy premium or mirrored-execution follow copy/code");
-  const uiFollowBlock = html.slice(html.indexOf("/* Follow only changes receipt-alert"), html.indexOf("/* ---------------- Google sign-in"));
+  const uiFollowBlock = html.slice(html.indexOf("/* Follow only changes receipt-alert"), html.indexOf("/* ---------------- Clerk account"));
   ok(!/league\.commit|myCommits|portfolioHistory|mySecrets/.test(uiFollowBlock), "follow UI cannot create or mutate a prediction position");
 
   console.log(`follow: ${passed}/${passed} passed`);
