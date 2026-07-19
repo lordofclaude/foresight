@@ -102,7 +102,7 @@ select{flex:1;background:#0f2233;border:1px solid #1d3a52;color:var(--txt);font:
 .calbar .ca.dn{background:#ff5a74}
 /* market-volatility chip on radar tiles */
 .volchip{margin-left:.4rem;padding:.05rem .35rem;border-radius:4px;font-size:.62rem;font-weight:700;background:#132030;border:1px solid #22334a;color:#7fb3d5}
-.volchip.hot{background:#2b1420;border-color:#5a2432;color:#ff8ba0;animation:pulse 1.6s ease-in-out infinite}
+.volchip.hot{background:#2b1420;border-color:#5a2432;color:#ff8ba0}
 /* ---- landing gate (AetherFlow particle hero, vanilla port, Foresight palette) ---- */
 #gate{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#04070d}
 #gate.hidden{display:none}
@@ -111,24 +111,24 @@ select{flex:1;background:#0f2233;border:1px solid #1d3a52;color:var(--txt);font:
 @keyframes gateUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
 .gate-inner>*{opacity:0;animation:gateUp .8s ease forwards}
 .gate-chip{display:inline-flex;gap:.45rem;align-items:center;padding:.35rem .9rem;border-radius:999px;background:rgba(194,240,74,.08);border:1px solid rgba(194,240,74,.25);backdrop-filter:blur(4px);font-size:.72rem;font-weight:700;color:#d7e6ef;animation-delay:.4s}
-.gate-title{font-size:clamp(3rem,9vw,5.5rem);font-weight:900;font-style:italic;letter-spacing:-.03em;margin:.6rem 0;background:linear-gradient(180deg,#fff 30%,#c2f04a);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation-delay:.6s}
+.gate-title{font-family:var(--fdisp);font-size:clamp(3rem,9vw,5.5rem);font-weight:800;font-style:italic;letter-spacing:.005em;text-transform:uppercase;color:#eef4ff;margin:.6rem 0;animation-delay:.6s}
 .gate-sub{color:#8fa3b5;font-size:clamp(.95rem,2vw,1.15rem);line-height:1.6;max-width:34rem;margin:0 auto 1.6rem;animation-delay:.8s}
 .gate-cta{display:flex;gap:.7rem;justify-content:center;flex-wrap:wrap;animation-delay:1s}
 .gate-cta button{cursor:pointer;border:0;border-radius:9px;padding:.85rem 1.5rem;font-weight:800;font-size:.95rem;display:inline-flex;gap:.5rem;align-items:center;transition:transform .15s,box-shadow .15s}
 .gate-cta button:hover{transform:translateY(-2px)}
-#gateGoogle{background:#fff;color:#0a1322;box-shadow:0 8px 30px rgba(255,255,255,.12)}
+#gateGoogle{background:rgba(238,244,255,.07);color:#eef4ff;border:1px solid rgba(238,244,255,.28);box-shadow:none}
 #gateEnter{background:#c2f04a;color:#0a1322;box-shadow:0 8px 30px rgba(194,240,74,.25)}
-.gate-note{margin-top:1rem;font-size:.72rem;color:#5d7285;max-width:30rem;margin-left:auto;margin-right:auto;animation-delay:1.2s}
+.gate-note{margin-top:1rem;font-size:.72rem;color:#8fa3b5;max-width:30rem;margin-left:auto;margin-right:auto;animation-delay:1.2s}
 /* ---- market monitor row (OpenBB-style terminal cells) + tape crosshair tooltip (lightweight-charts affordances) ---- */
 #monitor{display:grid;grid-template-columns:repeat(3,1fr);gap:.45rem;margin:.35rem 0 .5rem}
 .moncell{background:#0a141f;border:1px solid #16283a;border-radius:7px;padding:.4rem .55rem;display:flex;align-items:center;gap:.55rem;font-size:.7rem;min-width:0}
 .moncell .lbl{font-weight:800;color:#7c93a6;font-size:.62rem;letter-spacing:.06em}
 .moncell .q{font-weight:900;font-size:1.05rem;color:#e6f1f8;font-variant-numeric:tabular-nums}
 .moncell .d{font-weight:700;font-size:.66rem;font-variant-numeric:tabular-nums}
-.moncell .d.up{color:#c2f04a}.moncell .d.dn{color:#ff5a74}.moncell .d.fl{color:#5d7285}
+.moncell .d.up{color:#c2f04a}.moncell .d.dn{color:#ff5a74}.moncell .d.fl{color:#8299b8}
 .moncell svg{margin-left:auto;flex:0 0 auto}
 .card:has(#cv){position:relative}
-#cv{cursor:crosshair}
+#cv{cursor:crosshair;touch-action:pan-y}   /* pan-y: touch-drag the tape horizontally for the crosshair, vertical still scrolls */
 #cvTip{position:absolute;display:none;pointer-events:none;z-index:5;background:#0c1622ee;border:1px solid #2a4258;border-radius:7px;padding:.4rem .55rem;font-size:.66rem;line-height:1.5;color:#cfe;box-shadow:0 8px 24px #0009;white-space:nowrap}
 @media (max-width:640px){#monitor{grid-template-columns:1fr;gap:.3rem}}
 /* agent builder */
@@ -245,6 +245,7 @@ main{display:grid;grid-template-columns:296px 1fr 336px;gap:12px;margin:0 16px}
 .btn{width:100%;background:#12233f;border:1px solid var(--line);color:var(--blue);font-family:var(--fdisp);font-style:italic;font-weight:700;font-size:.86rem;letter-spacing:.04em;text-transform:uppercase;padding:.62rem;border-radius:9px;cursor:pointer;margin-top:.45rem;transition:background .15s,border-color .15s}
 .btn:hover{background:#173056;border-color:#2e5488}
 .btn:disabled{opacity:.4;cursor:default}
+.btn:active:not(:disabled),.pick:active,.gate-cta button:active{transform:scale(.98)}
 .btn.violet{color:#0a1322;background:var(--lime);border-color:var(--lime);font-weight:800}
 .btn.violet:hover{background:#d2fa62}
 select{flex:1;background:#12233f;border:1px solid var(--line);color:var(--txt);font-family:var(--fbody);padding:.5rem;border-radius:8px}
@@ -307,7 +308,7 @@ footer b{color:var(--txt)}
   #modalbox{width:94vw;max-height:88vh;padding:.9rem}
 }
 @media(max-width:430px){.radar{grid-template-columns:1fr}.stat{flex:1 1 calc(50% - 4px)}}
-@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}.gate-inner>*{opacity:1}}
 /* overflow hardening — never let the page scroll sideways on mobile */
 html,body{overflow-x:hidden;max-width:100vw}
 .tile,.stat,.card,.prophet,.posrow,.commitrow,.hero-team,.hero-mid,main>div{min-width:0}
@@ -338,18 +339,18 @@ footer,footer code,.card,.prow,.commitrow,.receipt,.stratbox,.vd,.abprev{overflo
 
 <!-- Landing gate: AetherFlow-style particle hero (vanilla canvas port — this is
      a zero-build static app, so the React/shadcn original is adapted, not
-     imported). Google sign-in goes live the moment a Clerk publishable key is
-     configured; until then the button explains itself honestly. Guest entry
-     always works — a judge is never blocked by auth. -->
+     imported). Sign-in is Clerk-powered (Google OAuth + Sign-in-with-Solana;
+     publishable key baked in, override via ?clerk_pk=). Guest entry always
+     works — a judge is never blocked by auth. -->
 <div id="gate">
   <canvas id="gateCv"></canvas>
   <div class="gate-inner">
     <div class="gate-chip">⚡ Real TxLINE data · Solana-anchored proofs · live SSE</div>
-    <h1 class="gate-title">FORESIGHT</h1>
+    <h1 class="gate-title">FORE<b>SIGHT</b></h1>
     <p class="gate-sub">The prediction league where reputations are provable. Commit before the market moves, get graded by the chain — build a track record nobody can fake. Including you.</p>
     <div class="gate-cta">
-      <button id="gateGoogle"><svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg> Sign in with Google</button>
       <button id="gateEnter">▶ Enter the league</button>
+      <button id="gateGoogle"><svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg> Sign in with Google</button>
     </div>
     <div class="gate-note" id="gateNote">No account needed to explore — every commit is provable either way.</div>
   </div>
@@ -422,7 +423,7 @@ footer,footer code,.card,.prow,.commitrow,.receipt,.stratbox,.vd,.abprev{overflo
   </div>
   <div class="card">
     <h3>Replay <span class="r2">all matches advance together</span></h3>
-    <button class="btn" id="run">▶ RUN REPLAY (all 3 fixtures)</button>
+    <button class="btn" id="run">▶ RUN REPLAY (all fixtures)</button>
     <div class="ctl">
       <select id="speed"><option value="2" selected>2×</option><option value="4">4×</option><option value="8">8×</option><option value="16">16×</option></select>
       <button class="btn" id="instant" style="margin:0">⚡ INSTANT</button>
@@ -433,7 +434,7 @@ footer,footer code,.card,.prow,.commitrow,.receipt,.stratbox,.vd,.abprev{overflo
 <div><!-- CENTER: tape -->
   <div class="card">
     <h3><span id="tapeTitle">consensus tape</span>
-      <span class="r2">◆ commits · ● moves · brackets = market lag</span></h3>
+      <span class="r2">hover / drag to inspect · ◆ commits · ● moves · brackets = market lag</span></h3>
     <div id="monitor"></div>
     <canvas id="cv" height="360"></canvas>
     <div id="cvTip"></div>
@@ -453,6 +454,7 @@ footer,footer code,.card,.prow,.commitrow,.receipt,.stratbox,.vd,.abprev{overflo
       <span data-f="human" onclick="setBoardFilter('human')">👤 humans</span>
       <span data-f="agent" onclick="setBoardFilter('agent')">🤖 agents</span>
     </div>
+    <div class="small mut" style="margin:-.1rem 0 .35rem">score = avg $/pick (shrunk) · 🎯 streak · ⚡ upsets · 🔥 burned · 💎 premium</div>
     <div class="feed" id="board"><div class="mut small">field is loading…</div></div>
     <div class="infotoggle" onclick="toggleInfo('leagueInfo')">ⓘ how the league works</div>
     <div class="small mut infobox" id="leagueInfo">Real agents, not opaque bots: 🤖 rule &amp; 🔓 public-prompt strategies you can inspect, 🔒 private ones, a 🛰️ external API/ML algo, and 👤 manual humans — all trading the same real World Cup tapes through the identical hash→reveal→burn→grade pipeline. Standings are LIVE mark-to-market until every match settles. Click any name for its record, or follow it to mirror its calls.</div>
@@ -479,13 +481,13 @@ footer,footer code,.card,.prow,.commitrow,.receipt,.stratbox,.vd,.abprev{overflo
 </div>
 
 <footer>
-  <div class="infotoggle" style="margin-top:0" onclick="toggleInfo('footerInfo')">ⓘ real data, the five trust layers, and what's not live yet</div>
+  <div class="infotoggle" style="margin-top:0" onclick="toggleInfo('footerInfo')">ⓘ real data, the five trust layers, and what's still simulated</div>
   <div class="infobox" id="footerInfo" style="margin-top:.5rem">
-    <b>REAL DATA:</b> three real World Cup fixtures — events + StablePrice full-match 1X2 consensus (<b>GET /api/scores/historical/{fixtureId}</b> + <b>GET /api/odds/updates/{epochDay}/{hourOfDay}/{interval}</b>, compacted by <code>shared/build-real-tapes.js</code>); move detection = the SurpriseIndex detector.
-    <b>LIVE MODE &amp; LAG (honest):</b> this deploy is replay-based — the tournament ends before judging, so replay IS the demo. Live wiring (documented seams, runs locally with credentials): <b>GET /api/odds/stream</b> + <b>GET /api/scores/stream</b> (SSE) at our subscription tier <b>service level 1 = 60-second delay</b> (real-time = level 12, mainnet); the 5-minute granularity you see in historical endpoints is storage bucketing, not live lag. Our own calibration measured the odds stream front-running the scores stream by a median 23s on majors.
-    <b>THE FIVE LAYERS:</b> L1 commit hash + external timestamp — <b>proven for real</b>: one genuine commit is anchored on Solana devnet (see the ⛓ card; tx verifiable on the explorer), every other commit in this app is a local sim-slot (not yet individually broadcast on-chain — see below) · L2 anchored price at commit (<b>/api/odds/validation</b>) · L3 reveal-or-burn · L4 grading reads the <b>game_finalised statKeys 1001+3001 / 1002+3002</b> (90' 1X2) — prod CPIs <b>validateStatV2</b>, the SettleKit binding pattern minus the vault · L5 $100-flat at de-vigged anchored prices + shrinkage; earliness receipts gated at 120s (measured ±105s feed-noise band).
+    <b>REAL DATA:</b> real World Cup fixtures — three completed replays plus France–England live-polled tonight — events + StablePrice full-match 1X2 consensus (<b>GET /api/scores/historical/{fixtureId}</b> + <b>GET /api/odds/updates/{epochDay}/{hourOfDay}/{interval}</b>, compacted by <code>shared/build-real-tapes.js</code>); move detection = the SurpriseIndex detector.
+    <b>LIVE MODE &amp; LAG (honest):</b> replay is the default (those fixtures are finished matches), and live is real: the 🔴 GO LIVE control streams TxLINE's <b>GET /api/odds/stream</b> + <b>GET /api/scores/stream</b> (SSE) through our deployed relay at <code>foresight-relay.lordofclaude.workers.dev</code> — credentials stay server-side, and France–England was streamed live through it tonight. GO LIVE auto-targets the <b>World Cup FINAL</b> (Spain–Argentina, Jul 19 19:00 UTC) from two hours before kickoff — <code>?fixture=&lt;id&gt;</code> overrides. Our subscription tier is <b>service level 1 = 60-second delay</b> (real-time = level 12, mainnet); the 5-minute granularity you see in historical endpoints is storage bucketing, not live lag. Our own calibration measured the odds stream front-running the scores stream by a median 23s on majors.
+    <b>THE FIVE LAYERS:</b> L1 commit hash + external timestamp — <b>proven for real</b>: two genuine commits are anchored on Solana devnet, including a <b>World Cup FINAL pick anchored ~19h BEFORE kickoff</b> (see the ⛓ card; txs verifiable on the explorer) — every other commit in this app is a local sim-slot (not yet individually broadcast on-chain — see below) · L2 anchored price at commit (<b>/api/odds/validation</b>) · L3 reveal-or-burn · L4 grading reads the <b>game_finalised statKeys 1001+3001 / 1002+3002</b> (90' 1X2) — prod CPIs <b>validateStatV2</b>, the SettleKit binding pattern minus the vault · L5 $100-flat at de-vigged anchored prices + shrinkage; earliness receipts gated at 120s (measured ±105s feed-noise band).
     <b>REAL WALLET MODE:</b> click <b>🔗 Connect Wallet</b> (Phantom, devnet) and every commit after that signs a genuine Solana memo transaction — your own key signs, we never see it, confirmed on-chain in ~1-2s (verified: <code>verify-wallet-flow.js</code>, 392ms real confirm). Without a wallet connected, commits stay local sim-slots — same hash logic, zero friction. The simulated agents/humans on the leaderboard stay sim-slots either way; there's no honest way to hand 8 fake identities their own real wallets.
-    <b>NOT LIVE YET:</b> Google Sign-In has no registered OAuth client; Polymarket links open their real site for you to trade — Foresight can't execute for you; premium follow unlock has no payment processor (explicitly simulated, never a silent charge).
+    <b>SIGN-IN &amp; WHAT'S STILL SIMULATED:</b> Google + Solana sign-in on the landing gate is real (Clerk-powered — Google OAuth + Sign-in-with-Solana); Polymarket links open their real site for you to trade — Foresight can't execute for you; premium follow unlock has no payment processor (explicitly simulated, never a silent charge).
     <b>NO CUSTODY, NO EXECUTION:</b> the $100 stake and the portfolio's mark-to-market value are notional — Foresight verifies WHAT you called and WHEN, never that real money moved.
     <b>HONESTY:</b> TxLINE carries no volume/liquidity data — every "spike" is a consensus implied-probability move. Sybil-resistance is economic; what is cryptographic: no record can be forged or backdated. Pure functions in <code>foresight.js</code> — <code>node test.js</code>.
   </div>
@@ -507,10 +509,17 @@ footer,footer code,.card,.prow,.commitrow,.receipt,.stratbox,.vd,.abprev{overflo
      if the file 404s, nothing is pushed (see the conditional above). -->
 <script src="real-data/18257865.tape.js"></script>
 <script>if (window.TXLINE_TAPE) TX_TAPES.push(window.TXLINE_TAPE); window.TXLINE_TAPE = null;</script>
+<!-- Spain v Argentina — the World Cup FINAL (kickoff Jul 19 19:00 UTC). Same
+     404-safe pattern: if live-poll has captured a tape by load time it's
+     preloaded here; otherwise the live module builds an empty accumulating
+     bundle from its registry meta and GO LIVE streams it into existence. -->
+<script src="real-data/18257739.tape.js"></script>
+<script>if (window.TXLINE_TAPE) TX_TAPES.push(window.TXLINE_TAPE); window.TXLINE_TAPE = null;</script>
 <script src="shared/txline-real.js"></script>
 <script src="shared/agent.js"></script>
 <script src="foresight.js"></script>
-<script src="anchored-proof.js"></script><!-- REAL Solana devnet tx: a genuine Foresight commit hash anchored on-chain -->
+<script src="anchored-proof.js"></script><!-- REAL Solana devnet tx: a genuine Foresight commit hash anchored on-chain (mechanism demo, anchored post-match) -->
+<script src="anchored-proof-final.js"></script><!-- REAL pre-kickoff anchor: World Cup FINAL pick, anchored ~19h BEFORE kickoff -->
 <script src="https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script><!-- exposes window.solanaWeb3 — for real wallet-signed commits -->
 
 
@@ -544,7 +553,7 @@ const FIXTURES = TX_TAPES.filter(Boolean).map(bundle => {
     settled: false,
   };
 }).filter(Boolean);
-const GLOBAL_END = Math.max(...FIXTURES.map(f => f.endT));
+let GLOBAL_END = Math.max(...FIXTURES.map(f => f.endT));   // let: a live fixture joining mid-session (the FINAL) can extend the horizon
 let sel = 0;
 
 /* ---------------- league (one league, all fixtures — reputations cross-match) ---------------- */
@@ -645,6 +654,10 @@ function drawSparkline() {
 /* ---------------- fixture selection + radar grid ---------------- */
 function selectFixture(i) {
   sel = i; selPick = null;
+  monLast = 0;                                 // fixture switch: monitor repaints immediately, no throttle
+  // live mode: browsing another fixture releases the auto-pin; clicking the
+  // live match back re-engages it (liveRebuild only re-pins when !liveBrowse)
+  if (liveOn) liveBrowse = FIXTURES[i].id !== LIVE_FIXTURE_ID;
   document.querySelectorAll('.pick').forEach(p => p.classList.remove('sel'));
   $('commitBtn').disabled = true; $('commitBtn').textContent = "◆ COMMIT — select a side";
   renderAll();
@@ -653,15 +666,21 @@ function selectFixture(i) {
    the Kafka): stddev of tick-to-tick implied-prob changes over the last ~10
    sim-minutes, in points. "Which market is hot right now" at a glance. */
 function marketVol(F, t) {
+  // memo: renderAll fires from many non-replay paths (commits, board, resize)
+  // where the playhead hasn't moved — skip the O(ticks) rescan in those cases.
+  // Keyed on the tape object too, so a live rebuild invalidates it.
+  if (F._volTape === F.tape && F._volT === t) return F._volV;
   const ticks = F.tape.ticks;
   let hi = ticks.length - 1;
   while (hi > 0 && ticks[hi].t > t) hi--;
-  const lo = Math.max(0, (() => { let i = hi; while (i > 0 && t - ticks[i].t <= 600) i--; return i; })());
-  if (hi - lo < 3) return 0;
+  let lo = Math.max(0, (() => { let i = hi; while (i > 0 && t - ticks[i].t <= 600) i--; return i; })());
+  if (ticks[lo].t < t - 600) lo++;             // the scan lands one tick OUTSIDE the window; step in so every delta is intra-window (a data gap can't leak an ancient jump into "last 10 min")
+  F._volTape = F.tape; F._volT = t;
+  if (hi - lo < 3) return (F._volV = 0);
   const ds = [];
   for (let i = lo + 1; i <= hi; i++) ds.push((ticks[i].home - ticks[i - 1].home) * 100);
   const mean = ds.reduce((a, b) => a + b, 0) / ds.length;
-  return Math.sqrt(ds.reduce((a, b) => a + (b - mean) * (b - mean), 0) / ds.length);
+  return (F._volV = Math.sqrt(ds.reduce((a, b) => a + (b - mean) * (b - mean), 0) / ds.length));
 }
 function renderRadar() {
   $('radar').innerHTML = FIXTURES.map((F, i) => {
@@ -678,7 +697,7 @@ function renderRadar() {
       <div class="m">${liveBadge}${F.f1} ${F.p1} ${st.g1}–${st.g2} ${F.p2} ${F.f2}</div>
       <div class="sc">${done ? '<span class="ft">FT · SETTLED ' + F.outcome.g1 + "–" + F.outcome.g2 + " (90')</span>" : F.liveMatch ? Math.floor(t / 60) + "' · real-time TxLINE, not replay" : "UPSET RISK · " + Math.floor(t / 60) + "'"}${volChip}</div>
       <div class="rk" style="color:${col}">${done ? "✓" : r.risk}</div>
-      <div class="bar"><i style="width:${r.risk}%"></i></div></div>`;
+      <div class="bar"><i style="width:${r.risk}%;background:${col}"></i></div></div>`;
   }).join('');
 }
 
@@ -833,7 +852,7 @@ function renderMyCommits() {
 
 /* ---------------- replay driver (all matches advance together) ---------------- */
 function fmtMin(t) { return Math.floor(t / 60) + "'"; }
-function stopReplay(lbl) { if (timer) { clearInterval(timer); timer = null; } $('run').disabled = false; $('run').textContent = lbl || "▶ RUN REPLAY (all 3 fixtures)"; }
+function stopReplay(lbl) { if (timer) { clearInterval(timer); timer = null; } $('run').disabled = false; $('run').textContent = lbl || "▶ RUN REPLAY (all fixtures)"; }
 function tickSettlements() {
   for (const F of FIXTURES) {
     if (F.settled) continue;
@@ -869,7 +888,7 @@ function tickActivity(prevT) {
 }
 function startReplay() {
   if (timer) return;
-  if (FIXTURES.every(F => F.settled)) resetLeague();
+  if (FIXTURES.every(F => F.settled || F.liveMatch)) resetLeague();  // a LIVE fixture can never settle — don't let it brick RE-RUN
   announcedIds = new Set(league.commits.filter(c => c.tCommit <= simT).map(c => c.id));
   $('run').disabled = true; $('run').textContent = "● LIVE (replay ×" + $('speed').value + ")";
   const speed = +$('speed').value;
@@ -881,7 +900,7 @@ function startReplay() {
   }, 50);
 }
 $('run').onclick = startReplay;
-$('instant').onclick = () => { if (timer) stopReplay(); if (FIXTURES.every(F => F.settled)) resetLeague(); simT = GLOBAL_END; tickSettlements(); renderAll(); };
+$('instant').onclick = () => { if (timer) stopReplay(); if (FIXTURES.every(F => F.settled || F.liveMatch)) resetLeague(); simT = GLOBAL_END; tickSettlements(); renderAll(); };
 
 /* ---------------- unified live feed (events + moves + commits + settlements) ----------------
    One reverse-chronological ticker across ALL matches — "the best app for any
@@ -995,6 +1014,7 @@ function renderStats() {
   $('riskNum').textContent = r.risk;
   $('riskNum').style.color = r.risk > 55 ? "var(--red)" : r.risk > 30 ? "var(--amber)" : "var(--green)";
   $('riskBar').style.width = r.risk + "%";
+  $('riskBar').style.background = $('riskNum').style.color;
   $('riskWhy').innerHTML = `favorite <b>${r.favSide === "home" ? F.p1 : F.p2}</b> ${(r.qFav0 * 100).toFixed(0)}%→${(r.qFavT * 100).toFixed(0)}% · ${r.trailing === 1 ? "<span class='r'>TRAILING</span>" : r.trailing ? "level late" : "not trailing"} · underdog pressure ${r.pressure}/10min`;
   const p = league.profile("@you");
   $('sScore').textContent = p.n ? (p.pnl >= 0 ? "+$" : "−$") + Math.abs(p.pnl).toFixed(0) : "—";
@@ -1125,33 +1145,48 @@ function renderBoard() {
   else if (boardFilter === "agent") board = board.filter(p => p.by !== "human");   // rule + prompt + api
   const allDone = FIXTURES.every(F => F.settled);
   $('boardLive').innerHTML = allDone ? '<span class="tag human" style="color:var(--lime);border-color:#3a5a1d">FINAL</span>'
-    : '<span class="tag api" style="animation:pulse 1.6s ease-in-out infinite">● LIVE STANDINGS</span>';
+    : '<span class="tag api">● LIVE STANDINGS</span>';
   // ranks are within the CURRENT filter view
   $('board').innerHTML = board.length ? board.map((p, i) => `<div class="prophet${p.wallet === "@you" ? " you" : ""}" onclick="openProfile('${p.wallet}')" title="click for full record">
     <span class="rank">${i + 1}</span><span class="name">${following[p.wallet] ? "⭐ " : tracking[p.wallet] ? "👁 " : ""}${p.wallet}${tierOf(p.wallet).mode === "paid" ? " 💎" : ""}${kindBadge(p)}</span>
     <span class="${p.shrunk >= 0 ? 'g' : 'r'}">${p.shrunk >= 0 ? "+" : ""}${p.shrunk.toFixed(0)}</span>
-    <span class="mut">${p.wins}/${p.resolved || 0}${p.resolved < p.n ? "·" + (p.n - p.resolved) + " open" : ""}${p.burned ? " 🔥" + p.burned : ""}${p.upsetsLanded ? " ⚡" + p.upsetsLanded : ""}${(s => s.cur >= 2 ? ` <span class="g" title="win streak — ${s.cur} graded wins in a row (best ${s.best})">🎯${s.cur}</span>` : "")(streakOf(p.wallet))}</span></div>`).join('')
+    <span class="mut">${p.wins}/${p.resolved || 0}${p.resolved < p.n ? "·" + (p.n - p.resolved) + " open" : ""}${p.burned ? " 🔥" + p.burned : ""}${p.upsetsLanded ? " ⚡" + p.upsetsLanded : ""}${(s => s.best >= 2 ? ` <span class="g" title="best win streak — ${s.best} graded wins in a row">🎯${s.best}</span>` : "")(streakOf(p.wallet))}</span></div>`).join('')
     : `<div class="mut small">${league.commits.length ? "no " + (boardFilter === "human" ? "humans" : "agents") + " on the board" : "field is loading…"}</div>`;
 }
-/* ---------------- real on-chain anchor (proof the mechanism is not a mock) ---------------- */
+/* ---------------- real on-chain anchors (proof the mechanism is not a mock) ----------------
+   HERO = the World Cup FINAL anchor: committed ~19h BEFORE kickoff, so the
+   outcome is genuinely unknown as you read this — the validator blockTime IS
+   the proof. Secondary = the first anchor (Argentina–Switzerland), honestly
+   labeled: it was made AFTER that match ended while wiring the pipeline, so
+   it proves the mechanism, not foresight. */
 function renderAnchor() {
-  const P = window.ANCHOR_PROOF;
+  const P = window.ANCHOR_PROOF_FINAL, D = window.ANCHOR_PROOF;
   const el = $('anchorBody'); if (!el) return;
-  if (!P) { el.innerHTML = 'no anchor proof loaded'; return; }
-  const side = P.pick.side === "part1" ? "HOME" : P.pick.side === "part2" ? "AWAY" : "DRAW";
-  const q = (FO.devig(P.pick.mkt).draw * 100).toFixed(1);
-  el.innerHTML = `<div>A genuine Foresight commit — Argentina–Switzerland <b>${side}</b> @ ${q}% — anchored on <b>Solana devnet</b> before kickoff. Not a sim-slot: a real transaction.</div>
-    <div style="margin:.4rem 0"><span class="anchor-live">● ON-CHAIN</span> blockTime <b>${(P.blockTimeISO || "").replace("T", " ").replace(".000Z", " UTC")}</b></div>
-    <div class="mut">commit hash</div><div class="anchor-hash">${P.hash}</div>
-    <div class="mut" style="margin-top:.3rem">devnet tx (click to verify on explorer)</div>
-    <div class="anchor-sig"><a href="${P.explorer}" target="_blank" rel="noopener">${P.signature}</a></div>
-    <button class="btn" id="anchorVerify" style="margin-top:.45rem">↻ recompute the hash → prove it matches on-chain</button>
-    <div id="anchorVerifyOut" class="small" style="margin-top:.35rem"></div>
-    <div class="small mut" style="margin-top:.35rem">Not just this one anymore — click <b>🔗 Connect Wallet</b> above and your own commits sign live memo transactions just like this. The mechanism is real; here's proof you can look up right now.</div>`;
-  $('anchorVerify').onclick = () => {
-    const rec = FO.commitHash(P.canonical, "foresight-onchain-demo-v1");
+  if (!P && !D) { el.innerHTML = 'no anchor proof loaded'; return; }
+  let html = "";
+  if (P) {
+    const q = (P.pick.mkt.away * 100).toFixed(1);
+    const hrs = Math.round((P.match.kickoff - P.blockTime * 1000) / 3600e3);
+    html += `<div><b>${P.match.competition}</b> — ${P.match.participant1} v ${P.match.participant2}: <b>${P.pick.sideTeam}</b> (the de-vigged underdog @ ${q}%) — anchored on <b>Solana devnet</b> ~${hrs}h <b>BEFORE kickoff</b>. The outcome is unknown as you read this; the timestamp is the proof.</div>
+      <div style="margin:.4rem 0"><span class="anchor-live">● ON-CHAIN</span> blockTime <b>${(P.blockTimeISO || "").replace("T", " ").replace(".000Z", " UTC")}</b> · kickoff <b>${(P.match.kickoffISO || "").replace("T", " ").replace(".000Z", " UTC")}</b></div>
+      <div class="mut">commit hash</div><div class="anchor-hash">${P.hash}</div>
+      <div class="mut" style="margin-top:.3rem">devnet tx (click to verify on explorer)</div>
+      <div class="anchor-sig"><a href="${P.explorer}" target="_blank" rel="noopener">${P.signature}</a></div>
+      <button class="btn" id="anchorVerify" style="margin-top:.45rem">↻ recompute the hash → prove it matches on-chain</button>
+      <div id="anchorVerifyOut" class="small" style="margin-top:.35rem"></div>`;
+  }
+  if (D) {
+    const side = D.pick.side === "part1" ? "HOME" : D.pick.side === "part2" ? "AWAY" : "DRAW";
+    const q = (FO.devig(D.pick.mkt).draw * 100).toFixed(1);
+    html += `<div class="small mut" style="margin-top:.55rem;border-top:1px solid #16283c;padding-top:.45rem"><b>Mechanism demo</b> — Argentina–Switzerland ${side} @ ${q}%: the first anchor, made while wiring the pipeline. Anchored <b>post-match</b> (its blockTime shows exactly that — nothing here pretends otherwise); it proves the memo→hash→chain pipeline works, the FINAL anchor above proves foresight. <a href="${D.explorer}" target="_blank" rel="noopener">tx ↗</a></div>`;
+  }
+  html += `<div class="small mut" style="margin-top:.35rem">Not just these — click <b>🔗 Connect Wallet</b> above and your own commits sign live memo transactions the same way.</div>`;
+  el.innerHTML = html;
+  const btn = $('anchorVerify');
+  if (btn) btn.onclick = () => {
+    const rec = FO.commitHash(P.canonical, "foresight-final-onchain-v1");
     $('anchorVerifyOut').innerHTML = rec === P.hash
-      ? `<span class="g">recompute sha256(canonical | salt) = ${rec.slice(0, 24)}…</span><br><b class="g">✓ MATCHES the hash in the on-chain memo</b> — the pick provably existed before the 90' result.`
+      ? `<span class="g">recompute sha256(canonical | salt) = ${rec.slice(0, 24)}…</span><br><b class="g">✓ MATCHES the hash in the on-chain memo</b> — this exact pick provably existed ~19h before kickoff.`
       : `<span class="r">mismatch</span>`;
   };
 }
@@ -1228,6 +1263,7 @@ function openProfile(wallet) {
 }
 window.openProfile = openProfile;
 $('modal').onclick = e => { if (e.target.id === "modal") $('modal').classList.remove('open'); };
+addEventListener('keydown', e => { if (e.key === "Escape") $('modal').classList.remove('open'); });
 window.setMyTier = mode => { myTier.mode = mode; openProfile("@you"); toast(mode === "paid" ? "💎 your auto-follow is now premium" : "🆓 your auto-follow is free", false, "act"); };
 function toggleTrack(wallet) {
   if (tracking[wallet]) { delete tracking[wallet]; toast(`stopped tracking ${wallet}`); }
@@ -1285,17 +1321,17 @@ function toggleFollow(wallet) {
 }
 window.toggleFollow = toggleFollow;
 
-/* ---------------- Google sign-in (honest placeholder) ----------------
-   Real "Sign in with Google" needs an OAuth client ID registered to this
-   domain in Google Cloud Console — that doesn't exist yet. Rather than fake
-   a login that silently does nothing (or worse, collect real credentials
-   this static page has no secure backend to hold), the button is honest
-   about what's wired today and what production needs. */
+/* ---------------- Google sign-in (header shortcut) ----------------
+   The real sign-in lives on the landing gate: Clerk-powered Google OAuth +
+   Sign-in-with-Solana, wired and working. This static dashboard keeps no
+   session of its own, so the header button routes back to the gate instead
+   of faking a second login surface. */
 $('googleLoginBtn').onclick = () => {
   $('modalbox').innerHTML = `<h4>Sign in with Google <span onclick="document.getElementById('modal').classList.remove('open')">✕ close</span></h4>
-    <div class="stratbox priv">Real Google Sign-In needs an OAuth client ID registered to this domain in Google Cloud Console — not wired yet on this deploy. We won't fake a login or ask for your Google password on a static page with no backend to hold it safely.</div>
-    <div class="small mut" style="margin-top:.5rem">For this demo you're already <b>@you</b> — every commit, follow and portfolio action is tracked under that identity, no login required. Production plan: OAuth client + a small backend session, wallet-linked to your Foresight identity for real on-chain commits.</div>
-    <button class="btn violet" style="margin-top:.6rem" onclick="document.getElementById('modal').classList.remove('open')">Continue as @you</button>`;
+    <div class="stratbox">Google + Solana sign-in is live on the landing gate (Clerk-powered — Google OAuth + Sign-in-with-Solana). Sign in there; this dashboard never asks for a password itself.</div>
+    <div class="small mut" style="margin-top:.5rem">Signed in or not, on this dashboard you're <b>@you</b> — every commit, follow and portfolio action is tracked under that identity. Wallet-linking your Foresight identity for real on-chain commits stays the production plan.</div>
+    <button class="btn violet" style="margin-top:.6rem" onclick="localStorage.removeItem('foresight_entered');location.reload()">↩ Back to the gate to sign in</button>
+    <button class="btn" style="margin-top:.4rem" onclick="document.getElementById('modal').classList.remove('open')">Continue as @you</button>`;
   $('modal').classList.add('open');
 };
 
@@ -1478,10 +1514,10 @@ let W = 0, dpr = 1, yLo = .2, yHi = .8;
 /* Crosshair + tooltip — the lightweight-charts affordances our tape lacked
    (borrowed pattern, not the library: our overlays are too custom to swap). */
 let xhairT = null;
-cv.addEventListener("mousemove", e => {
+function xhairAt(clientX, clientY) {
   const r = cv.getBoundingClientRect();
   const F = FIXTURES[sel];
-  const t = ((e.clientX - r.left) - PAD_L) / Math.max(1, (r.width - PAD_L - PAD_R)) * F.endT;
+  const t = ((clientX - r.left) - PAD_L) / Math.max(1, (r.width - PAD_L - PAD_R)) * F.endT;
   xhairT = t >= 0 && t <= F.endT ? t : null;
   drawChart();
   const tip = $('cvTip');
@@ -1492,23 +1528,42 @@ cv.addEventListener("mousemove", e => {
   tip.innerHTML = `<b>${fmtMin(Math.min(xhairT, F.endT))}</b> · ${F.p1} <b style="color:#c2f04a">${(q.home * 100).toFixed(1)}%</b> · draw <b>${(q.draw * 100).toFixed(1)}%</b> · ${F.p2} <b style="color:#3b8bf5">${(q.away * 100).toFixed(1)}%</b>${near ? `<br>${near.type === "goal" ? "⚽" : near.type === "card" ? "🟨" : "📺"} ${near.type}${near.team ? " — " + (near.team === 1 ? F.p1 : F.p2) : ""} @ ${fmtMin(near.t)}` : ""}`;
   tip.style.display = "block";
   const card = cv.parentElement, cr = card.getBoundingClientRect();
-  const x = e.clientX - cr.left + 14, flip = x + tip.offsetWidth + 20 > cr.width;
+  const x = clientX - cr.left + 14, flip = x + tip.offsetWidth + 20 > cr.width;
   tip.style.left = (flip ? x - tip.offsetWidth - 28 : x) + "px";
-  tip.style.top = (e.clientY - cr.top - 10) + "px";
-});
-cv.addEventListener("mouseleave", () => { xhairT = null; $('cvTip').style.display = "none"; drawChart(); });
+  tip.style.top = (clientY - cr.top - 10) + "px";
+}
+function xhairHide() { xhairT = null; $('cvTip').style.display = "none"; drawChart(); }
+cv.addEventListener("mousemove", e => xhairAt(e.clientX, e.clientY));
+cv.addEventListener("mouseleave", xhairHide);
+/* touch/pen: drag on the tape shows the same crosshair+tooltip. Mouse stays on
+   the mousemove path above; these skip it so nothing runs twice. touch-action
+   pan-y (set in CSS) keeps vertical page scroll working — horizontal drags are ours. */
+const xhairPtr = e => { if (e.pointerType !== "mouse") xhairAt(e.clientX, e.clientY); };
+cv.addEventListener("pointerdown", xhairPtr);
+cv.addEventListener("pointermove", xhairPtr);
+cv.addEventListener("pointerup", e => { if (e.pointerType !== "mouse") xhairHide(); });
+cv.addEventListener("pointercancel", e => { if (e.pointerType !== "mouse") xhairHide(); });
+/* pure: y-range must span BOTH plotted series (home + away) or the away line
+   clips off-scale. Dependency-free on purpose — test-ui-logic.js extracts and
+   runs this exact source. */
+function chartYRange(ticks) {
+  let lo = 1, hi = 0;
+  for (const k of ticks) { lo = Math.min(lo, k.home, k.away); hi = Math.max(hi, k.home, k.away); }
+  if (hi < lo) { lo = .2; hi = .8; }            // empty-tape guard (defaults, never inverted)
+  return { yLo: lo - .05, yHi: hi + .05 };
+}
 function sizeCanvas() {
   dpr = window.devicePixelRatio || 1; W = cv.clientWidth;
   cv.width = W * dpr; cv.height = 360 * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  const hs = FIXTURES[sel].tape.ticks.map(k => k.home);
-  yLo = Math.min(...hs) - .05; yHi = Math.max(...hs) + .05;
+  const yr = chartYRange(FIXTURES[sel].tape.ticks);
+  yLo = yr.yLo; yHi = yr.yHi;
 }
 function drawChart() {
   const F = FIXTURES[sel], t = fxT(F);
   const xOf = x => PAD_L + (x / F.endT) * (W - PAD_L - PAD_R);
   const yOf = p => TOP + (yHi - p) / (yHi - yLo) * CH;
   ctx.clearRect(0, 0, W, 360); ctx.font = "10px Consolas,monospace";
-  ctx.strokeStyle = "#0d1721"; ctx.fillStyle = "#41586a";
+  ctx.strokeStyle = "#0d1721"; ctx.fillStyle = "#7c93a6";
   for (let m = 0; m <= F.endT / 60; m += 15) { const x = xOf(m * 60); ctx.beginPath(); ctx.moveTo(x, TOP); ctx.lineTo(x, LANE + 40); ctx.stroke(); ctx.fillText(m + "'", x - 8, LANE + 52); }
   for (let p = Math.ceil(yLo * 10) / 10; p <= yHi; p += .1) { const y = yOf(p); ctx.beginPath(); ctx.moveTo(PAD_L, y); ctx.lineTo(W - PAD_R, y); ctx.stroke(); ctx.fillText((p * 100).toFixed(0) + "%", 6, y + 3); }
   const upto = F.tape.ticks.filter(k => k.t <= t);
@@ -1586,8 +1641,20 @@ function monSpark(ticks, key, t, color) {
   const xy = pts.map((v, i) => `${(i / (pts.length - 1) * w).toFixed(1)},${(h - 2 - (v - lo) / rng * (h - 4)).toFixed(1)}`).join(" ");
   return `<svg width="${w}" height="${h}"><polyline points="${xy}" fill="none" stroke="${color}" stroke-width="1.4"/></svg>`;
 }
-function renderMonitor() {
+/* renderAll runs at 20Hz during replay; rebuilding the monitor's innerHTML
+   (3 cells + sparklines) that often is wasted layout work. Throttle to 1/sec
+   with a trailing update so the final tick is never left stale; selectFixture
+   resets monLast so a fixture switch repaints immediately. */
+let monLast = 0, monPend = 0;
+function renderMonitor(force) {
   const el = $('monitor'); if (!el) return;
+  const now = performance.now();
+  if (!force && now - monLast < 1000) {
+    if (!monPend) monPend = setTimeout(() => { monPend = 0; renderMonitor(true); }, 1000 - (now - monLast));
+    return;
+  }
+  if (monPend) { clearTimeout(monPend); monPend = 0; }
+  monLast = now;
   const F = FIXTURES[sel], t = fxT(F);
   const q = FO.devig(oddsAt(F, t)), q0 = FO.devig(oddsAt(F, Math.max(0, t - 600)));
   const cells = [
@@ -1618,14 +1685,34 @@ window.toggleInfo = id => { const el = $(id); el.classList.toggle('open'); };
 
 /* ================= LIVE SSE via relay (true push, no reload) =================
    Consumes the SAME real TxLINE SSE the relay proxies (creds stay server-side),
-   accumulates new score/odds messages into the France–England bundle, rebuilds
-   that ONE fixture's tape with the identical buildTape pipeline every replay
-   uses, and re-renders — plus a football-news lane merged into the feed. */
-const LIVE_FIXTURE_ID = 18257865;                       // France v England, tonight
+   accumulates new score/odds messages into the selected live fixture's bundle,
+   rebuilds that ONE fixture's tape with the identical buildTape pipeline every
+   replay uses, and re-renders — plus a football-news lane merged into the feed.
+   The relay streams ANY fixture via ?fixtureId=, so switching targets is pure
+   client-side selection. */
 const qs = new URLSearchParams(location.search);
 let RELAY_BASE = (qs.get("relay") || window.FORESIGHT_RELAY || localStorage.getItem("foresight_relay")
   || "https://foresight-relay.lordofclaude.workers.dev").replace(/\/$/, "");  // ?relay=http://127.0.0.1:8799 for local wrangler dev
+/* GO LIVE fixture registry: id → null (a preloaded tape on disk carries the
+   fixture meta) or minimal meta for fixtures with NO tape yet (the FINAL —
+   its bundle starts empty and accumulates from the stream). */
+const FINAL_KICKOFF = 1784487600000;                    // 2026-07-19T19:00:00Z
+const LIVE_FIXTURES = {
+  18257865: null,                                       // France v England — preloaded tape (semi, streamed live already)
+  18257739: { FixtureId: 18257739, Participant1: "Spain", Participant2: "Argentina",
+              Participant1IsHome: true, StartTime: FINAL_KICKOFF, Competition: "World Cup FINAL" },
+};
+/* pure: which fixture GO LIVE targets — ?fixture=<id> forces one; otherwise
+   auto-target the FINAL from 2h before its kickoff, France–England before
+   that (ids inlined so test-ui-logic.js can run this exact source). */
+function liveFixturePick(param, now) {
+  const q = +param;
+  if (q === 18257865 || q === 18257739) return q;
+  return now >= 1784487600000 - 2 * 3600e3 ? 18257739 : 18257865;
+}
+const LIVE_FIXTURE_ID = liveFixturePick(qs.get("fixture"), Date.now());
 let liveOn = false, liveHandles = [], newsTimer = null, liveStat = { scores: 0, odds: 0, news: 0 };
+let liveBrowse = false;   // true while the user has browsed AWAY from the live fixture during live mode
 const liveAccum = { seenSeq: {}, seenOdds: {}, historical: [], odds: [] };
 const LIVE_KEEP = new Set(["goal","yellow_card","red_card","corner","shot","free_kick","penalty",
   "penalty_outcome","var","var_end","substitution","kickoff","halftime_finalised","game_finalised",
@@ -1653,31 +1740,50 @@ function liveMergeOdds(o) {
 }
 let liveRebuildQueued = false;
 function liveRebuildSoon() { if (liveRebuildQueued) return; liveRebuildQueued = true; setTimeout(liveRebuild, 400); }
+const liveMeta = () => { const b = liveBundle(); return (b && b.fixture) || LIVE_FIXTURES[LIVE_FIXTURE_ID] || {}; };
+const liveName = () => { const m = liveMeta(); return (m.Participant1 || "?") + " v " + (m.Participant2 || "?"); };
+(function ensureLiveBundle() {                           // no tape on disk for the target (the FINAL pre-kickoff):
+  const meta = LIVE_FIXTURES[LIVE_FIXTURE_ID];           // create an empty accumulating bundle from registry meta so
+  if (!liveBundle() && meta) window.TX_TAPES.push({ fixture: meta, historical: [], odds: [] });  // GO LIVE has somewhere to merge into
+})();
 function liveRebuild() {
   liveRebuildQueued = false;
-  const b = liveBundle(), F = liveEntry(); if (!b || !F) return;
+  const b = liveBundle(); if (!b) return;
   const merged = { fixture: b.fixture, historical: b.historical.concat(liveAccum.historical), odds: b.odds.concat(liveAccum.odds) };
   const t0 = TxReal.buildTape(merged);
-  const tape = SA.buildRealTape(t0.events, t0.oddsTimeline); if (!tape) return;
+  const tape = SA.buildRealTape(t0.events, t0.oddsTimeline);
+  if (!tape) { liveSetStatus(); return; }        // pre-kickoff: no events yet — odds keep accumulating, fixture stays off the radar, no crash
+  let F = liveEntry();
+  if (!F) {                                      // first live data for a fixture with NO preloaded tape (the FINAL): put it on the board now
+    const fx = t0.fixture || b.fixture;
+    F = { id: fx.FixtureId, fx, tape, liveMatch: true,
+      p1: (fx.Participant1 || "HOME").slice(0, 3).toUpperCase(), p2: (fx.Participant2 || "AWAY").slice(0, 3).toUpperCase(),
+      f1: flagOf(fx.Participant1), f2: flagOf(fx.Participant2), moves: [], outcome: null, endT: 0, settled: false };
+    FIXTURES.push(F);
+    toast(`🔴 ${fx.Participant1}–${fx.Participant2} joined the board — first live TxLINE data landed`);
+  }
   F.tape = tape;
   F.liveMatch = !tape.events.some(e => e.type === "game_finalised");
   F.moves = SA.detectMoves(tape.ticks, SA.CFG);
   F.outcome = F.liveMatch ? null : FO.outcomeFromTape(tape.events);
   F.endT = Math.max(tape.ticks[tape.ticks.length - 1].t, tape.events[tape.events.length - 1].t);
-  if (liveOn) { sel = FIXTURES.indexOf(F); simT = F.endT; }       // pin to the live edge
+  GLOBAL_END = Math.max(GLOBAL_END, F.endT);     // a live fixture joining/growing mid-session can extend the horizon
+  if (sel >= FIXTURES.length) sel = 0;           // sel bounds (FIXTURES only ever grows, but stay paranoid)
+  if (liveOn && !liveBrowse) { sel = FIXTURES.indexOf(F); simT = F.endT; }  // pin to the live edge — unless the user browsed elsewhere
   liveSetStatus();
   renderAll();
 }
 function liveSetStatus(msg) {
   const el = $('liveStatus'); if (!el) return;
   el.innerHTML = liveOn
-    ? `<span class="dot"></span> LIVE · ${liveStat.scores} score · ${liveStat.odds} odds · ${liveStat.news} news`
+    ? `<span class="dot"></span> LIVE · ${liveName()} · ${liveStat.scores} score · ${liveStat.odds} odds · ${liveStat.news} news`
     : (msg || "relay idle");
 }
 let newsCache = [];                                      // full lane, for move-driver matching
 async function fetchNewsOnce() {
   try {
-    const r = await fetch(`${RELAY_BASE}/api/news?teams=France,England`).then(x => x.json());
+    const m = liveMeta();
+    const r = await fetch(`${RELAY_BASE}/api/news?teams=${encodeURIComponent((m.Participant1 || "") + "," + (m.Participant2 || ""))}`).then(x => x.json());
     newsCache = r.items || [];
     newsCache.slice(0, 8).forEach(it => {
       const key = "news:" + (it.link || it.title);
@@ -1702,33 +1808,35 @@ function newsDriverFor(mv, F) {
     const dt = wall - it.ts;                             // >0 = published before the move
     if (dt < -5 * 60000 || dt > 45 * 60000) continue;
     const txt = (it.title + " " + (it.desc || "")).toLowerCase();
-    let score = 0;
-    teams.forEach(k => { if (txt.includes(k)) score += 2; });
+    let score = 0, teamHit = false;
+    teams.forEach(k => { if (txt.includes(k)) { score += 2; teamHit = true; } });
     RISK.forEach(k => { if (txt.includes(k)) score += 1; });
     if (it.tag === "injury" || it.tag === "lineup") score += 1;  // team-news moves markets pre-event
-    if (!score) continue;
-    score += Math.max(0, 1 - dt / (45 * 60000));         // fresher = better
+    if (!teamHit) continue;                              // ENFORCED: risk terms alone can't fake relevance to this match
+    score += Math.min(1, Math.max(0, 1 - dt / (45 * 60000)));  // fresher = better — capped at 1 so the post-move grace can't inflate it
     if (score > bestScore) { bestScore = score; best = { ...it, agoMin: Math.max(0, Math.round(dt / 60000)) }; }
   }
-  return bestScore >= 2 ? best : null;                   // needs at least a team match
+  return bestScore >= 2 ? best : null;                   // team keyword required (enforced above) + minimum combined score
 }
 function goLive() {
   if (liveOn) return;
-  if (!liveEntry()) { toast("France–England tape not loaded yet", true); return; }
+  if (!liveBundle()) { toast(liveName() + " — no live bundle available", true); return; }
   liveOn = true;
-  if (timer) stopReplay("▶ RUN REPLAY (all 3 fixtures)");        // hand the stage to live
+  if (timer) stopReplay("▶ RUN REPLAY (all fixtures)");        // hand the stage to live
   if ("Notification" in window && Notification.permission === "default") Notification.requestPermission();
   TxReal.configure({ host: RELAY_BASE, jwt: "relay", apiToken: "relay" }); // dummy creds → skip guest-auth; relay injects real ones
   liveHandles.push(TxReal.streamLive("scores", { fixtureId: LIVE_FIXTURE_ID, onMessage: m => { const d = m.data; if (d && typeof d === "object") { if (liveMergeScore(d)) { liveStat.scores++; liveRebuildSoon();
-    if (d.Action === "goal") notifyLive("⚽ GOAL — France v England", "The tape is repricing. Open Foresight.");
-    else if (d.Action === "red_card") notifyLive("🟥 RED CARD — France v England", "Upset radar climbing.");
-    else if (d.Action === "var") notifyLive("📺 VAR review — France v England", "The market front-runs verdicts. Watch the tape.");
+    if (d.Action === "goal") notifyLive("⚽ GOAL — " + liveName(), "The tape is repricing. Open Foresight.");
+    else if (d.Action === "red_card") notifyLive("🟥 RED CARD — " + liveName(), "Upset radar climbing.");
+    else if (d.Action === "var") notifyLive("📺 VAR review — " + liveName(), "The market front-runs verdicts. Watch the tape.");
   } } }, onStatus: s => { if (s.state === "error") liveSetStatus("reconnecting…"); } }));
   liveHandles.push(TxReal.streamLive("odds", { fixtureId: LIVE_FIXTURE_ID, onMessage: m => { const d = m.data; if (d && typeof d === "object") { if (liveMergeOdds(d)) { liveStat.odds++; liveRebuildSoon(); } } } }));
   fetchNewsOnce(); newsTimer = setInterval(fetchNewsOnce, 60000);
-  sel = FIXTURES.indexOf(liveEntry()); simT = liveEntry().endT;
+  liveBrowse = false;                                  // fresh GO LIVE always starts pinned
+  const E = liveEntry();                               // may not exist yet (FINAL pre-kickoff: joins FIXTURES on first event)
+  if (E) { sel = FIXTURES.indexOf(E); simT = E.endT; }
   const btn = $('goLiveBtn'); if (btn) { btn.textContent = "■ STOP LIVE"; btn.classList.add("on"); }
-  toast("🔴 LIVE — streaming France–England from the relay");
+  toast("🔴 LIVE — streaming " + liveName() + " from the relay");
   liveSetStatus(); renderAll();
 }
 function stopLive() {
@@ -1739,12 +1847,12 @@ function stopLive() {
 }
 (function injectLiveControl() {
   const s = document.createElement("style");
-  s.textContent = `#liveCtl{position:fixed;top:10px;right:10px;z-index:60;background:#0c1622;border:1px solid #22c55e33;border-radius:10px;padding:8px 10px;font:600 11px system-ui,sans-serif;color:#cfe;box-shadow:0 6px 24px #0008;max-width:min(92vw,320px)}
-    #liveCtl .row{display:flex;gap:6px;align-items:center}#liveCtl button{cursor:pointer;border:0;border-radius:7px;padding:6px 10px;font-weight:800;background:#22c55e;color:#04140a}
+  s.textContent = `#liveCtl{position:fixed;bottom:14px;left:14px;z-index:60;background:#0c1622;border:1px solid #c2f04a33;border-radius:10px;padding:8px 10px;font:600 11px Inter,system-ui,sans-serif;color:#cfe;box-shadow:0 6px 24px #0008;max-width:min(92vw,300px)}
+    #liveCtl .row{display:flex;gap:6px;align-items:center}#liveCtl button{cursor:pointer;border:0;border-radius:7px;padding:6px 10px;font-weight:800;background:#c2f04a;color:#0a1322}
     #liveCtl button.on{background:#ff5a74;color:#1a0208}#liveCtl input{flex:1;min-width:0;background:#081019;border:1px solid #ffffff1a;color:#9fb;border-radius:6px;padding:5px 7px;font:600 10px monospace}
-    #liveStatus{margin-top:6px;color:#7fe6a6;font-weight:700}#liveStatus .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#22c55e;margin-right:4px;animation:pulse 1.4s infinite}
-    .feeditem.news{background:#10233a;border-left:3px solid #3b8bf5}
-    .feeditem.pundit{background:#170f26;border-left:3px solid #c084fc;font-style:italic}`;
+    #liveStatus{margin-top:6px;color:#c2f04a;font-weight:700}#liveStatus .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#c2f04a;margin-right:4px;animation:pulse 1.4s infinite}
+    .feeditem.news{background:#10233a}
+    .feeditem.pundit{background:rgba(238,244,255,.04);font-style:italic}`;
   document.head.appendChild(s);
   const el = document.createElement("div"); el.id = "liveCtl";
   el.innerHTML = `<div class="row"><button id="goLiveBtn">🔴 GO LIVE</button>
@@ -1756,7 +1864,7 @@ function stopLive() {
   fetch(`${RELAY_BASE}/health`).then(r => r.json()).then(h => {
     liveSetStatus(h && h.ok ? "relay ✓ ready — click GO LIVE" : "relay unreachable");
     if (h && h.ok && qs.get("live") === "1") goLive();            // ?live=1 auto-starts
-  }).catch(() => liveSetStatus("relay unreachable — start it: wrangler dev"));
+  }).catch(() => liveSetStatus("relay unreachable — check the URL (or run a local one: wrangler dev)"));
 })();
 
 /* ================= landing gate (particle hero + login) =================
@@ -1771,6 +1879,15 @@ function stopLive() {
   let rafId = null, particles = [], stopped = false;
   const mouse = { x: null, y: null, radius: 170 };
   const ctx2 = cv.getContext('2d');
+  // house rule: all motion is reduced-motion-aware — under prefers-reduced-motion
+  // the particle rAF loop never starts; a static gradient stands in.
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function paintStatic() {
+    cv.width = innerWidth; cv.height = innerHeight;
+    const g = ctx2.createLinearGradient(0, 0, cv.width, cv.height);
+    g.addColorStop(0, "#04070d"); g.addColorStop(.55, "#071120"); g.addColorStop(1, "#0a1626");
+    ctx2.fillStyle = g; ctx2.fillRect(0, 0, cv.width, cv.height);
+  }
 
   function initParticles() {
     particles = [];
@@ -1816,16 +1933,18 @@ function stopLive() {
   }
   function closeGate(persist) {
     stopped = true; if (rafId) cancelAnimationFrame(rafId);
-    removeEventListener("resize", resize); removeEventListener("mousemove", onMove); removeEventListener("mouseout", onOut);
+    removeEventListener("resize", resize); removeEventListener("resize", paintStatic);
+    removeEventListener("mousemove", onMove); removeEventListener("mouseout", onOut);
     gate.classList.add("hidden");
     if (persist) localStorage.setItem("foresight_entered", "1");
+    if (window.__onGateClosed) { const f = window.__onGateClosed; window.__onGateClosed = null; f(); }  // deferred replay start
   }
   const onMove = e => { mouse.x = e.clientX; mouse.y = e.clientY; };
   const onOut = () => { mouse.x = null; mouse.y = null; };
 
   if (skip) { gate.classList.add("hidden"); return; }
-  addEventListener("resize", resize); addEventListener("mousemove", onMove); addEventListener("mouseout", onOut);
-  resize(); step();
+  if (reduceMotion) { addEventListener("resize", paintStatic); paintStatic(); }
+  else { addEventListener("resize", resize); addEventListener("mousemove", onMove); addEventListener("mouseout", onOut); resize(); step(); }
 
   $('gateEnter').onclick = () => closeGate(true);
   /* Clerk sign-in — Google OAuth + Sign-in-with-Solana (web3_solana_signature),
@@ -1848,11 +1967,16 @@ function stopLive() {
         try { host = atob(CLERK_PK.replace(/^pk_(test|live)_/, "")).replace(/\$$/, ""); } catch (e) { /* fall back to CDN */ }
         s.src = host ? "https://" + host + "/npm/@clerk/clerk-js@5/dist/clerk.browser.js"
           : "https://cdn.jsdelivr.net/npm/@clerk/clerk-js@5/dist/clerk.browser.js";
+        // the accounts.dev-hosted bundle SELF-INITIALIZES on load and reads the pk
+        // from this attribute — without it, it throws and window.Clerk becomes a
+        // broken instance ("not a constructor" on the next line's old code).
+        s.setAttribute("data-clerk-publishable-key", CLERK_PK);
         s.crossOrigin = "anonymous"; s.onload = res; s.onerror = () => rej(new Error("clerk-js failed to load"));
         document.head.appendChild(s);
       });
-      const clerk = new window.Clerk(CLERK_PK);
-      await clerk.load();
+      // hosted bundle → window.Clerk is the READY instance (has .load); jsdelivr CDN → it's the constructor
+      const clerk = window.Clerk.load ? window.Clerk : new window.Clerk(CLERK_PK);
+      await clerk.load({});
       if (clerk.user) { toast("Signed in as " + (clerk.user.fullName || clerk.user.primaryEmailAddress || "user")); closeGate(true); return; }
       clerk.openSignIn({ afterSignInUrl: location.href, afterSignUpUrl: location.href });
       clerk.addListener(({ user }) => { if (user) { toast("Signed in as " + (user.fullName || "user")); closeGate(true); } });
@@ -1873,7 +1997,13 @@ renderAnchor();
   tickSettlements();
   announcedIds = new Set(league.commits.filter(c => c.tCommit <= simT).map(c => c.id));
   renderAll();
-  startReplay();
+  // don't burn 20Hz replay CPU behind the landing gate — start when it closes
+  // (gate already hidden/skipped → start now; closeGate fires the callback).
+  // liveOn guard: ?live=1 can GO LIVE while the gate is still up — live owns
+  // the stage then, so the deferred replay start must stand down.
+  const g = $('gate');
+  if (g && !g.classList.contains("hidden")) window.__onGateClosed = () => { if (!liveOn) startReplay(); };
+  else startReplay();
 })();
 </script>
 </body></html>

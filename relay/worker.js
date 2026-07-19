@@ -9,33 +9,91 @@
    zero new browser stream code.
 
    Endpoints (all GET, CORS-open, read-only):
-     /health                              -> { ok, host, hasCreds }
+     /health                              -> { ok, host, hasCreds, version }
      /api/scores/stream?fixtureId=<id>    -> proxied real SSE (scores)
      /api/odds/stream?fixtureId=<id>      -> proxied real SSE (odds)
      /api/news?teams=England,France       -> merged football news JSON (RSS, no key)
 
    Secrets (wrangler secret put … ; local: relay/.dev.vars):
      TXLINE_JWT, TXLINE_API_TOKEN, TXLINE_HOST (optional, defaults devnet)
+   Optional env:
+     ALLOWED_ORIGINS — comma-separated origin allowlist. When set, only listed
+       origins are reflected in CORS (others get no ACAO header). When unset,
+       CORS stays "*" (needed for file:// local demos + the Vercel site today).
+
+   Hardening (2026-07-18): fixtureId validation, per-IP token-bucket rate limits
+   (SSE 10/min, news 30/min), concurrent-SSE cap (20), news Cache-Control.
+   NOTE: rate/concurrency state is per-isolate in-memory — best-effort only.
+   Cloudflare may run many isolates across PoPs, each with its own counters.
+   Good enough to stop casual abuse for a hackathon; use Durable Objects or
+   Cloudflare Rate Limiting rules for real global enforcement.
 */
 
+const VERSION = "1.1.0-hardened-2026-07-18";
 const DEFAULT_HOST = "https://txline-dev.txodds.com";
+
+// ---- hardening knobs ------------------------------------------------------
+const SSE_CONN_PER_MIN = 10;      // new SSE connections per IP per minute
+const NEWS_REQ_PER_MIN = 30;      // /api/news requests per IP per minute
+const MAX_CONCURRENT_SSE = 20;    // simultaneous SSE pass-throughs per isolate
+const MAX_BUCKETS = 2000;         // bound rate-limit memory per isolate
+const NEWS_CACHE_SECONDS = 60;    // Cache-Control max-age for /api/news
 
 // Module-scoped JWT cache: lets a 401 refresh survive within a warm isolate.
 let JWT_CACHE = null;
 
-function cors(extra) {
-  return Object.assign({
-    "Access-Control-Allow-Origin": "*",
+// ---- per-isolate rate limiting (best-effort, see header note) -------------
+const BUCKETS = new Map(); // key "kind:ip" -> { tokens, last }
+
+/** Token bucket: capacity = perMinute, refills continuously. True = allowed. */
+function allowRate(kind, ip, perMinute) {
+  const key = kind + ":" + (ip || "unknown");
+  const now = Date.now();
+  let b = BUCKETS.get(key);
+  if (!b) {
+    if (BUCKETS.size >= MAX_BUCKETS) {          // crude eviction: drop oldest entry
+      const first = BUCKETS.keys().next().value;
+      if (first) BUCKETS.delete(first);
+    }
+    b = { tokens: perMinute, last: now };
+    BUCKETS.set(key, b);
+  }
+  b.tokens = Math.min(perMinute, b.tokens + ((now - b.last) / 60000) * perMinute);
+  b.last = now;
+  if (b.tokens < 1) return false;
+  b.tokens -= 1;
+  return true;
+}
+
+let ACTIVE_SSE = 0; // concurrent SSE pass-throughs in this isolate
+
+// ---- CORS -----------------------------------------------------------------
+/** Resolve the ACAO value: "*" when no allowlist, the reflected origin when
+    allowed, or null (no CORS headers → browser blocks) when denied. */
+function corsOrigin(request, env) {
+  const list = (env && env.ALLOWED_ORIGINS || "").split(",").map(s => s.trim()).filter(Boolean);
+  if (!list.length) return "*";
+  const origin = request.headers.get("Origin");
+  return origin && list.includes(origin) ? origin : null;
+}
+
+function cors(extra, acao) {
+  const h = Object.assign({
     "Access-Control-Allow-Methods": "GET, OPTIONS",
     "Access-Control-Allow-Headers": "Authorization, X-Api-Token, Last-Event-ID, Cache-Control, Content-Type",
     "Access-Control-Expose-Headers": "Last-Event-ID",
   }, extra || {});
+  if (acao) { // null = origin denied by ALLOWED_ORIGINS → no ACAO header, browser blocks
+    h["Access-Control-Allow-Origin"] = acao;
+    if (acao !== "*") h["Vary"] = "Origin";
+  }
+  return h;
 }
 
-function json(obj, status) {
+function json(obj, status, acao, extraHeaders) {
   return new Response(JSON.stringify(obj), {
     status: status || 200,
-    headers: cors({ "Content-Type": "application/json" }),
+    headers: cors(Object.assign({ "Content-Type": "application/json" }, extraHeaders || {}), acao),
   });
 }
 
@@ -64,25 +122,48 @@ function upstreamHeaders(env, req) {
 }
 
 /** Proxy a TxLINE SSE stream (scores|odds), refreshing the JWT once on 401. */
-async function proxySSE(kind, env, req, url) {
+async function proxySSE(kind, env, req, url, acao, ctx) {
+  // fixtureId: optional (the app's client may stream unfiltered), but when
+  // present it must be a positive integer of at most 10 digits.
   const fixtureId = url.searchParams.get("fixtureId");
+  if (fixtureId !== null && !/^[1-9]\d{0,9}$/.test(fixtureId)) {
+    return json({ error: "invalid fixtureId: must be a positive integer (max 10 digits)" }, 400, acao);
+  }
+
+  const ip = req.headers.get("CF-Connecting-IP");
+  if (!allowRate("sse", ip, SSE_CONN_PER_MIN)) {
+    return json({ error: "rate limited: too many stream connections, retry later" }, 429, acao, { "Retry-After": "60" });
+  }
+  if (ACTIVE_SSE >= MAX_CONCURRENT_SSE) {
+    return json({ error: "busy: too many concurrent streams, retry later" }, 503, acao, { "Retry-After": "15" });
+  }
+
   const target = host(env) + "/api/" + kind + "/stream" + (fixtureId ? "?fixtureId=" + encodeURIComponent(fixtureId) : "");
 
   let up = await fetch(target, { headers: upstreamHeaders(env, req) });
   if (up.status === 401) { await refreshJwt(env); up = await fetch(target, { headers: upstreamHeaders(env, req) }); }
   if (!up.ok || !up.body) {
     const t = await up.text().catch(() => "");
-    return json({ error: "upstream " + kind + " stream " + up.status, detail: t.slice(0, 200) }, 502);
+    return json({ error: "upstream " + kind + " stream " + up.status, detail: t.slice(0, 200) }, 502, acao);
   }
-  // Pipe the real SSE body straight through — the browser receives genuine push frames.
-  return new Response(up.body, {
+
+  // Pipe through an identity TransformStream so we can count the connection
+  // open/closed (client disconnects surface as a pipeTo rejection).
+  ACTIVE_SSE++;
+  const { readable, writable } = new TransformStream();
+  const pipe = up.body.pipeTo(writable)
+    .catch(() => {})
+    .finally(() => { ACTIVE_SSE = Math.max(0, ACTIVE_SSE - 1); });
+  if (ctx && ctx.waitUntil) ctx.waitUntil(pipe);
+
+  return new Response(readable, {
     status: 200,
     headers: cors({
       "Content-Type": "text/event-stream; charset=utf-8",
       "Cache-Control": "no-cache, no-transform",
       Connection: "keep-alive",
       "X-Accel-Buffering": "no",
-    }),
+    }, acao),
   });
 }
 
@@ -153,7 +234,7 @@ function dedupe(items) {
   return kept;
 }
 
-async function newsLane(env, url) {
+async function newsLane(env, url, acao) {
   const teams = (url.searchParams.get("teams") || "").split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
   const results = await Promise.all(RSS_FEEDS.map(async (feed) => {
     try {
@@ -171,24 +252,38 @@ async function newsLane(env, url) {
   items.sort((a, b) => b.ts - a.ts);
   items = dedupe(items);
   items.forEach(it => { const c = categorize(it); it.tag = c.tag; it.emoji = c.emoji; });
-  return json({ ok: true, count: items.length, items: items.slice(0, 30), fetchedAt: new Date().toISOString() });
+  return json(
+    { ok: true, count: items.length, items: items.slice(0, 30), fetchedAt: new Date().toISOString() },
+    200, acao,
+    { "Cache-Control": "public, max-age=" + NEWS_CACHE_SECONDS }
+  );
 }
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
-    if (request.method === "OPTIONS") return new Response(null, { headers: cors() });
+    const acao = corsOrigin(request, env); // "*", allowed origin, or null (denied)
+    if (request.method === "OPTIONS") return new Response(null, { headers: cors(null, acao) });
 
     try {
       if (url.pathname === "/health") {
-        return json({ ok: true, host: host(env), hasCreds: !!(env && env.TXLINE_API_TOKEN), service: "foresight-relay" });
+        return json({
+          ok: true, host: host(env), hasCreds: !!(env && env.TXLINE_API_TOKEN),
+          service: "foresight-relay", version: VERSION, activeStreams: ACTIVE_SSE,
+        }, 200, acao);
       }
-      if (url.pathname === "/api/scores/stream") return await proxySSE("scores", env, request, url);
-      if (url.pathname === "/api/odds/stream") return await proxySSE("odds", env, request, url);
-      if (url.pathname === "/api/news") return await newsLane(env, url);
-      return json({ error: "not found", paths: ["/health", "/api/scores/stream", "/api/odds/stream", "/api/news"] }, 404);
+      if (url.pathname === "/api/scores/stream") return await proxySSE("scores", env, request, url, acao, ctx);
+      if (url.pathname === "/api/odds/stream") return await proxySSE("odds", env, request, url, acao, ctx);
+      if (url.pathname === "/api/news") {
+        const ip = request.headers.get("CF-Connecting-IP");
+        if (!allowRate("news", ip, NEWS_REQ_PER_MIN)) {
+          return json({ error: "rate limited: retry later" }, 429, acao, { "Retry-After": "60" });
+        }
+        return await newsLane(env, url, acao);
+      }
+      return json({ error: "not found", paths: ["/health", "/api/scores/stream", "/api/odds/stream", "/api/news"] }, 404, acao);
     } catch (e) {
-      return json({ error: String(e && e.message || e) }, 500);
+      return json({ error: String(e && e.message || e) }, 500, acao);
     }
   },
 };

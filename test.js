@@ -253,12 +253,18 @@ ok(!F.gradePick("part1", { home: 0.5, draw: 0.3, away: 0.2 }, "part1").upsetCall
 
 /* ---------------- real-tape integration ---------------- */
 {
-  const shared = path.join(__dirname, "..", "shared");
-  const src = fs.readFileSync(path.join(shared, "real-data", "18222446.tape.js"), "utf8");
+  // Layout-aware: this repo flattens the monorepo (shared/ + real-data/ at the
+  // root, agent.js inside shared/); the war-room monorepo keeps ../shared and
+  // ../t3-surprise-index. Try local first so `git clone && node test.js` works.
+  const local = fs.existsSync(path.join(__dirname, "shared", "txline-real.js"));
+  const shared = local ? path.join(__dirname, "shared") : path.join(__dirname, "..", "shared");
+  const tapeDir = local ? path.join(__dirname, "real-data") : path.join(shared, "real-data");
+  const src = fs.readFileSync(path.join(tapeDir, "18222446.tape.js"), "utf8");
   const bundle = JSON.parse(src.slice(src.indexOf("=") + 1).trim().replace(/;\s*$/, ""));
   const TxReal = require(path.join(shared, "txline-real.js"));
   TxReal.load({ data: bundle });
-  const SA = require(path.join(__dirname, "..", "t3-surprise-index", "agent.js"));
+  const SA = local ? require(path.join(shared, "agent.js"))
+    : require(path.join(__dirname, "..", "t3-surprise-index", "agent.js"));
   const tape = SA.buildRealTape(TxReal.EVENTS, TxReal.state.oddsTimeline);
   ok(tape && tape.real, "real tape builds");
 

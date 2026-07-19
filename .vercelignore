@@ -1,0 +1,9 @@
+# Never upload secrets or local state to the static deploy
+_keys/
+shared/.txline.json
+.txline.json
+relay/.dev.vars
+*.live-state.json
+node_modules/
+.git/
+DESIGN-BRIEF-CHATGPT.md
