@@ -1667,7 +1667,7 @@ function renderAnchor() {
       <div class="mut">commit hash</div><div class="anchor-hash">${P.hash}</div>
       <div class="mut" style="margin-top:.3rem">devnet tx (click to verify on explorer)</div>
       <div class="anchor-sig"><a href="${P.explorer}" target="_blank" rel="noopener">${P.signature}</a></div>
-      <button class="btn" id="anchorVerify" style="margin-top:.45rem">↻ recompute the hash → prove it matches on-chain</button>
+      <button class="btn" id="anchorVerify" style="margin-top:.45rem">↻ recompute the bundled proof hash</button>
       <div id="anchorVerifyOut" class="small" style="margin-top:.35rem"></div>`;
   }
   if (D) {
@@ -1679,13 +1679,13 @@ function renderAnchor() {
   if (S) html += `<div class="small" style="margin-top:.55rem;border-top:1px solid #16283c;padding-top:.45rem">
     <b>⚖ SETTLED ON-CHAIN</b> — the anchored England–Argentina pick (<span class="anchor-hash" style="font-size:.62rem">${S.commitHash.slice(0, 18)}…</span>, Argentina) was graded <b class="g">${S.result}</b> in an <b>atomic devnet transaction</b>: TxLINE's <code>validateStatV2</code> verified the final score <b>${S.values[0]}–${S.values[1]}</b> against the on-chain Merkle root, and the grade memo landed <b>in the same transaction</b> — the grade record can only exist because the chain verified the outcome first. Instruction composition from the client (not a custom-program CPI), and the docs say so.
     <a href="${S.explorer}" target="_blank" rel="noopener">settlement tx ↗</a></div>`;
-  html += `<div class="small mut" style="margin-top:.35rem">Not just these — click <b>🔗 Connect Wallet</b> above and your own commits sign live memo transactions the same way.</div>`;
+  html += `<div class="small mut" style="margin-top:.35rem">On an <b>eligible pre-kickoff or fresh verified-live fixture</b>, connect a wallet to sign a devnet memo. Completed historical replays always stay practice-local.</div>`;
   el.innerHTML = html;
   const btn = $('anchorVerify');
   if (btn) btn.onclick = () => {
     const rec = FO.commitHash(P.canonical, "foresight-final-onchain-v1");
     $('anchorVerifyOut').innerHTML = rec === P.hash
-      ? `<span class="g">recompute sha256(canonical | salt) = ${rec.slice(0, 24)}…</span><br><b class="g">✓ MATCHES the hash in the on-chain memo</b> — this exact pick provably existed ~19h before kickoff.`
+      ? `<span class="g">recompute sha256(canonical | salt) = ${rec.slice(0, 24)}…</span><br><b class="g">✓ MATCHES the bundled artifact hash</b> — use the Explorer link above to independently confirm the memo and validator timestamp.`
       : `<span class="r">mismatch</span>`;
   };
 }

@@ -149,6 +149,8 @@ has("streak badge uses best streak", /s\.best >= 2 \? ` <span class="g" title="b
 has("RE-RUN gates exempt live fixtures", /every\(F => F\.settled \|\| F\.liveMatch\)/);
 has("anchor hero is the pre-kickoff FINAL proof", /ANCHOR_PROOF_FINAL/);
 has("old anchor honestly labeled post-match", /Anchored <b>post-match<\/b>/);
+has("anchor recompute is scoped to the bundled artifact", /recompute the bundled proof hash[\s\S]*MATCHES the bundled artifact hash/);
+has("anchor wallet copy preserves fixture eligibility", /eligible pre-kickoff or fresh verified-live fixture[\s\S]*Completed historical replays always stay practice-local/);
 has("newsDriver requires a team keyword", /if \(!teamHit\) continue;/);
 has("newsDriver recency bonus capped at 1", /Math\.min\(1, Math\.max\(0, 1 - dt \/ \(45 \* 60000\)\)\)/);
 has("Polymarket comparison aligns by replay quote timestamp", /params\.set\("atMs"[\s\S]*api\/polymarket\?\$\{params\}/);
