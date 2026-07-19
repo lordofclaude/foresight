@@ -101,6 +101,11 @@ select{flex:1;background:#0f2233;border:1px solid #1d3a52;color:var(--txt);font:
 .calbar .ca{height:4px;top:auto}
 .calbar .ca.up{background:#c2f04a}
 .calbar .ca.dn{background:#ff5a74}
+/* ---- real flag images (see FLAG_ISO in the app script) ---- */
+.flag{width:20px;height:15px;object-fit:cover;border-radius:2.5px;vertical-align:-2px;box-shadow:0 0 0 1px #ffffff26}
+.hero-flag .flag{width:48px;height:36px;border-radius:5px;vertical-align:-6px}
+.mkt .flag{width:16px;height:12px;vertical-align:-1px}
+#tickerbar .flag{width:14px;height:10px;vertical-align:-1px;border-radius:2px}
 /* ---- ticker tape (TradingView idiom) ---- */
 #tickerbar{overflow:hidden;white-space:nowrap;background:#060b13;border-bottom:1px solid #14263a;font:700 11px Consolas,ui-monospace,monospace;color:#8fa8bd;padding:5px 0;cursor:default}
 #tickerbar .inner{display:inline-block;will-change:transform;animation:tickscroll 45s linear infinite}
@@ -572,8 +577,15 @@ const SA = SurpriseAgent, FO = Foresight;
 
 /* ---------------- build all fixtures ---------------- */
 // broadcast flag chips — country name → emoji (no external assets)
-const FLAGS = { Argentina: "🇦🇷", Switzerland: "🇨🇭", France: "🇫🇷", Spain: "🇪🇸", England: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", Brazil: "🇧🇷", Germany: "🇩🇪", Japan: "🇯🇵", Italy: "🇮🇹", Portugal: "🇵🇹", Netherlands: "🇳🇱", Belgium: "🇧🇪", Croatia: "🇭🇷", Morocco: "🇲🇦", Norway: "🇳🇴", Mexico: "🇲🇽", Uruguay: "🇺🇾" };
-const flagOf = n => FLAGS[n] || "⚽";
+/* Country flags as real images — emoji flags don't render on Windows Chrome
+   (regional-indicator pairs degrade to bare letters like "FR", and England's
+   tag-sequence to a black flag). flagcdn serves tiny PNGs per ISO code, with
+   England's own code (gb-eng). Unknown team or failed load → neutral ⚽. */
+const FLAG_ISO = { Argentina: "ar", Switzerland: "ch", France: "fr", Spain: "es", England: "gb-eng", Brazil: "br", Germany: "de", Japan: "jp", Italy: "it", Portugal: "pt", Netherlands: "nl", Belgium: "be", Croatia: "hr", Morocco: "ma", Norway: "no", Mexico: "mx", Uruguay: "uy" };
+const flagOf = n => {
+  const iso = FLAG_ISO[n];
+  return iso ? `<img class="flag" src="https://flagcdn.com/w40/${iso}.png" srcset="https://flagcdn.com/w80/${iso}.png 2x" alt="${n} flag" loading="lazy" onerror="this.replaceWith('⚽')">` : "⚽";
+};
 const FIXTURES = TX_TAPES.filter(Boolean).map(bundle => {
   const t0 = TxReal.buildTape(bundle);                       // pure — per-bundle
   const tape = SA.buildRealTape(t0.events, t0.oddsTimeline);
@@ -760,7 +772,7 @@ function tickerHtml() {
       return `${k === "home" ? "H" : k === "draw" ? "D" : "A"} ${(q[k] * 100).toFixed(1)} <span class="${cls}">${d > 0 ? "▲" : d < 0 ? "▼" : "·"}${Math.abs(d).toFixed(1)}</span>`;
     };
     const vol = F.settled ? 0 : marketVol(F, t);
-    return `<span class="tk">${F.liveMatch ? '<span class="lv">● LIVE</span> ' : ""}<b>${F.p1} ${sc.g1}–${sc.g2} ${F.p2}</b> ${cell("home")} ${cell("draw")} ${cell("away")}${vol >= 0.15 ? ` <span class="n">σ${vol.toFixed(1)}</span>` : ""}</span>`;
+    return `<span class="tk">${F.liveMatch ? '<span class="lv">● LIVE</span> ' : ""}${F.f1} <b>${F.p1} ${sc.g1}–${sc.g2} ${F.p2}</b> ${F.f2} ${cell("home")} ${cell("draw")} ${cell("away")}${vol >= 0.15 ? ` <span class="n">σ${vol.toFixed(1)}</span>` : ""}</span>`;
   }).join("");
   return parts + parts;                                  // doubled → seamless -50% loop
 }
@@ -1157,7 +1169,7 @@ function renderStats() {
   const ev = F.tape.events.filter(e => e.t <= t);
   const sc = ev.length ? ev[ev.length - 1].stats : { g1: 0, g2: 0 };
   const done = !F.liveMatch && simT >= F.endT;                   // a live match is NEVER "done"
-  $('heroFlag1').textContent = F.f1; $('heroFlag2').textContent = F.f2;
+  $('heroFlag1').innerHTML = F.f1; $('heroFlag2').innerHTML = F.f2;
   $('heroName1').textContent = F.p1; $('heroName2').textContent = F.p2;
   $('heroScore').textContent = `${done ? F.outcome.g1 : sc.g1} – ${done ? F.outcome.g2 : sc.g2}`;
   const hm = $('heroMin');
