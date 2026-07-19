@@ -137,22 +137,45 @@ table.mkt{width:100%;border-collapse:collapse;font:600 10.5px Consolas,ui-monosp
 /* market-volatility chip on radar tiles */
 .volchip{margin-left:.4rem;padding:.05rem .35rem;border-radius:4px;font-size:.62rem;font-weight:700;background:#132030;border:1px solid #22334a;color:#7fb3d5}
 .volchip.hot{background:#2b1420;border-color:#5a2432;color:#ff8ba0}
-/* ---- landing gate (AetherFlow particle hero, vanilla port, Foresight palette) ---- */
-#gate{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#04070d}
+/* ---- cinematic landing (stadium + signal-network motion) ---- */
+html.gate-open,body.gate-open{overflow:hidden}
+#gate{position:fixed;inset:0;z-index:100;display:flex;align-items:stretch;justify-content:center;overflow-x:hidden;overflow-y:auto;background:#04070d;isolation:isolate}
 #gate.hidden{display:none}
-#gateCv{position:absolute;inset:0;width:100%;height:100%}
-.gate-inner{position:relative;z-index:2;text-align:center;padding:1.5rem;max-width:46rem}
+#gateCv{position:absolute;inset:0;z-index:1;width:100%;height:100%;opacity:.82;mix-blend-mode:screen;pointer-events:none}
+.gate-inner{position:relative;z-index:3;width:min(calc(100% - 64px),1280px);min-height:100%;margin:auto;padding:30px 0 38px;display:flex;flex-direction:column;justify-content:space-between}
+.gate-topline{display:flex;align-items:center;justify-content:space-between;gap:20px;color:#dbe7f4;font:800 .76rem var(--fmono);letter-spacing:.1em;text-transform:uppercase}
+.gate-mark{display:flex;align-items:center;gap:11px}.gate-mark::before{content:"";width:11px;height:11px;border:2px solid #ff9d2e;box-shadow:0 0 18px rgba(255,157,46,.75);transform:rotate(45deg)}
+.gate-mark b{color:#ffad49}.gate-built{display:flex;align-items:center;gap:9px;color:#9eafc3}.gate-built i{width:4px;height:4px;border-radius:50%;background:#35c9f2;box-shadow:0 0 12px #35c9f2}
+.gate-grid{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(390px,.72fr);gap:clamp(44px,7vw,104px);align-items:center;padding:42px 0 28px}
+.gate-copy{text-align:left;max-width:690px}
 @keyframes gateUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
-.gate-inner>*{opacity:0;animation:gateUp .8s ease forwards}
-.gate-chip{display:inline-flex;gap:.45rem;align-items:center;padding:.35rem .9rem;border-radius:999px;background:rgba(194,240,74,.08);border:1px solid rgba(194,240,74,.25);backdrop-filter:blur(4px);font-size:.72rem;font-weight:700;color:#d7e6ef;animation-delay:.4s}
-.gate-title{font-family:var(--fdisp);font-size:clamp(3rem,9vw,5.5rem);font-weight:800;font-style:italic;letter-spacing:.005em;text-transform:uppercase;color:#eef4ff;margin:.6rem 0;animation-delay:.6s}
-.gate-sub{color:#8fa3b5;font-size:clamp(.95rem,2vw,1.15rem);line-height:1.6;max-width:34rem;margin:0 auto 1.6rem;animation-delay:.8s}
-.gate-cta{display:flex;gap:.7rem;justify-content:center;flex-wrap:wrap;animation-delay:1s}
-.gate-cta button{cursor:pointer;border:0;border-radius:9px;padding:.85rem 1.5rem;font-weight:800;font-size:.95rem;display:inline-flex;gap:.5rem;align-items:center;transition:transform .15s,box-shadow .15s}
+.gate-topline,.gate-copy>*,.gate-visual,.gate-foot{opacity:0;animation:gateUp .75s cubic-bezier(.2,.75,.25,1) forwards}
+.gate-topline{animation-delay:.08s}.gate-chip{animation-delay:.18s}.gate-title{animation-delay:.28s}.gate-headline{animation-delay:.36s}.gate-sub{animation-delay:.44s}.gate-cta{animation-delay:.52s}.gate-note{animation-delay:.58s}.gate-trust{animation-delay:.64s}.gate-visual{animation-delay:.4s}.gate-foot{animation-delay:.72s}
+.gate-chip{display:inline-flex;gap:.5rem;align-items:center;padding:.42rem .72rem;border-radius:4px;background:rgba(7,12,20,.58);border:1px solid rgba(53,201,242,.48);backdrop-filter:blur(10px);font:800 .74rem var(--fmono);letter-spacing:.06em;text-transform:uppercase;color:#8de8ff}
+.gate-chip::before{content:"";width:6px;height:6px;border-radius:50%;background:#44d18a;box-shadow:0 0 14px #44d18a;animation:gatePulse 1.8s ease-in-out infinite}
+.gate-title{font-family:var(--fdisp);font-size:clamp(4.7rem,9vw,8.4rem);font-weight:850;font-style:italic;line-height:.86;letter-spacing:-.055em;text-transform:uppercase;color:#f6f8fc;margin:1.05rem 0 .65rem;text-shadow:0 10px 42px rgba(0,0,0,.72)}
+.gate-title b{color:#ff9d2e}.gate-headline{margin:0 0 .8rem;color:#fff;font:800 clamp(1.45rem,2.8vw,2.55rem)/1.04 var(--fdisp);letter-spacing:-.025em;text-wrap:balance}.gate-headline em{color:#66dcfa;font-style:normal}
+.gate-sub{color:#bcc9d8;font-size:clamp(.98rem,1.25vw,1.12rem);line-height:1.62;max-width:620px;margin:0 0 1.6rem;text-shadow:0 2px 12px rgba(0,0,0,.75)}
+.gate-cta{display:flex;gap:.7rem;justify-content:flex-start;flex-wrap:wrap}
+.gate-cta button{cursor:pointer;border-radius:6px;min-height:50px;padding:.82rem 1.2rem;font:800 .9rem var(--fbody);display:inline-flex;gap:.58rem;align-items:center;justify-content:center;transition:transform .18s,box-shadow .18s,border-color .18s,background .18s}
 .gate-cta button:hover{transform:translateY(-2px)}
-#gateGoogle{background:rgba(238,244,255,.07);color:#eef4ff;border:1px solid rgba(238,244,255,.28);box-shadow:none}
-#gateEnter{background:#c2f04a;color:#0a1322;box-shadow:0 8px 30px rgba(194,240,74,.25)}
-.gate-note{margin-top:1rem;font-size:.72rem;color:#8fa3b5;max-width:30rem;margin-left:auto;margin-right:auto;animation-delay:1.2s}
+#gateGoogle{background:rgba(5,10,18,.62);color:#f1f5fb;border:1px solid rgba(199,215,233,.38);box-shadow:none;backdrop-filter:blur(12px)}
+#gateGoogle:hover{border-color:#78ddf8;background:rgba(9,20,31,.82)}
+#gateEnter{border:1px solid #ff9d2e;background:#ff9d2e;color:#160f08;box-shadow:0 12px 38px rgba(255,157,46,.24)}
+#gateEnter:hover{background:#ffb04a;box-shadow:0 16px 48px rgba(255,157,46,.32)}
+.gate-note{margin-top:.85rem;font-size:.78rem;color:#a3b2c4;max-width:590px}
+.gate-trust{display:flex;gap:8px;flex-wrap:wrap;margin-top:1.25rem}.gate-trust span{display:inline-flex;align-items:center;gap:7px;padding:.36rem .55rem;border:1px solid rgba(137,158,184,.3);border-radius:4px;background:rgba(5,10,18,.54);color:#c2cfdd;font:750 .7rem var(--fmono);backdrop-filter:blur(10px)}.gate-trust span::before{content:"✓";color:#44d18a}
+.gate-visual{position:relative;overflow:hidden;min-height:490px;padding:20px;border:1px solid rgba(132,163,199,.34);border-radius:12px;background:linear-gradient(145deg,rgba(8,17,29,.88),rgba(5,10,18,.68));box-shadow:0 30px 90px rgba(0,0,0,.52),inset 0 1px 0 rgba(255,255,255,.07);backdrop-filter:blur(18px)}
+.gate-visual::before{content:"";position:absolute;inset:-35% auto -35% -25%;width:32%;background:linear-gradient(90deg,transparent,rgba(53,201,242,.13),transparent);transform:rotate(12deg);animation:gateScan 5.4s ease-in-out infinite;pointer-events:none}
+.gate-panel-top,.gate-panel-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;color:#8294aa;font:750 .68rem var(--fmono);letter-spacing:.05em;text-transform:uppercase}.gate-live{display:inline-flex;align-items:center;gap:7px;color:#76e7ad}.gate-live::before{content:"";width:6px;height:6px;border-radius:50%;background:#44d18a;box-shadow:0 0 12px #44d18a;animation:gatePulse 1.8s ease-in-out infinite}
+.gate-preview-match{display:flex;align-items:end;justify-content:space-between;gap:20px;margin:22px 0 18px;padding-bottom:18px;border-bottom:1px solid rgba(117,143,174,.25)}.gate-preview-match small{display:block;margin-bottom:5px;color:#ffad49;font:800 .68rem var(--fmono);letter-spacing:.08em}.gate-preview-match strong{display:block;color:#f4f7fb;font:850 1.38rem var(--fdisp);letter-spacing:-.015em}.gate-preview-clock{color:#6fe0fb;font:850 1.05rem var(--fmono)}
+.gate-chart{position:relative;height:150px;border:1px solid rgba(89,119,151,.26);border-radius:7px;background:linear-gradient(rgba(49,73,99,.2) 1px,transparent 1px),linear-gradient(90deg,rgba(49,73,99,.2) 1px,transparent 1px),rgba(4,9,16,.55);background-size:100% 37px,54px 100%;overflow:hidden}.gate-chart svg{position:absolute;inset:0;width:100%;height:100%}.gate-chart-label{position:absolute;left:11px;top:9px;color:#8fa1b5;font:750 .64rem var(--fmono);letter-spacing:.07em;text-transform:uppercase}.gate-chart-now{position:absolute;right:10px;top:9px;padding:.2rem .38rem;border-radius:3px;background:#ff9d2e;color:#171006;font:900 .62rem var(--fmono)}
+.gate-insights{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0 18px}.gate-insight{padding:10px;border:1px solid rgba(90,118,150,.28);border-radius:6px;background:rgba(8,15,25,.68)}.gate-insight span{display:block;color:#8193a9;font:750 .61rem var(--fmono);letter-spacing:.06em;text-transform:uppercase}.gate-insight b{display:block;margin-top:3px;color:#f1f5fa;font:800 .82rem var(--fbody)}.gate-insight:nth-child(1) b{color:#ffb45b}.gate-insight:nth-child(2) b{color:#67defb}.gate-insight:nth-child(3) b{color:#72e6aa}
+.gate-panel-foot{padding-top:3px;text-transform:none;letter-spacing:0;font-size:.72rem}.gate-panel-foot b{color:#dbe5f0}.gate-foot{display:flex;justify-content:space-between;gap:20px;align-items:center;color:#899aad;font:700 .69rem var(--fmono);letter-spacing:.035em}.gate-foot span:last-child{color:#b8c5d4}
+@keyframes gatePulse{50%{opacity:.45;transform:scale(.75)}}
+@keyframes gateScan{0%,12%{transform:translateX(-130%) rotate(12deg)}70%,100%{transform:translateX(520%) rotate(12deg)}}
+@media(max-width:900px){.gate-inner{width:min(calc(100% - 36px),760px);padding:22px 0}.gate-grid{grid-template-columns:1fr;padding:40px 0 24px}.gate-visual{display:none}.gate-copy{max-width:680px}.gate-title{font-size:clamp(4.2rem,16vw,7rem)}.gate-foot{padding-top:18px}}
+@media(max-width:560px){#gate::before{transform:none!important;animation:none!important}.gate-inner{width:min(calc(100% - 28px),760px)}.gate-topline{font-size:.65rem}.gate-built span{display:none}.gate-grid{padding:26px 0 16px}.gate-title{font-size:clamp(3.7rem,19vw,5.4rem);margin-top:.85rem}.gate-headline{font-size:1.45rem}.gate-sub{font-size:.94rem}.gate-cta{display:grid}.gate-cta button{width:100%}.gate-trust span{font-size:.64rem}.gate-foot{display:block}.gate-foot span{display:block}.gate-foot span+span{margin-top:5px}}
 /* ---- market monitor row (OpenBB-style terminal cells) + tape crosshair tooltip (lightweight-charts affordances) ---- */
 #monitor{display:grid;grid-template-columns:repeat(3,1fr);gap:.45rem;margin:.35rem 0 .5rem}
 .moncell{background:#0a141f;border:1px solid #16283a;border-radius:7px;padding:.4rem .55rem;display:flex;align-items:center;gap:.55rem;font-size:.7rem;min-width:0}
@@ -342,7 +365,7 @@ footer b{color:var(--txt)}
   #modalbox{width:94vw;max-height:88vh;padding:.9rem}
 }
 @media(max-width:430px){.radar{grid-template-columns:1fr}.stat{flex:1 1 calc(50% - 4px)}}
-@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}.gate-inner>*{opacity:1}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}.gate-inner>*,.gate-copy>*,.gate-visual{opacity:1!important;transform:none!important}}
 /* overflow hardening — never let the page scroll sideways on mobile */
 html,body{overflow-x:hidden;max-width:100vw}
 .tile,.stat,.card,.prophet,.posrow,.commitrow,.hero-team,.hero-mid,main>div{min-width:0}
@@ -396,8 +419,10 @@ button.prophet{width:100%;background:transparent;text-align:left}
 @media(prefers-reduced-motion:reduce){html:focus-within{scroll-behavior:auto!important}#tickerbar .inner{animation:none!important;transform:none!important;will-change:auto}.dot,.datatag.is-live,.live-badge .dot,.wallet-pending::after{animation:none!important}.gate-cta button:hover,.tile:hover{transform:none!important}}
 /* Original international-football imagery. Art is atmosphere, never evidence;
    only the two visible background assets load outside the lazy gallery. */
-#gate::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(4,7,13,.86),rgba(4,7,13,.48)),url("assets/world-cup/players-tunnel.webp") center/cover no-repeat;opacity:.74;transform:scale(1.015)}
-#gateCv{z-index:1;opacity:.7}.gate-inner{z-index:2}
+#gate::before{content:"";position:absolute;inset:0;z-index:-2;background:url("assets/world-cup/stadium-night-panorama.webp") center 58%/cover no-repeat;opacity:.9;transform:scale(1.035);animation:gateStadiumDrift 18s ease-in-out infinite alternate}
+#gate::after{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(circle at 72% 48%,rgba(18,51,75,.08),rgba(3,7,13,.42) 48%,rgba(3,7,13,.92) 100%),linear-gradient(90deg,rgba(3,7,13,.88) 0%,rgba(3,7,13,.54) 48%,rgba(3,7,13,.3) 100%),linear-gradient(180deg,rgba(3,7,13,.52),transparent 34%,rgba(3,7,13,.82));pointer-events:none}
+#gateCv{z-index:1;opacity:.82}.gate-inner{z-index:3}
+@keyframes gateStadiumDrift{to{transform:scale(1.075) translate3d(-.6%,.35%,0)}}
 .hero{background-image:linear-gradient(90deg,rgba(10,19,34,.94),rgba(10,19,34,.66) 48%,rgba(10,19,34,.94)),url("assets/world-cup/stadium-night-panorama.webp");background-size:cover;background-position:center}
 .world-stage{margin:0 16px 14px;padding:10px 12px 12px;background:#0b192c;border:1px solid var(--line);border-radius:12px;content-visibility:auto;contain-intrinsic-size:150px}
 .world-stage-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:8px;flex-wrap:wrap}
@@ -411,8 +436,8 @@ button.prophet{width:100%;background:transparent;text-align:left}
 .world-stage-card figcaption span{display:block;margin-top:1px;color:#b8c9dc;font:600 .54rem var(--fmono);font-style:normal;text-transform:none;letter-spacing:0}
 .world-stage-card:hover img{transform:scale(1.035)}
 @media(max-width:640px){.world-stage{margin:0 12px 12px;padding:9px}.world-stage-track{grid-auto-columns:74vw}.world-stage-card{min-height:124px}}
-@media(prefers-reduced-motion:reduce){.world-stage-card img{transition:none}.world-stage-card:hover img{transform:none}}
-@media(prefers-reduced-data:reduce){#gate::before,.hero{background-image:none}}
+@media(prefers-reduced-motion:reduce){#gate::before{animation:none}.gate-chip::before,.gate-live::before,.gate-visual::before{animation:none}.world-stage-card img{transition:none}.world-stage-card:hover img{transform:none}}
+@media(prefers-reduced-data:reduce){#gate::before,.hero{background-image:none}.gate-visual{backdrop-filter:none}}
 
 /* ---- 2026 intelligence workspace ---------------------------------------
    The product signal owns the hierarchy: match -> divergence -> evidence.
@@ -640,17 +665,52 @@ body.detail-open>.workspace-nav,body.detail-open>#tickerbar,body.detail-open>.de
      imported). Sign-in is Clerk-powered (Google OAuth + Sign-in-with-Solana;
      publishable key baked in, override via ?clerk_pk=). Guest entry always
      works — a judge is never blocked by auth. -->
-<div id="gate" aria-labelledby="gateTitle">
+<div id="gate" role="dialog" aria-modal="true" aria-labelledby="gateTitle" aria-describedby="gateSub">
   <canvas id="gateCv" aria-hidden="true"></canvas>
   <div class="gate-inner">
-    <div class="gate-chip">⚡ Real TxLINE inputs · optional Solana anchors · live SSE</div>
-    <h1 class="gate-title" id="gateTitle">FORE<b>SIGHT</b></h1>
-    <p class="gate-sub"><strong>A verified track record, graded against verifiable TxLINE results.</strong><br>Commit before the market moves; prove what you knew and when.</p>
-    <div class="gate-cta">
-      <button type="button" id="gateEnter">▶ Enter the league</button>
-      <button type="button" id="gateGoogle"><svg aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg> Sign in with Google</button>
+    <div class="gate-topline">
+      <div class="gate-mark">Foresight <b>World Cup 2026</b></div>
+      <div class="gate-built"><span>Powered by TxLINE</span><i aria-hidden="true"></i><span>Anchored on Solana</span></div>
     </div>
-    <div class="gate-note" id="gateNote">No account needed. Historical calls are local practice; eligible future/live calls can be wallet-anchored.</div>
+    <div class="gate-grid">
+      <div class="gate-copy">
+        <div class="gate-chip">The live football intelligence desk</div>
+        <h1 class="gate-title" id="gateTitle">FORE<b>SIGHT</b></h1>
+        <p class="gate-headline">Every match signal. <em>One decisive view.</em></p>
+        <p class="gate-sub" id="gateSub">Live odds, market divergence, news, key match events and the moves of top traders—unified in one World Cup command center. Make the call, then prove exactly when you made it.</p>
+        <div class="gate-cta">
+          <button type="button" id="gateEnter">Open match desk <span aria-hidden="true">→</span></button>
+          <button type="button" id="gateGoogle"><svg aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg> Sign in with Google</button>
+        </div>
+        <div class="gate-note" id="gateNote">No account required. Historical replays stay local; eligible future/live calls can be wallet-anchored.</div>
+        <div class="gate-trust" aria-label="Foresight data layers">
+          <span>TxLINE odds + events</span><span>Polymarket comparison</span><span>Verifiable receipts</span>
+        </div>
+      </div>
+      <div class="gate-visual" aria-label="Interface preview showing match signals flowing into one view">
+        <div class="gate-panel-top"><span class="gate-live">Signal map</span><span>Interface preview</span></div>
+        <div class="gate-preview-match">
+          <div><small>WORLD CUP MATCH DESK</small><strong>All the game. One screen.</strong></div>
+          <div class="gate-preview-clock">30×</div>
+        </div>
+        <div class="gate-chart" aria-hidden="true">
+          <span class="gate-chart-label">Probability tape + match pressure</span><span class="gate-chart-now">NOW</span>
+          <svg viewBox="0 0 520 150" preserveAspectRatio="none">
+            <defs><linearGradient id="gateArea" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ff9d2e" stop-opacity=".32"/><stop offset="1" stop-color="#ff9d2e" stop-opacity="0"/></linearGradient></defs>
+            <path d="M0 116 C46 102 71 108 108 88 S173 72 215 81 S280 55 322 63 S382 92 420 65 S474 42 520 36 L520 150 L0 150 Z" fill="url(#gateArea)"/>
+            <path d="M0 116 C46 102 71 108 108 88 S173 72 215 81 S280 55 322 63 S382 92 420 65 S474 42 520 36" fill="none" stroke="#ff9d2e" stroke-width="3"/>
+            <path d="M0 62 C50 70 92 53 133 67 S206 94 250 80 S323 72 365 83 S436 74 520 92" fill="none" stroke="#35c9f2" stroke-width="2" stroke-dasharray="5 5" opacity=".9"/>
+          </svg>
+        </div>
+        <div class="gate-insights">
+          <div class="gate-insight"><span>Odds</span><b>Divergence</b></div>
+          <div class="gate-insight"><span>Match</span><b>Pressure</b></div>
+          <div class="gate-insight"><span>League</span><b>Trader flow</b></div>
+        </div>
+        <div class="gate-panel-foot"><span>Odds · news · shots · corners · possession</span><b>timestamped together</b></div>
+      </div>
+    </div>
+    <div class="gate-foot"><span>Built for the TxODDS World Cup Hackathon</span><span>Practice is local · eligible calls are on-chain</span></div>
   </div>
 </div>
 
@@ -2006,7 +2066,7 @@ $('googleLoginBtn').onclick = () => {
   $('modalbox').innerHTML = `<h4>Sign in with Google <button type="button" class="modal-close" onclick="closeModal()">✕ close</button></h4>
     <div class="stratbox">Google + Solana sign-in is live on the landing gate (Clerk-powered — Google OAuth + Sign-in-with-Solana). Sign in there; this dashboard never asks for a password itself.</div>
     <div class="small mut" style="margin-top:.5rem">Clerk sessions use the real immutable <code>user.id</code>. Wallet linking requires an expiring nonce signature and backend verification; without that backend, the UI stays explicitly session-only and pending.</div>
-    <button class="btn violet" style="margin-top:.6rem" onclick="localStorage.removeItem('foresight_entered');location.reload()">↩ Back to the gate to sign in</button>
+    <button class="btn violet" style="margin-top:.6rem" onclick="location.reload()">↩ Back to the landing page to sign in</button>
     <button type="button" class="btn" style="margin-top:.4rem" onclick="closeModal()">Continue as @you</button>`;
   openModal();
 };
@@ -3112,17 +3172,24 @@ function setDemoDone(step) { if (demoMode) document.querySelectorAll(`[data-demo
 (function gateModule() {
   const gate = $('gate'), cv = $('gateCv');
   if (!gate || !cv) return;
-  const skip = demoMode || qs.get("nogate") === "1" || localStorage.getItem("foresight_entered") === "1";
+  const skip = demoMode || qs.get("nogate") === "1";
   let rafId = null, particles = [], stopped = false;
   const mouse = { x: null, y: null, radius: 170 };
   const ctx2 = cv.getContext('2d');
+  const workspace = [...document.body.children].filter(el => el !== gate && el.tagName !== "SCRIPT");
+  function setGateOpen(open) {
+    document.documentElement.classList.toggle("gate-open", open);
+    document.body.classList.toggle("gate-open", open);
+    for (const element of workspace) element.inert = open;
+  }
   // house rule: all motion is reduced-motion-aware — under prefers-reduced-motion
   // the particle rAF loop never starts; a static gradient stands in.
   const reduceMotion = PREFERS_REDUCED_MOTION;
   function paintStatic() {
     cv.width = innerWidth; cv.height = innerHeight;
+    ctx2.clearRect(0, 0, cv.width, cv.height);
     const g = ctx2.createLinearGradient(0, 0, cv.width, cv.height);
-    g.addColorStop(0, "#04070d"); g.addColorStop(.55, "#071120"); g.addColorStop(1, "#0a1626");
+    g.addColorStop(0, "rgba(255,157,46,.08)"); g.addColorStop(.55, "rgba(4,10,18,0)"); g.addColorStop(1, "rgba(53,201,242,.08)");
     ctx2.fillStyle = g; ctx2.fillRect(0, 0, cv.width, cv.height);
   }
 
@@ -3134,7 +3201,7 @@ function setDemoDone(step) { if (demoMode) document.querySelectorAll(`[data-demo
       particles.push({
         x: Math.random() * cv.width, y: Math.random() * cv.height,
         dx: Math.random() * 0.4 - 0.2, dy: Math.random() * 0.4 - 0.2,
-        size, color: Math.random() < 0.25 ? "rgba(194,240,74,.9)" : "rgba(59,139,245,.75)",
+        size, color: Math.random() < 0.28 ? "rgba(255,157,46,.9)" : "rgba(53,201,242,.75)",
       });
     }
   }
@@ -3142,7 +3209,7 @@ function setDemoDone(step) { if (demoMode) document.querySelectorAll(`[data-demo
   function step() {
     if (stopped) return;
     rafId = requestAnimationFrame(step);
-    ctx2.fillStyle = "#04070d"; ctx2.fillRect(0, 0, cv.width, cv.height);
+    ctx2.clearRect(0, 0, cv.width, cv.height);
     for (const p of particles) {
       if (p.x > cv.width || p.x < 0) p.dx = -p.dx;
       if (p.y > cv.height || p.y < 0) p.dy = -p.dy;
@@ -3162,35 +3229,38 @@ function setDemoDone(step) { if (demoMode) document.querySelectorAll(`[data-demo
       if (d2 < maxD2) {
         const op = Math.max(0, 1 - d2 / 20000);
         const ma = mouse.x !== null && Math.hypot(particles[a].x - mouse.x, particles[a].y - mouse.y) < mouse.radius;
-        ctx2.strokeStyle = ma ? `rgba(230,245,255,${op})` : `rgba(93,140,190,${op * 0.55})`;
+        ctx2.strokeStyle = ma ? `rgba(238,248,255,${op})` : `rgba(71,177,213,${op * 0.5})`;
         ctx2.lineWidth = 1; ctx2.beginPath();
         ctx2.moveTo(particles[a].x, particles[a].y); ctx2.lineTo(particles[b].x, particles[b].y); ctx2.stroke();
       }
     }
   }
-  function closeGate(persist) {
+  function closeGate() {
     stopped = true; if (rafId) cancelAnimationFrame(rafId);
     removeEventListener("resize", resize); removeEventListener("resize", paintStatic);
     removeEventListener("mousemove", onMove); removeEventListener("mouseout", onOut);
     gate.classList.add("hidden");
-    if (persist) localStorage.setItem("foresight_entered", "1");
+    setGateOpen(false);
+    requestAnimationFrame(() => document.querySelector(".workspace-nav a")?.focus());
     if (window.__onGateClosed) { const f = window.__onGateClosed; window.__onGateClosed = null; f(); }  // deferred replay start
   }
   const onMove = e => { mouse.x = e.clientX; mouse.y = e.clientY; };
   const onOut = () => { mouse.x = null; mouse.y = null; };
 
-  if (skip) { gate.classList.add("hidden"); return; }
+  if (skip) { gate.classList.add("hidden"); setGateOpen(false); return; }
+  setGateOpen(true);
   if (reduceMotion) { addEventListener("resize", paintStatic); paintStatic(); }
   else { addEventListener("resize", resize); addEventListener("mousemove", onMove); addEventListener("mouseout", onOut); resize(); step(); }
+  requestAnimationFrame(() => $('gateEnter').focus({ preventScroll: true }));
 
-  $('gateEnter').onclick = () => closeGate(true);
+  $('gateEnter').onclick = closeGate;
   $('gateGoogle').onclick = async () => {
     try {
       $('gateNote').textContent = "loading Clerk…";
       const clerk = await ensureClerk();
-      if (clerk.user) { bindClerkUser(clerk.user); closeGate(true); return; }
+      if (clerk.user) { bindClerkUser(clerk.user); closeGate(); return; }
       clerk.openSignIn({ afterSignInUrl: location.href, afterSignUpUrl: location.href });
-      clerk.addListener(({ user }) => { if (user) { bindClerkUser(user); closeGate(true); } });
+      clerk.addListener(({ user }) => { if (user) { bindClerkUser(user); closeGate(); } });
     } catch (e) {
       $('gateNote').innerHTML = `<b style="color:#ff5a74">Clerk failed to load:</b> ${String(e.message || e)} — <button type="button" class="inline-action" onclick="$('gateEnter').click()">enter as guest</button>.`;
     }

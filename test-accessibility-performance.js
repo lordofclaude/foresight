@@ -47,6 +47,10 @@ has("390px controls reflow", /@media\(max-width:430px\)\{\.pickrow\{grid-templat
 has("detail pages expose native open and back controls", /id="detailBack"[\s\S]*id="portfolioOpen"[\s\S]*id="newsOpen"[\s\S]*id="leaderboardOpen"/);
 has("portfolio summary chart supports keyboard activation", /id="pfSpark" role="button" tabindex="0"[\s\S]*event\.key === "Enter" \|\| event\.key === " "/);
 has("mobile detail pages collapse KPI and news grids", /@media\(max-width:820px\)[^{]*\{[\s\S]*\.detail-kpis\{grid-template-columns:1fr 1fr\}[\s\S]*\.detail-news-layout\{grid-template-columns:1fr\}/);
+has("landing page is a labeled modal surface", /id="gate" role="dialog" aria-modal="true" aria-labelledby="gateTitle" aria-describedby="gateSub"/);
+has("landing page makes the workspace inert until entry", /function setGateOpen\(open\)[\s\S]*element\.inert = open/);
+has("normal visits are not permanently skipped by local storage", /const skip = demoMode \|\| qs\.get\("nogate"\) === "1";/);
+has("landing page states the centralized match intelligence value", /Live odds, market divergence, news, key match events and the moves of top traders/);
 has("trend chart switcher uses an accessible tablist", /id="tapeSwitcher" role="tablist" aria-label="Match trend chart"[\s\S]*role="tab" class="on" aria-selected="true"/);
 has("trend tabs support arrow-key navigation", /event\.key !== "ArrowRight" && event\.key !== "ArrowLeft"[\s\S]*setTapeView\(buttons\[next\]\.dataset\.tapeView, true\)/);
 lacks("fast-changing trend readout avoids live announcements", /id="trendReadout"[^>]*aria-live=/);
@@ -56,8 +60,8 @@ const worldStageBytes = worldStageImages.reduce((sum, file) => sum + fs.statSync
 check("ten world-stage WebP assets exist", worldStageImages.length === 10);
 check("world-stage image set stays under 2 MB", worldStageBytes < 2 * 1024 * 1024);
 check("main dashboard does not load the decorative image carousel", !/<img[^>]+assets\/world-cup\//.test(html));
-has("championship imagery stays atmospheric in gate and match hero", /#gate::before\{[^}]*players-tunnel\.webp[\s\S]*\.hero\{background-image:[^}]*stadium-night-panorama\.webp/);
-has("reduced-data mode removes decorative imagery", /@media\(prefers-reduced-data:reduce\)\{#gate::before,\.hero\{background-image:none\}\}/);
+has("stadium imagery frames the landing and match hero", /#gate::before\{[^}]*stadium-night-panorama\.webp[\s\S]*\.hero\{background-image:[^}]*stadium-night-panorama\.webp/);
+has("reduced-data mode removes decorative imagery and blur", /@media\(prefers-reduced-data:reduce\)\{#gate::before,\.hero\{background-image:none\}\.gate-visual\{backdrop-filter:none\}\}/);
 
 console.log(`\n${passed} passed, ${failed} failed`);
 if (failed) process.exit(1);

@@ -4,6 +4,24 @@ import { openDemo } from './helpers'
 test.describe('mobile and keyboard access', () => {
   test.use({ viewport: { width: 390, height: 844 } })
 
+  test('cinematic landing stays focused and fits a 390px viewport', async ({ page }) => {
+    await page.goto('/?acceptance=gate')
+    await expect(page.locator('#gate')).toBeVisible()
+    await expect(page.locator('.gate-visual')).toBeHidden()
+    await expect(page.locator('#gateEnter')).toBeVisible()
+    await expect(page.locator('header')).toHaveAttribute('inert', '')
+    const dimensions = await page.evaluate(() => ({
+      clientWidth: document.documentElement.clientWidth,
+      documentWidth: document.documentElement.scrollWidth,
+      gateWidth: document.querySelector('#gate')?.scrollWidth || 0,
+    }))
+    expect(dimensions.documentWidth).toBeLessThanOrEqual(dimensions.clientWidth)
+    expect(dimensions.gateWidth).toBeLessThanOrEqual(dimensions.clientWidth)
+    await page.locator('#gateEnter').click()
+    await expect(page.locator('#gate')).toHaveClass(/hidden/)
+    await expect(page.locator('.workspace-nav a').first()).toBeFocused()
+  })
+
   test('mobile layout does not overflow the viewport', async ({ page }) => {
     await openDemo(page)
     const dimensions = await page.evaluate(() => ({

@@ -2,20 +2,29 @@ import { expect, test } from '@playwright/test'
 import { openDemo, relayBase } from './helpers'
 
 test.describe('remaining interactive controls', () => {
-  test('landing gate supports offline auth fallback, remembers guest entry, and restores modal focus', async ({ page }) => {
+  test('landing page supports offline auth fallback, returns on reload, and restores modal focus', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 })
     await page.route('https://cdn.jsdelivr.net/**', route => route.abort())
     await page.goto(`/?relay=${encodeURIComponent(relayBase)}&acceptance=gate`)
 
     await expect(page.locator('#gate')).toBeVisible()
-    await expect(page.getByRole('button', { name: /enter the league/i })).toBeVisible()
+    await expect(page.locator('#gate')).toHaveAttribute('aria-modal', 'true')
+    await expect(page.locator('.gate-visual')).toBeVisible()
+    await expect(page.locator('.gate-visual')).toHaveCSS('opacity', '1')
+    await expect(page.locator('.gate-title')).toHaveCSS('opacity', '1')
+    await expect(page.locator('header')).toHaveAttribute('inert', '')
+    await expect(page.getByRole('button', { name: /open match desk/i })).toBeVisible()
     await page.locator('#gateGoogle').click()
     await expect(page.locator('#gateNote')).toContainText('Clerk failed to load')
     await page.getByRole('button', { name: /enter as guest/i }).click()
     await expect(page.locator('#gate')).toHaveClass(/hidden/)
 
+    await page.evaluate(() => localStorage.setItem('foresight_entered', '1'))
     await page.reload()
+    await expect(page.locator('#gate')).toBeVisible()
+    await page.locator('#gateEnter').click()
     await expect(page.locator('#gate')).toHaveClass(/hidden/)
+    await expect(page.locator('header')).not.toHaveAttribute('inert', '')
     const headerSignIn = page.locator('#googleLoginBtn')
     await headerSignIn.click()
     await expect(page.locator('#modal')).toHaveAttribute('aria-hidden', 'false')
