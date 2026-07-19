@@ -2626,6 +2626,11 @@ const qs = new URLSearchParams(location.search);
 const CLERK_PK = "pk_test_Y2VydGFpbi1lbXUtNjMuY2xlcmsuYWNjb3VudHMuZGV2JA";
 let CLERK_USER = null;
 let CLERK_LOAD_PROMISE = null;
+// True only while the gate's own "Sign in to Foresight" click is in flight —
+// gates dashboard navigation to an explicit click, never a silent background
+// session restore (so reloading an already-signed-in session lands back on
+// the landing page, not straight through to the dashboard).
+let awaitingGateSignIn = false;
 /** Clerk user → league handle: username > firstName > email local-part, sanitized. */
 function clerkLabel(u) {
   const base = (u && (u.username || u.firstName
@@ -2643,7 +2648,10 @@ function bindClerkUser(user) {
   renderIdentityState();
   toast("✓ signed in as " + ME_LABEL + " — new commits use the stable Clerk account ID", false, "act");
   renderAll();
-  if (typeof window.__onClerkAuthenticated === "function") window.__onClerkAuthenticated(user);
+  if (awaitingGateSignIn && typeof window.__onClerkAuthenticated === "function") {
+    awaitingGateSignIn = false;
+    window.__onClerkAuthenticated(user);
+  }
 }
 async function ensureClerk() {
   if (window.__clerkInst) return window.__clerkInst;
@@ -3273,10 +3281,12 @@ function setDemoDone(step) { if (demoMode) document.querySelectorAll(`[data-demo
       $('gateNote').textContent = "loading Clerk…";
       const clerk = await ensureClerk();
       watchClerkAuth(clerk);
+      awaitingGateSignIn = true;                // this click, and only this click, may open the dashboard
       if (clerk.user) { bindClerkUser(clerk.user); return; }
       clerk.openSignIn({ afterSignInUrl: location.href, afterSignUpUrl: location.href });
       $('gateNote').textContent = "Complete sign-in in the secure Clerk window to open the match desk.";
     } catch (e) {
+      awaitingGateSignIn = false;
       $('gateNote').innerHTML = `<b style="color:#ff5a74">Sign-in unavailable:</b> ${String(e.message || e)}. Dashboard access stays locked; retry when Clerk is reachable.`;
     }
   };
