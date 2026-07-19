@@ -38,8 +38,9 @@ export async function installSolanaWeb3Mock(page: Page) {
 export async function installSolanaProviderMock(
   page: Page,
   mode: 'confirmed' | 'pending' | 'rejected',
+  injection: 'legacy' | 'phantom' = 'legacy',
 ) {
-  await page.addInitScript(({ providerMode }) => {
+  await page.addInitScript(({ providerMode, injectionShape }) => {
     const address = 'ForesightE2EWallet1111111111111111111111111'
     const publicKey = { toString: () => address }
     let resolveConnect: ((value: { publicKey: typeof publicKey }) => void) | null = null
@@ -60,14 +61,18 @@ export async function installSolanaProviderMock(
         return { signature: new Uint8Array([1, 2, 3]) }
       },
     }
-    Object.defineProperty(window, 'solana', { configurable: true, value: provider })
+    if (injectionShape === 'phantom') {
+      Object.defineProperty(window, 'phantom', { configurable: true, value: { solana: provider } })
+    } else {
+      Object.defineProperty(window, 'solana', { configurable: true, value: provider })
+    }
     window.__FORESIGHT_SOLANA_PROVIDER_MOCK__ = true
     window.__resolveForesightSolanaProviderMock = () => {
       if (!resolveConnect) throw new Error('mock connect is not pending')
       resolveConnect({ publicKey })
       resolveConnect = null
     }
-  }, { providerMode: mode })
+  }, { providerMode: mode, injectionShape: injection })
 }
 
 declare global {

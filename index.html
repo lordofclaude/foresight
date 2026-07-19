@@ -1233,11 +1233,20 @@ $('pickrow').onclick = e => {
    identities their own real wallets. */
 const MEMO_PROGRAM_ID = "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr";
 const DEVNET_RPC = "https://api.devnet.solana.com";
-let solWallet = null, solConn = null;
+let solWallet = null, solConn = null, solProvider = null;
+
+function getSolanaProvider() {
+  const phantom = window.phantom && window.phantom.solana;
+  if (phantom && phantom.isPhantom && typeof phantom.connect === "function") return phantom;
+  const legacy = window.solana;
+  if (legacy && legacy.isPhantom && typeof legacy.connect === "function") return legacy;
+  return null;
+}
 
 async function requestWalletIdentityLink() {
   if (!CLERK_USER) { renderIdentityState(); return; }
-  if (!window.solana || typeof window.solana.signMessage !== "function") {
+  const provider = solProvider || getSolanaProvider();
+  if (!provider || typeof provider.signMessage !== "function") {
     identityBinding.unlink(); renderIdentityState();
     toast("wallet connected, but this provider cannot sign the account-link challenge", true);
     return;
@@ -1245,7 +1254,7 @@ async function requestWalletIdentityLink() {
   try {
     const challenge = identityBinding.beginLink({ accountId: CLERK_USER.id, walletAddress: solWallet });
     renderIdentityState();
-    const signed = await window.solana.signMessage(new TextEncoder().encode(challenge.message), "utf8");
+    const signed = await provider.signMessage(new TextEncoder().encode(challenge.message), "utf8");
     const state = await identityBinding.submitProof({
       challengeId: challenge.id, accountId: CLERK_USER.id, walletAddress: solWallet,
       signature: signed && signed.signature
@@ -1293,7 +1302,8 @@ $('modal').addEventListener('keydown', e => {
 });
 
 async function connectWallet() {
-  if (!window.solana || !window.solana.isPhantom) {
+  const provider = getSolanaProvider();
+  if (!provider) {
     $('modalbox').innerHTML = `<h4>Connect Wallet <button type="button" class="modal-close" onclick="closeModal()">✕ close</button></h4>
       <div class="stratbox priv">No Solana wallet extension detected. Real on-chain commits need a browser wallet — <a href="https://phantom.app" target="_blank" rel="noopener" style="color:var(--blue)">Phantom</a> is the most common. Install it, switch it to <b>Devnet</b>, then reconnect.</div>
       <div class="small mut" style="margin-top:.5rem">Until then, commits stay local sim-slots — same hash logic, no wallet required, zero friction for the demo.</div>`;
@@ -1302,8 +1312,9 @@ async function connectWallet() {
   }
   try {
     $('walletBtn').classList.add('wallet-pending'); $('walletBtn').disabled = true;
-    const resp = await window.solana.connect();
+    const resp = await provider.connect();
     solWallet = resp.publicKey.toString();
+    solProvider = provider;
     if (!window.solanaWeb3) throw new Error(window.SOLANA_WEB3_LOAD_FAILED ? "Solana library CDN unavailable; guest replay still works" : "Solana library is still loading; retry in a moment");
     solConn = new solanaWeb3.Connection(DEVNET_RPC, "confirmed");
     const lamports = await solConn.getBalance(new solanaWeb3.PublicKey(solWallet));
@@ -1330,6 +1341,8 @@ $('walletBtn').onclick = connectWallet;
     shape the sim path already knows how to render, plus a real anchor. */
 async function commitRealOnChain(F, pick, t, mkt) {
   if (!walletCommitEligible(F, Date.now(), isVerifiedLiveFixture(F))) throw new Error("historical/captured fixtures are practice-only");
+  const provider = solProvider || getSolanaProvider();
+  if (!provider) throw new Error("Solana wallet provider is no longer available");
   const salt = "you-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
   const oddsTs = Math.round(t * 1000);
   const linked = identityBinding.snapshot();
@@ -1347,11 +1360,11 @@ async function commitRealOnChain(F, pick, t, mkt) {
   tx.recentBlockhash = blockhash;
 
   let signature;
-  if (window.solana.signAndSendTransaction) {
-    const r = await window.solana.signAndSendTransaction(tx);
+  if (provider.signAndSendTransaction) {
+    const r = await provider.signAndSendTransaction(tx);
     signature = r.signature || r;
   } else {
-    const signed = await window.solana.signTransaction(tx);
+    const signed = await provider.signTransaction(tx);
     signature = await solConn.sendRawTransaction(signed.serialize());
   }
   await solConn.confirmTransaction(signature, "confirmed");

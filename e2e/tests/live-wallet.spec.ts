@@ -39,6 +39,16 @@ test.describe('deterministic live relay states', () => {
 })
 
 test.describe('explicit Solana provider test double', () => {
+  test('connects through Phantom official window.phantom.solana injection', async ({ page }) => {
+    await installSolanaWeb3Mock(page)
+    await installSolanaProviderMock(page, 'confirmed', 'phantom')
+    await openDemo(page)
+
+    await page.locator('#walletBtn').click()
+    await expect(page.locator('#walletBtn')).toContainText('2.000 SOL')
+    expect(await page.evaluate(() => typeof window.solana)).toBe('undefined')
+  })
+
   test('shows a wallet rejection without claiming a connection', async ({ page }) => {
     await installSolanaWeb3Mock(page)
     await installSolanaProviderMock(page, 'rejected')
@@ -67,7 +77,7 @@ test.describe('explicit Solana provider test double', () => {
   test('confirms an eligible live commit through mocks without RPC or wallet mutation', async ({ page }) => {
     const frames = await holdLiveFrames(page)
     await installSolanaWeb3Mock(page)
-    await installSolanaProviderMock(page, 'confirmed')
+    await installSolanaProviderMock(page, 'confirmed', 'phantom')
     await page.clock.setFixedTime(finalLiveTime)
     await openDemo(page, '&fixture=18257739')
 
