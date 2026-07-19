@@ -15,7 +15,7 @@ test.describe('guest demo golden path', () => {
   })
 
   test('guided demo autoplays the historical probability tape at a true 30×', async ({ page }) => {
-    await page.goto(`/?demo=1&relay=${encodeURIComponent(relayBase)}`)
+    await page.goto(`/?demo=1&e2e_auth=1&relay=${encodeURIComponent(relayBase)}`)
     await expect(page.locator('#gate')).toHaveClass(/hidden/)
     await expect(page.locator('#speed')).toHaveValue('30')
     await expect(page.locator('#run')).toContainText('PLAYING · PRACTICE REPLAY ×30')

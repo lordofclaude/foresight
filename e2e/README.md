@@ -1,13 +1,14 @@
 # Foresight browser E2E
 
 This standalone Playwright suite serves the parent static app without changing
-its package or source files. Guest tests are deterministic and require no
-secrets. Relay frames and Solana behavior come from fixtures explicitly labeled
+its package or source files. Local practice tests are deterministic and require
+no secrets. Relay frames and Solana behavior come from fixtures explicitly labeled
 as mocks; they never contact a wallet, Solana RPC, or TxLINE.
 
 ## Success criteria
 
-- `?demo=1` skips the gate, stays at 0', and exposes the guided rail.
+- `?demo=1` selects guided replay mode; tests add a localhost-only `e2e_auth=1`
+  seam to bypass OAuth. Production hosts ignore that seam and remain locked.
 - Guest commit → verify → forgery rejection → instant grading works.
 - A reload discards local practice history, matching the product's truth label.
 - 390×844 has no horizontal overflow and pick buttons work by keyboard.

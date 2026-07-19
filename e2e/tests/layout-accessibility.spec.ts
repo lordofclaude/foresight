@@ -8,7 +8,8 @@ test.describe('mobile and keyboard access', () => {
     await page.goto('/?acceptance=gate')
     await expect(page.locator('#gate')).toBeVisible()
     await expect(page.locator('.gate-visual')).toBeHidden()
-    await expect(page.locator('#gateEnter')).toBeVisible()
+    await expect(page.locator('#gateGoogle')).toBeVisible()
+    await expect(page.locator('#gateEnter')).toHaveCount(0)
     await expect(page.locator('header')).toHaveAttribute('inert', '')
     const dimensions = await page.evaluate(() => ({
       clientWidth: document.documentElement.clientWidth,
@@ -17,9 +18,9 @@ test.describe('mobile and keyboard access', () => {
     }))
     expect(dimensions.documentWidth).toBeLessThanOrEqual(dimensions.clientWidth)
     expect(dimensions.gateWidth).toBeLessThanOrEqual(dimensions.clientWidth)
-    await page.locator('#gateEnter').click()
+    await page.goto('/?e2e_auth=1')
     await expect(page.locator('#gate')).toHaveClass(/hidden/)
-    await expect(page.locator('.workspace-nav a').first()).toBeFocused()
+    await expect(page.locator('header')).not.toHaveAttribute('inert', '')
   })
 
   test('mobile layout does not overflow the viewport', async ({ page }) => {

@@ -4,7 +4,7 @@ Foresight is a verified track record for sports predictions.
 
 The product turns “I called it” into an inspectable sequence: a prediction payload is hashed, optionally timestamped outside the app, revealed, graded against TxLINE match data, and shown as a record. The hackathon build demonstrates that sequence while clearly separating real integrations and proof artifacts from local practice and simulated league activity.
 
-- **Try it:** [foresight-txline.vercel.app/?nogate=1](https://foresight-txline.vercel.app/?nogate=1)
+- **Try it:** [foresight-txline.vercel.app](https://foresight-txline.vercel.app/)
 - **Technical audit and setup:** [README.md](README.md)
 - **Relay status:** [foresight-relay.lordofclaude.workers.dev/health](https://foresight-relay.lordofclaude.workers.dev/health)
 
@@ -14,11 +14,11 @@ Prediction reputations are easy to edit after the result: winners stay visible, 
 
 The current build proves important pieces of that mechanism. It now contains tested implementations for an append-only ledger, public proof/profile views, stable Clerk/wallet binding, signed external-agent commits, and leakage-safe evaluation. Those production services are not yet deployed/configured, the eligible evaluation sample remains below the claim threshold, and there is still no evidence that the demo agents have repeatable edge.
 
-The deployed relay is `1.3.0-market-intelligence-2026-07-18`: its Polymarket comparison, proof routes, Durable Object rate/concurrency controls, freshness telemetry, and production-origin allowlist are live. The static judge path remains deliberately useful without a live match, wallet popup, OAuth callback, or backend write.
+The deployed relay is `1.3.0-market-intelligence-2026-07-18`: its Polymarket comparison, proof routes, Durable Object rate/concurrency controls, freshness telemetry, and production-origin allowlist are live. The judge path remains deliberately useful without a live match, wallet popup, or backend write, but dashboard entry now requires a Clerk session.
 
 ## 30-second judge path
 
-1. Open [the app with the gate skipped](https://foresight-txline.vercel.app/?nogate=1).
+1. Open [the app](https://foresight-txline.vercel.app/) and authenticate through the Clerk landing gate.
 2. Pick a side under **Commit a call**. Notice the **PRACTICE** label: captured-match calls are local, not silently presented as on-chain history.
 3. Click **⚡ INSTANT**, then verify the hash and try the forge action.
 4. Inspect **Real on-chain anchor**. Lead with the Spain–Argentina World Cup Final artifact, anchored around 19 hours before kickoff.

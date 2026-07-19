@@ -6,13 +6,13 @@ It combines captured or live TxLINE match data, hash commitments, optional Solan
 
 - **App:** [foresight-txline.vercel.app](https://foresight-txline.vercel.app)
 - **Relay health:** [foresight-relay.lordofclaude.workers.dev/health](https://foresight-relay.lordofclaude.workers.dev/health)
-- **Stack:** static HTML/JavaScript, a Cloudflare Worker relay, TxLINE, optional Clerk entry, and Solana devnet
+- **Stack:** static HTML/JavaScript, a Cloudflare Worker relay, TxLINE, required Clerk entry, and Solana devnet
 
 ## Judge quickstart
 
-### 30-second path — no account, wallet, or live match required
+### 30-second path — authenticated account required; wallet and live match optional
 
-1. Open [the deployed app with the entry gate skipped](https://foresight-txline.vercel.app/?nogate=1).
+1. Open [the deployed app](https://foresight-txline.vercel.app/) and authenticate through Clerk. The dashboard has no production guest or query-string bypass.
 2. In **Commit a call**, select a side and commit. The banner correctly labels this a local **PRACTICE** call.
 3. Click **⚡ INSTANT**, then **✓ verify my last commit** and **✗ try to forge a backdated call**. The first recomputes the local hash; the second explains why an externally timestamped record cannot be inserted into an earlier slot.
 4. In **Real on-chain anchor**, inspect the Spain–Argentina World Cup Final artifact. Its Solana block time is about 19 hours before kickoff. The older Argentina–Switzerland artifact is explicitly labeled post-match.
@@ -54,7 +54,8 @@ If the browser restricts `file://` behavior, serve the directory with any static
 python -m http.server 4173
 ```
 
-Then open `http://localhost:4173/?nogate=1`.
+Then open `http://localhost:4173/`. Automated browser tests alone use the
+localhost-only `?e2e_auth=1` seam; deployed hosts ignore it.
 
 ## The product in one loop
 
@@ -199,7 +200,7 @@ These are prototype analytics. They need more fixtures, holdout evaluation, sens
 5. **Verified grades/evidence — implemented, deployment pending:** immutable evidence taxonomy prevents memo/mechanism artifacts from becoming authoritative grades.
 6. **Authenticated agent ingestion — implemented, deployment pending:** commit-only Ed25519 API with ownership, nonce/timestamp replay defense, allowlists, proof binding, and idempotency.
 7. **Leakage-safe evaluation — implemented, sample expansion pending:** whole-fixture chronological splits, 90-minute outcomes, baseline metrics, calibration, uncertainty, and explicit low-N refusal.
-8. **Browser E2E — implemented:** deterministic guest, live-state, wallet-mock, reload, mobile, keyboard, and optional Clerk-token projects; Clerk cases skip unless test secrets exist.
+8. **Browser E2E — implemented:** deterministic localhost practice, auth-boundary, live-state, wallet-mock, reload, mobile, keyboard, and optional Clerk-token projects; Clerk cases skip unless test secrets exist.
 9. **Durable relay state — deployed:** Durable Object coordination, shared rate/concurrency controls, persistent telemetry, freshness states, request IDs, and sanitized errors.
 10. **Evidence-based live state — implemented:** CONNECTING/LIVE/STALE/ERROR/ENDED plus exact fixture/quote freshness guards for wallet eligibility.
 11. **Safe capture workflow — implemented:** dry-run default, explicit write confirmation, safe paths, resume/backups, redaction, and final/incomplete manifests.
@@ -221,7 +222,7 @@ The ranked top-20 judge-facing improvements and pitch rationale are tracked in `
 - [`agent-ingest/`](agent-ingest/) — signed external-agent commit API.
 - [`proof-pages/`](proof-pages/) — safe public receipt/profile pages with deterministic sample mode.
 - [`evaluation/`](evaluation/) — leakage-safe baseline evaluation and low-sample claim gate.
-- [`e2e/`](e2e/) — Playwright guest, live, wallet-mock, responsive, and optional Clerk tests.
+- [`e2e/`](e2e/) — Playwright localhost practice, auth-boundary, live, wallet-mock, responsive, and optional Clerk tests.
 - [`monetization/`](monetization/) — disabled-by-default entitlement/webhook and demand-validation seam.
 - [`assets/world-cup/`](assets/world-cup/) — ten original, optimized international-football images plus prompt/placement manifest.
 - [`real-data/`](real-data/) — four checked-in fixture tapes.

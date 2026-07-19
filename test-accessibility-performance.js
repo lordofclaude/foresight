@@ -49,8 +49,11 @@ has("portfolio summary chart supports keyboard activation", /id="pfSpark" role="
 has("mobile detail pages collapse KPI and news grids", /@media\(max-width:820px\)[^{]*\{[\s\S]*\.detail-kpis\{grid-template-columns:1fr 1fr\}[\s\S]*\.detail-news-layout\{grid-template-columns:1fr\}/);
 has("landing page is a labeled modal surface", /id="gate" role="dialog" aria-modal="true" aria-labelledby="gateTitle" aria-describedby="gateSub"/);
 has("landing page makes the workspace inert until entry", /function setGateOpen\(open\)[\s\S]*element\.inert = open/);
-has("normal visits are not permanently skipped by local storage", /const skip = demoMode \|\| qs\.get\("nogate"\) === "1";/);
+has("auth bypass is limited to an explicit localhost test seam", /AUTH_TEST_BYPASS = \/\^\(localhost\|127\\\.0\\\.0\\\.1\)\$\/\.test\(location\.hostname\) && qs\.get\("e2e_auth"\) === "1"/);
+lacks("landing has no unauthenticated guest entry", /id="gateEnter"|enter as guest/);
+has("landing explains its required secure sign-in", /Authentication required\. Clerk secures access/);
 has("landing page states the centralized match intelligence value", /Live odds, market divergence, news, key match events and the moves of top traders/);
+has("landing animates the probability lines and source flow", /\.gate-home-line,\.gate-away-line[^{]*\{[^}]*animation:gateLineDraw[\s\S]*\.gate-source-flow::before[^{]*\{[^}]*animation:gateFlow/);
 has("trend chart switcher uses an accessible tablist", /id="tapeSwitcher" role="tablist" aria-label="Match trend chart"[\s\S]*role="tab" class="on" aria-selected="true"/);
 has("trend tabs support arrow-key navigation", /event\.key !== "ArrowRight" && event\.key !== "ArrowLeft"[\s\S]*setTapeView\(buttons\[next\]\.dataset\.tapeView, true\)/);
 lacks("fast-changing trend readout avoids live announcements", /id="trendReadout"[^>]*aria-live=/);

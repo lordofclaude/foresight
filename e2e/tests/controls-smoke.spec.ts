@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test'
 import { openDemo, relayBase } from './helpers'
 
 test.describe('remaining interactive controls', () => {
-  test('landing page supports offline auth fallback, returns on reload, and restores modal focus', async ({ page }) => {
+  test('landing page stays locked when auth is offline and ignores production bypass parameters', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 })
     await page.route('https://cdn.jsdelivr.net/**', route => route.abort())
     await page.goto(`/?relay=${encodeURIComponent(relayBase)}&acceptance=gate`)
@@ -13,22 +13,24 @@ test.describe('remaining interactive controls', () => {
     await expect(page.locator('.gate-visual')).toHaveCSS('opacity', '1')
     await expect(page.locator('.gate-title')).toHaveCSS('opacity', '1')
     await expect(page.locator('header')).toHaveAttribute('inert', '')
-    await expect(page.getByRole('button', { name: /open match desk/i })).toBeVisible()
+    await expect(page.locator('#gateEnter')).toHaveCount(0)
     await page.locator('#gateGoogle').click()
-    await expect(page.locator('#gateNote')).toContainText('Clerk failed to load')
-    await page.getByRole('button', { name: /enter as guest/i }).click()
-    await expect(page.locator('#gate')).toHaveClass(/hidden/)
-
-    await page.evaluate(() => localStorage.setItem('foresight_entered', '1'))
-    await page.reload()
+    await expect(page.locator('#gateNote')).toContainText('Sign-in unavailable')
     await expect(page.locator('#gate')).toBeVisible()
-    await page.locator('#gateEnter').click()
+    await expect(page.locator('#gateNote')).toContainText('Dashboard access stays locked')
+    await expect(page.locator('header')).toHaveAttribute('inert', '')
+
+    await page.goto(`/?demo=1&nogate=1&relay=${encodeURIComponent(relayBase)}`)
+    await expect(page.locator('#gate')).toBeVisible()
+    await expect(page.locator('header')).toHaveAttribute('inert', '')
+
+    await page.goto(`/?e2e_auth=1&relay=${encodeURIComponent(relayBase)}`)
     await expect(page.locator('#gate')).toHaveClass(/hidden/)
     await expect(page.locator('header')).not.toHaveAttribute('inert', '')
     const headerSignIn = page.locator('#googleLoginBtn')
     await headerSignIn.click()
     await expect(page.locator('#modal')).toHaveAttribute('aria-hidden', 'false')
-    await expect(page.locator('#modalbox')).toContainText('Google + Solana sign-in is live on the landing gate')
+    await expect(page.locator('#modalbox')).toContainText('Dashboard access is Clerk-authenticated')
     await page.keyboard.press('Escape')
     await expect(page.locator('#modal')).toHaveAttribute('aria-hidden', 'true')
     await expect(headerSignIn).toBeFocused()
@@ -150,7 +152,7 @@ test.describe('remaining interactive controls', () => {
   })
 
   test('standard mode still explains the real Phantom requirement when no provider exists', async ({ page }) => {
-    await page.goto(`/?nogate=1&relay=${encodeURIComponent(relayBase)}`)
+    await page.goto(`/?e2e_auth=1&relay=${encodeURIComponent(relayBase)}`)
     await page.locator('#walletBtn').click()
     await expect(page.locator('#modalbox')).toContainText('No compatible Solana wallet is exposed to this browser')
     await expect(page.locator('#modalbox')).toContainText('same extension-enabled Chrome, Brave, or Edge profile')

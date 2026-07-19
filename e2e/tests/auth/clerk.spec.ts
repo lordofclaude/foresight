@@ -21,12 +21,13 @@ test('restores a real Clerk test session after reload', async ({ page }) => {
   const emailAddress = process.env.E2E_CLERK_USER_EMAIL
   test.skip(!emailAddress, 'Clerk session E2E skipped: missing E2E_CLERK_USER_EMAIL')
 
-  await page.addInitScript(() => localStorage.setItem('foresight_clerk_session', '1'))
-  await page.goto('/?nogate=1')
+  await page.goto('/')
   await clerk.loaded({ page })
   await clerk.signIn({ page, emailAddress })
+  await expect(page.locator('#gate')).toHaveClass(/hidden/)
 
   await page.reload()
+  await expect(page.locator('#gate')).toHaveClass(/hidden/)
   await expect(page.locator('#identityState')).toHaveAttribute('data-state', 'ACCOUNT_ONLY')
   await expect(page.locator('#identityState')).toContainText('Clerk session')
 })

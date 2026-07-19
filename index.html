@@ -156,24 +156,25 @@ html.gate-open,body.gate-open{overflow:hidden}
 .gate-title{font-family:var(--fdisp);font-size:clamp(4.7rem,9vw,8.4rem);font-weight:850;font-style:italic;line-height:.86;letter-spacing:-.055em;text-transform:uppercase;color:#f6f8fc;margin:1.05rem 0 .65rem;text-shadow:0 10px 42px rgba(0,0,0,.72)}
 .gate-title b{color:#ff9d2e}.gate-headline{margin:0 0 .8rem;color:#fff;font:800 clamp(1.45rem,2.8vw,2.55rem)/1.04 var(--fdisp);letter-spacing:-.025em;text-wrap:balance}.gate-headline em{color:#66dcfa;font-style:normal}
 .gate-sub{color:#bcc9d8;font-size:clamp(.98rem,1.25vw,1.12rem);line-height:1.62;max-width:620px;margin:0 0 1.6rem;text-shadow:0 2px 12px rgba(0,0,0,.75)}
-.gate-cta{display:flex;gap:.7rem;justify-content:flex-start;flex-wrap:wrap}
+.gate-cta{display:flex;gap:.7rem;justify-content:flex-start;flex-wrap:wrap;max-width:330px}
 .gate-cta button{cursor:pointer;border-radius:6px;min-height:50px;padding:.82rem 1.2rem;font:800 .9rem var(--fbody);display:inline-flex;gap:.58rem;align-items:center;justify-content:center;transition:transform .18s,box-shadow .18s,border-color .18s,background .18s}
 .gate-cta button:hover{transform:translateY(-2px)}
-#gateGoogle{background:rgba(5,10,18,.62);color:#f1f5fb;border:1px solid rgba(199,215,233,.38);box-shadow:none;backdrop-filter:blur(12px)}
-#gateGoogle:hover{border-color:#78ddf8;background:rgba(9,20,31,.82)}
-#gateEnter{border:1px solid #ff9d2e;background:#ff9d2e;color:#160f08;box-shadow:0 12px 38px rgba(255,157,46,.24)}
-#gateEnter:hover{background:#ffb04a;box-shadow:0 16px 48px rgba(255,157,46,.32)}
+#gateGoogle{width:100%;border:1px solid #ff9d2e;background:#ff9d2e;color:#160f08;box-shadow:0 12px 38px rgba(255,157,46,.24)}
+#gateGoogle:hover{border-color:#ffb04a;background:#ffb04a;box-shadow:0 16px 48px rgba(255,157,46,.32)}
 .gate-note{margin-top:.85rem;font-size:.78rem;color:#a3b2c4;max-width:590px}
 .gate-trust{display:flex;gap:8px;flex-wrap:wrap;margin-top:1.25rem}.gate-trust span{display:inline-flex;align-items:center;gap:7px;padding:.36rem .55rem;border:1px solid rgba(137,158,184,.3);border-radius:4px;background:rgba(5,10,18,.54);color:#c2cfdd;font:750 .7rem var(--fmono);backdrop-filter:blur(10px)}.gate-trust span::before{content:"✓";color:#44d18a}
 .gate-visual{position:relative;overflow:hidden;min-height:490px;padding:20px;border:1px solid rgba(132,163,199,.34);border-radius:12px;background:linear-gradient(145deg,rgba(8,17,29,.88),rgba(5,10,18,.68));box-shadow:0 30px 90px rgba(0,0,0,.52),inset 0 1px 0 rgba(255,255,255,.07);backdrop-filter:blur(18px)}
 .gate-visual::before{content:"";position:absolute;inset:-35% auto -35% -25%;width:32%;background:linear-gradient(90deg,transparent,rgba(53,201,242,.13),transparent);transform:rotate(12deg);animation:gateScan 5.4s ease-in-out infinite;pointer-events:none}
 .gate-panel-top,.gate-panel-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;color:#8294aa;font:750 .68rem var(--fmono);letter-spacing:.05em;text-transform:uppercase}.gate-live{display:inline-flex;align-items:center;gap:7px;color:#76e7ad}.gate-live::before{content:"";width:6px;height:6px;border-radius:50%;background:#44d18a;box-shadow:0 0 12px #44d18a;animation:gatePulse 1.8s ease-in-out infinite}
 .gate-preview-match{display:flex;align-items:end;justify-content:space-between;gap:20px;margin:22px 0 18px;padding-bottom:18px;border-bottom:1px solid rgba(117,143,174,.25)}.gate-preview-match small{display:block;margin-bottom:5px;color:#ffad49;font:800 .68rem var(--fmono);letter-spacing:.08em}.gate-preview-match strong{display:block;color:#f4f7fb;font:850 1.38rem var(--fdisp);letter-spacing:-.015em}.gate-preview-clock{color:#6fe0fb;font:850 1.05rem var(--fmono)}
-.gate-chart{position:relative;height:150px;border:1px solid rgba(89,119,151,.26);border-radius:7px;background:linear-gradient(rgba(49,73,99,.2) 1px,transparent 1px),linear-gradient(90deg,rgba(49,73,99,.2) 1px,transparent 1px),rgba(4,9,16,.55);background-size:100% 37px,54px 100%;overflow:hidden}.gate-chart svg{position:absolute;inset:0;width:100%;height:100%}.gate-chart-label{position:absolute;left:11px;top:9px;color:#8fa1b5;font:750 .64rem var(--fmono);letter-spacing:.07em;text-transform:uppercase}.gate-chart-now{position:absolute;right:10px;top:9px;padding:.2rem .38rem;border-radius:3px;background:#ff9d2e;color:#171006;font:900 .62rem var(--fmono)}
+.gate-chart{position:relative;height:150px;border:1px solid rgba(89,119,151,.26);border-radius:7px;background:linear-gradient(rgba(49,73,99,.2) 1px,transparent 1px),linear-gradient(90deg,rgba(49,73,99,.2) 1px,transparent 1px),rgba(4,9,16,.55);background-size:100% 37px,54px 100%;overflow:hidden}.gate-chart svg{position:absolute;inset:0;width:100%;height:100%}.gate-chart-label{position:absolute;left:11px;top:9px;color:#8fa1b5;font:750 .64rem var(--fmono);letter-spacing:.07em;text-transform:uppercase}.gate-chart-now{position:absolute;right:10px;top:9px;padding:.2rem .38rem;border-radius:3px;background:#ff9d2e;color:#171006;font:900 .62rem var(--fmono);animation:gateNow 1.8s ease-in-out infinite}.gate-home-line,.gate-away-line{stroke-dasharray:700;stroke-dashoffset:700;animation:gateLineDraw 2.2s cubic-bezier(.2,.75,.25,1) .8s forwards}.gate-away-line{animation-delay:1.15s}
 .gate-insights{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0 18px}.gate-insight{padding:10px;border:1px solid rgba(90,118,150,.28);border-radius:6px;background:rgba(8,15,25,.68)}.gate-insight span{display:block;color:#8193a9;font:750 .61rem var(--fmono);letter-spacing:.06em;text-transform:uppercase}.gate-insight b{display:block;margin-top:3px;color:#f1f5fa;font:800 .82rem var(--fbody)}.gate-insight:nth-child(1) b{color:#ffb45b}.gate-insight:nth-child(2) b{color:#67defb}.gate-insight:nth-child(3) b{color:#72e6aa}
-.gate-panel-foot{padding-top:3px;text-transform:none;letter-spacing:0;font-size:.72rem}.gate-panel-foot b{color:#dbe5f0}.gate-foot{display:flex;justify-content:space-between;gap:20px;align-items:center;color:#899aad;font:700 .69rem var(--fmono);letter-spacing:.035em}.gate-foot span:last-child{color:#b8c5d4}
+.gate-source-flow{position:relative;display:flex;align-items:center;justify-content:space-between;gap:5px;margin:0 0 15px;padding:9px 10px;overflow:hidden;border:1px solid rgba(85,114,147,.28);border-radius:6px;background:rgba(5,11,19,.7);color:#b8c6d6;font:750 .62rem var(--fmono);letter-spacing:.035em}.gate-source-flow::before{content:"";position:absolute;top:0;bottom:0;width:90px;left:-110px;background:linear-gradient(90deg,transparent,rgba(53,201,242,.18),transparent);animation:gateFlow 4.8s ease-in-out infinite}.gate-source-flow i{color:#5fd9f8;font-style:normal}.gate-panel-foot{padding-top:3px;text-transform:none;letter-spacing:0;font-size:.72rem}.gate-panel-foot b{color:#dbe5f0}.gate-foot{display:flex;justify-content:space-between;gap:20px;align-items:center;color:#899aad;font:700 .69rem var(--fmono);letter-spacing:.035em}.gate-foot span:last-child{color:#b8c5d4}
 @keyframes gatePulse{50%{opacity:.45;transform:scale(.75)}}
 @keyframes gateScan{0%,12%{transform:translateX(-130%) rotate(12deg)}70%,100%{transform:translateX(520%) rotate(12deg)}}
+@keyframes gateLineDraw{to{stroke-dashoffset:0}}
+@keyframes gateNow{50%{box-shadow:0 0 18px rgba(255,157,46,.65)}}
+@keyframes gateFlow{55%,100%{transform:translateX(580px)}}
 @media(max-width:900px){.gate-inner{width:min(calc(100% - 36px),760px);padding:22px 0}.gate-grid{grid-template-columns:1fr;padding:40px 0 24px}.gate-visual{display:none}.gate-copy{max-width:680px}.gate-title{font-size:clamp(4.2rem,16vw,7rem)}.gate-foot{padding-top:18px}}
 @media(max-width:560px){#gate::before{transform:none!important;animation:none!important}.gate-inner{width:min(calc(100% - 28px),760px)}.gate-topline{font-size:.65rem}.gate-built span{display:none}.gate-grid{padding:26px 0 16px}.gate-title{font-size:clamp(3.7rem,19vw,5.4rem);margin-top:.85rem}.gate-headline{font-size:1.45rem}.gate-sub{font-size:.94rem}.gate-cta{display:grid}.gate-cta button{width:100%}.gate-trust span{font-size:.64rem}.gate-foot{display:block}.gate-foot span{display:block}.gate-foot span+span{margin-top:5px}}
 /* ---- market monitor row (OpenBB-style terminal cells) + tape crosshair tooltip (lightweight-charts affordances) ---- */
@@ -436,7 +437,7 @@ button.prophet{width:100%;background:transparent;text-align:left}
 .world-stage-card figcaption span{display:block;margin-top:1px;color:#b8c9dc;font:600 .54rem var(--fmono);font-style:normal;text-transform:none;letter-spacing:0}
 .world-stage-card:hover img{transform:scale(1.035)}
 @media(max-width:640px){.world-stage{margin:0 12px 12px;padding:9px}.world-stage-track{grid-auto-columns:74vw}.world-stage-card{min-height:124px}}
-@media(prefers-reduced-motion:reduce){#gate::before{animation:none}.gate-chip::before,.gate-live::before,.gate-visual::before{animation:none}.world-stage-card img{transition:none}.world-stage-card:hover img{transform:none}}
+@media(prefers-reduced-motion:reduce){#gate::before{animation:none}.gate-chip::before,.gate-live::before,.gate-visual::before,.gate-chart-now,.gate-source-flow::before{animation:none}.gate-home-line,.gate-away-line{stroke-dashoffset:0!important}.world-stage-card img{transition:none}.world-stage-card:hover img{transform:none}}
 @media(prefers-reduced-data:reduce){#gate::before,.hero{background-image:none}.gate-visual{backdrop-filter:none}}
 
 /* ---- 2026 intelligence workspace ---------------------------------------
@@ -662,9 +663,8 @@ body.detail-open>.workspace-nav,body.detail-open>#tickerbar,body.detail-open>.de
 
 <!-- Landing gate: AetherFlow-style particle hero (vanilla canvas port — this is
      a zero-build static app, so the React/shadcn original is adapted, not
-     imported). Sign-in is Clerk-powered (Google OAuth + Sign-in-with-Solana;
-     publishable key baked in, override via ?clerk_pk=). Guest entry always
-     works — a judge is never blocked by auth. -->
+     imported). Dashboard access requires a Clerk-authenticated user. The only
+     bypass is an explicit localhost E2E seam; production URLs never skip it. -->
 <div id="gate" role="dialog" aria-modal="true" aria-labelledby="gateTitle" aria-describedby="gateSub">
   <canvas id="gateCv" aria-hidden="true"></canvas>
   <div class="gate-inner">
@@ -679,10 +679,9 @@ body.detail-open>.workspace-nav,body.detail-open>#tickerbar,body.detail-open>.de
         <p class="gate-headline">Every match signal. <em>One decisive view.</em></p>
         <p class="gate-sub" id="gateSub">Live odds, market divergence, news, key match events and the moves of top traders—unified in one World Cup command center. Make the call, then prove exactly when you made it.</p>
         <div class="gate-cta">
-          <button type="button" id="gateEnter">Open match desk <span aria-hidden="true">→</span></button>
-          <button type="button" id="gateGoogle"><svg aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg> Sign in with Google</button>
+          <button type="button" id="gateGoogle"><svg aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg> Continue with Google <span aria-hidden="true">→</span></button>
         </div>
-        <div class="gate-note" id="gateNote">No account required. Historical replays stay local; eligible future/live calls can be wallet-anchored.</div>
+        <div class="gate-note" id="gateNote">Authentication required. Clerk secures access; Foresight never sees or stores your Google password.</div>
         <div class="gate-trust" aria-label="Foresight data layers">
           <span>TxLINE odds + events</span><span>Polymarket comparison</span><span>Verifiable receipts</span>
         </div>
@@ -698,8 +697,8 @@ body.detail-open>.workspace-nav,body.detail-open>#tickerbar,body.detail-open>.de
           <svg viewBox="0 0 520 150" preserveAspectRatio="none">
             <defs><linearGradient id="gateArea" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ff9d2e" stop-opacity=".32"/><stop offset="1" stop-color="#ff9d2e" stop-opacity="0"/></linearGradient></defs>
             <path d="M0 116 C46 102 71 108 108 88 S173 72 215 81 S280 55 322 63 S382 92 420 65 S474 42 520 36 L520 150 L0 150 Z" fill="url(#gateArea)"/>
-            <path d="M0 116 C46 102 71 108 108 88 S173 72 215 81 S280 55 322 63 S382 92 420 65 S474 42 520 36" fill="none" stroke="#ff9d2e" stroke-width="3"/>
-            <path d="M0 62 C50 70 92 53 133 67 S206 94 250 80 S323 72 365 83 S436 74 520 92" fill="none" stroke="#35c9f2" stroke-width="2" stroke-dasharray="5 5" opacity=".9"/>
+            <path class="gate-home-line" d="M0 116 C46 102 71 108 108 88 S173 72 215 81 S280 55 322 63 S382 92 420 65 S474 42 520 36" fill="none" stroke="#ff9d2e" stroke-width="3"/>
+            <path class="gate-away-line" d="M0 62 C50 70 92 53 133 67 S206 94 250 80 S323 72 365 83 S436 74 520 92" fill="none" stroke="#35c9f2" stroke-width="2" opacity=".9"/>
           </svg>
         </div>
         <div class="gate-insights">
@@ -707,6 +706,7 @@ body.detail-open>.workspace-nav,body.detail-open>#tickerbar,body.detail-open>.de
           <div class="gate-insight"><span>Match</span><b>Pressure</b></div>
           <div class="gate-insight"><span>League</span><b>Trader flow</b></div>
         </div>
+        <div class="gate-source-flow" aria-label="Data flowing from match sources into a verifiable call"><span>TxLINE feed</span><i>→</i><span>match intelligence</span><i>→</i><span>your call</span><i>→</i><span>Solana proof</span></div>
         <div class="gate-panel-foot"><span>Odds · news · shots · corners · possession</span><b>timestamped together</b></div>
       </div>
     </div>
@@ -928,7 +928,7 @@ body.detail-open>.workspace-nav,body.detail-open>#tickerbar,body.detail-open>.de
     <b>LIVE MODE &amp; LAG (honest):</b> replay is the default (those fixtures are finished matches), and live is real: the 🔴 GO LIVE control streams TxLINE's <b>GET /api/odds/stream</b> + <b>GET /api/scores/stream</b> (SSE) through our deployed relay at <code>foresight-relay.lordofclaude.workers.dev</code> — credentials stay server-side, and France–England was streamed live through it tonight. GO LIVE auto-targets the <b>World Cup FINAL</b> (Spain–Argentina, Jul 19 19:00 UTC) from two hours before kickoff — <code>?fixture=&lt;id&gt;</code> overrides. Our subscription tier is <b>service level 1 = 60-second delay</b> (real-time = level 12, mainnet); the 5-minute granularity you see in historical endpoints is storage bucketing, not live lag. Our own calibration measured the odds stream front-running the scores stream by a median 23s on majors.
     <b>THE FIVE LAYERS:</b> L1 commit hash + external timestamp — <b>proven for real</b>: two genuine commits are anchored on Solana devnet, including a <b>World Cup FINAL pick anchored ~19h BEFORE kickoff</b> (see the ⛓ card; txs verifiable on the explorer) — every other commit in this app is a local sim-slot (not yet individually broadcast on-chain — see below) · L2 anchored price at commit (<b>/api/odds/validation</b>) · L3 reveal-or-burn · L4 grading reads the <b>game_finalised statKeys 1001+3001 / 1002+3002</b> (90' 1X2) — prod CPIs <b>validateStatV2</b>, the SettleKit binding pattern minus the vault · L5 $100-flat at de-vigged anchored prices + shrinkage; earliness receipts gated at 120s (measured ±105s feed-noise band).
     <b>REAL WALLET MODE:</b> only a future fixture or a verified actively streaming fixture may sign a Solana memo. Completed and captured historical fixtures always remain local practice, even with a wallet connected.
-    <b>SIGN-IN &amp; WHAT'S STILL SIMULATED:</b> Google + Solana sign-in on the landing gate is real (Clerk-powered — Google OAuth + Sign-in-with-Solana); Polymarket links open their real site for you to trade — Foresight can't execute for you. Follow is a local-demo receipt-alert watchlist in this build: it is not persisted, delivered by a notification service, or tied to any paid entitlement.
+    <b>SIGN-IN &amp; WHAT'S STILL SIMULATED:</b> Dashboard access requires Clerk authentication. This build is wired to Clerk Google, Solana and email sign-in; production launch still requires a Clerk production instance and production OAuth credentials. Polymarket links open their real site for you to trade — Foresight can't execute for you. Follow is a local-demo receipt-alert watchlist in this build: it is not persisted, delivered by a notification service, or tied to any paid entitlement.
     <b>NO CUSTODY, NO EXECUTION:</b> the $100 stake and the portfolio's mark-to-market value are notional — Foresight verifies WHAT you called and WHEN, never that real money moved.
     <b>HONESTY:</b> TxLINE carries no volume/liquidity data — every "spike" is a consensus implied-probability move. Local practice is not immutable; wallet-anchored hashes carry an external timestamp. Pure functions in <code>foresight.js</code> — <code>node test.js</code>.
   </div>
@@ -2064,10 +2064,9 @@ window.followAction = followAction;
    durable account-wallet record, so the header routes back to that surface. */
 $('googleLoginBtn').onclick = () => {
   $('modalbox').innerHTML = `<h4>Sign in with Google <button type="button" class="modal-close" onclick="closeModal()">✕ close</button></h4>
-    <div class="stratbox">Google + Solana sign-in is live on the landing gate (Clerk-powered — Google OAuth + Sign-in-with-Solana). Sign in there; this dashboard never asks for a password itself.</div>
+    <div class="stratbox">Dashboard access is Clerk-authenticated. Google, Solana and email options live on the landing gate; Foresight never asks for or stores your password.</div>
     <div class="small mut" style="margin-top:.5rem">Clerk sessions use the real immutable <code>user.id</code>. Wallet linking requires an expiring nonce signature and backend verification; without that backend, the UI stays explicitly session-only and pending.</div>
-    <button class="btn violet" style="margin-top:.6rem" onclick="location.reload()">↩ Back to the landing page to sign in</button>
-    <button type="button" class="btn" style="margin-top:.4rem" onclick="closeModal()">Continue as @you</button>`;
+    <button class="btn violet" style="margin-top:.6rem" onclick="location.reload()">↩ Return to secure sign-in</button>`;
   openModal();
 };
 
@@ -2622,11 +2621,12 @@ const qs = new URLSearchParams(location.search);
    Google OAuth + Sign-in-with-Solana (web3_solana_signature), both enabled on
    the Foresight instance. The fixed publishable key loads only from a trusted
    CDN. Signing in REBINDS ME to the stable Clerk user.id, never a mutable or
-   collision-prone display name. Guest commits made before sign-in keep their
-   "@you" label forever. Account-wallet links additionally require a signed,
-   expiring nonce and backend verification. */
+   collision-prone display name. Dashboard entry requires Clerk authentication;
+   account-wallet links additionally require a signed, expiring nonce and
+   backend verification. */
 const CLERK_PK = "pk_test_Y2VydGFpbi1lbXUtNjMuY2xlcmsuYWNjb3VudHMuZGV2JA";
 let CLERK_USER = null;
+let CLERK_LOAD_PROMISE = null;
 /** Clerk user → league handle: username > firstName > email local-part, sanitized. */
 function clerkLabel(u) {
   const base = (u && (u.username || u.firstName
@@ -2644,32 +2644,46 @@ function bindClerkUser(user) {
   renderIdentityState();
   toast("✓ signed in as " + ME_LABEL + " — new commits use the stable Clerk account ID", false, "act");
   renderAll();
+  if (typeof window.__onClerkAuthenticated === "function") window.__onClerkAuthenticated(user);
 }
 async function ensureClerk() {
   if (window.__clerkInst) return window.__clerkInst;
-  await new Promise((res, rej) => {
-    if (window.Clerk) return res();
-    const s = document.createElement("script");
-    s.src = "https://cdn.jsdelivr.net/npm/@clerk/clerk-js@5/dist/clerk.browser.js";
-    // the accounts.dev-hosted bundle SELF-INITIALIZES on load and reads the pk
-    // from this attribute — without it, it throws and window.Clerk becomes a
-    // broken instance ("not a constructor").
-    s.setAttribute("data-clerk-publishable-key", CLERK_PK);
-    s.crossOrigin = "anonymous"; s.onload = res; s.onerror = () => rej(new Error("clerk-js failed to load"));
-    document.head.appendChild(s);
-  });
-  // hosted bundle → window.Clerk is the READY instance (has .load); jsdelivr CDN → constructor
-  const clerk = window.Clerk.load ? window.Clerk : new window.Clerk(CLERK_PK);
-  await clerk.load({});
-  window.__clerkInst = clerk;
-  return clerk;
+  if (CLERK_LOAD_PROMISE) return CLERK_LOAD_PROMISE;
+  CLERK_LOAD_PROMISE = (async () => {
+    await new Promise((res, rej) => {
+      if (window.Clerk) return res();
+      const s = document.createElement("script");
+      s.src = "https://cdn.jsdelivr.net/npm/@clerk/clerk-js@5/dist/clerk.browser.js";
+      // the accounts.dev-hosted bundle SELF-INITIALIZES on load and reads the pk
+      // from this attribute — without it, it throws and window.Clerk becomes a
+      // broken instance ("not a constructor").
+      s.setAttribute("data-clerk-publishable-key", CLERK_PK);
+      s.crossOrigin = "anonymous"; s.onload = res; s.onerror = () => rej(new Error("clerk-js failed to load"));
+      document.head.appendChild(s);
+    });
+    // hosted bundle → window.Clerk is the READY instance (has .load); jsdelivr CDN → constructor
+    const clerk = window.Clerk.load ? window.Clerk : new window.Clerk(CLERK_PK);
+    await clerk.load({});
+    window.__clerkInst = clerk;
+    return clerk;
+  })();
+  try { return await CLERK_LOAD_PROMISE; }
+  catch (error) { CLERK_LOAD_PROMISE = null; throw error; }
 }
-/** Silent session restore for returning users (only if they signed in before). */
+function watchClerkAuth(clerk) {
+  if (window.__clerkAuthUnsubscribe) return;
+  window.__clerkAuthUnsubscribe = clerk.addListener(({ user }) => { if (user) bindClerkUser(user); });
+}
+/** Silent session restore for returning users. Clerk's session cookie is authoritative. */
 async function restoreClerkSession() {
-  if (localStorage.getItem("foresight_clerk_session") !== "1") return;
-  try { const c = await ensureClerk(); if (c.user) bindClerkUser(c.user); }
-  catch (e) { /* offline / blocked — stay guest, honestly */ }
+  if (AUTH_TEST_BYPASS) return;
+  try {
+    const c = await ensureClerk();
+    watchClerkAuth(c);
+    if (c.user) bindClerkUser(c.user);
+  } catch (e) { /* offline / blocked — keep the dashboard locked */ }
 }
+const AUTH_TEST_BYPASS = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) && qs.get("e2e_auth") === "1";
 const demoMode = qs.get("demo") === "1", demoAutoplay = demoMode && qs.get("autoplay") !== "0", DEFAULT_RELAY = "https://foresight-relay.lordofclaude.workers.dev";
 function safeRelayBase(candidate) {
   const u = new URL(candidate), local = (u.hostname === "localhost" || u.hostname === "127.0.0.1") && /https?:/.test(u.protocol), deployed = u.protocol === "https:" && u.hostname === "foresight-relay.lordofclaude.workers.dev";
@@ -3172,7 +3186,7 @@ function setDemoDone(step) { if (demoMode) document.querySelectorAll(`[data-demo
 (function gateModule() {
   const gate = $('gate'), cv = $('gateCv');
   if (!gate || !cv) return;
-  const skip = demoMode || qs.get("nogate") === "1";
+  const skip = AUTH_TEST_BYPASS;
   let rafId = null, particles = [], stopped = false;
   const mouse = { x: null, y: null, radius: 170 };
   const ctx2 = cv.getContext('2d');
@@ -3236,6 +3250,7 @@ function setDemoDone(step) { if (demoMode) document.querySelectorAll(`[data-demo
     }
   }
   function closeGate() {
+    if (gate.classList.contains("hidden")) return;
     stopped = true; if (rafId) cancelAnimationFrame(rafId);
     removeEventListener("resize", resize); removeEventListener("resize", paintStatic);
     removeEventListener("mousemove", onMove); removeEventListener("mouseout", onOut);
@@ -3246,23 +3261,24 @@ function setDemoDone(step) { if (demoMode) document.querySelectorAll(`[data-demo
   }
   const onMove = e => { mouse.x = e.clientX; mouse.y = e.clientY; };
   const onOut = () => { mouse.x = null; mouse.y = null; };
+  window.__onClerkAuthenticated = closeGate;
 
   if (skip) { gate.classList.add("hidden"); setGateOpen(false); return; }
   setGateOpen(true);
   if (reduceMotion) { addEventListener("resize", paintStatic); paintStatic(); }
   else { addEventListener("resize", resize); addEventListener("mousemove", onMove); addEventListener("mouseout", onOut); resize(); step(); }
-  requestAnimationFrame(() => $('gateEnter').focus({ preventScroll: true }));
+  requestAnimationFrame(() => $('gateGoogle').focus({ preventScroll: true }));
 
-  $('gateEnter').onclick = closeGate;
   $('gateGoogle').onclick = async () => {
     try {
       $('gateNote').textContent = "loading Clerk…";
       const clerk = await ensureClerk();
-      if (clerk.user) { bindClerkUser(clerk.user); closeGate(); return; }
+      watchClerkAuth(clerk);
+      if (clerk.user) { bindClerkUser(clerk.user); return; }
       clerk.openSignIn({ afterSignInUrl: location.href, afterSignUpUrl: location.href });
-      clerk.addListener(({ user }) => { if (user) { bindClerkUser(user); closeGate(); } });
+      $('gateNote').textContent = "Complete sign-in in the secure Clerk window to open the match desk.";
     } catch (e) {
-      $('gateNote').innerHTML = `<b style="color:#ff5a74">Clerk failed to load:</b> ${String(e.message || e)} — <button type="button" class="inline-action" onclick="$('gateEnter').click()">enter as guest</button>.`;
+      $('gateNote').innerHTML = `<b style="color:#ff5a74">Sign-in unavailable:</b> ${String(e.message || e)}. Dashboard access stays locked; retry when Clerk is reachable.`;
     }
   };
 })();
