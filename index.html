@@ -55,6 +55,7 @@ select{flex:1;background:#0f2233;border:1px solid #1d3a52;color:var(--txt);font:
 .prophet.you{background:#12102a;border-radius:4px}
 .commitrow{padding:.35rem .3rem;border-bottom:1px solid #0d1826;font-size:.68rem}
 .commitrow .hash{color:var(--violet);word-break:break-all}
+.share-btn{border:0;background:transparent;color:inherit;cursor:pointer;padding:.12rem .22rem;border-radius:4px;font:inherit}.share-btn:hover,.share-btn:focus-visible{background:#18304a;outline:1px solid var(--blue)}
 .st{font-size:.6rem;padding:.05rem .3rem;border-radius:3px;border:1px solid}
 .st.C{color:var(--amber);border-color:var(--amber)}.st.R{color:var(--cyan);border-color:var(--cyan)}
 .st.G{color:var(--green);border-color:var(--green)}.st.B{color:var(--red);border-color:var(--red)}
@@ -481,7 +482,7 @@ main{display:grid;grid-template-columns:250px minmax(520px,1fr) 340px;gap:12px;m
 .x-intro{margin-bottom:.6rem;padding:.6rem;border:1px solid #263b59;border-radius:8px;color:#8296b0;font-size:.65rem}.x-links{margin-top:.55rem}.x-links a{color:#8fc6ff;font-size:.65rem;text-decoration:none}
 .detail-card{padding:0;overflow:hidden}.detail-card summary{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:.85rem 1rem;cursor:pointer;color:#dce6f4;font-weight:700;font-size:.72rem;list-style:none}.detail-card summary::-webkit-details-marker{display:none}.detail-card summary::after{content:"+";color:#7890ac;font:700 .9rem var(--fmono)}.detail-card[open] summary::after{content:"−"}.detail-card summary span{margin-left:auto;color:#7186a2;font:500 .56rem var(--fmono)}.detail-card[open] summary{border-bottom:1px solid #1b304d}.detail-body{padding:.2rem 1rem 1rem}
 #feedCard{background:#091523}.feeditem{padding:.55rem .25rem;border-color:#182b45}.feeditem.event b{color:#dce6f4}
-#board{max-height:380px}.prophet{padding:.52rem .3rem}.prophet:nth-child(n+7){display:none}
+#board{max-height:380px}.prophet{padding:.52rem .3rem}.prophet:nth-child(n+7){display:none}.prophet.fresh{display:flex!important;outline:1px solid rgba(194,240,74,.42);outline-offset:-1px}
 .footer-strip,footer{margin-top:12px}
 @media(max-width:1180px){main{grid-template-columns:230px minmax(470px,1fr) 300px}.compare-head,.compare-row{grid-template-columns:minmax(90px,1fr) 66px 76px 84px;gap:6px}}
 @media(max-width:960px){main{grid-template-columns:1fr}.left-column{display:grid;grid-template-columns:1fr 1fr;gap:10px}.left-column .card{margin-bottom:0}.intel-card{order:-1}.radar{grid-template-columns:repeat(2,1fr)}.stats{grid-template-columns:repeat(3,1fr)}}
@@ -1421,7 +1422,7 @@ function renderMyCommits() {
     const st = c.status === "COMMITTED" ? "C" : c.status === "REVEALED" ? "R" : c.status === "GRADED" ? "G" : "B";
     const pick = c.pick || (mySecrets[c.id] || {}).pick || "?";
     const res = c.grade ? (c.grade.won ? ` +$${c.grade.pnl.toFixed(0)}` : ` −$100`) : "";
-    const share = c.status === "GRADED" ? ` <span style="cursor:pointer" title="download share card" onclick="shareCard(${c.id})">📤</span>` : "";
+    const share = c.status === "GRADED" ? ` <button type="button" class="share-btn" title="download share card" aria-label="Download share card for ${F.p1} versus ${F.p2}" onclick="shareCard(${c.id})">📤</button>` : "";
     const real = c.anchor && c.anchor.sim === false
       ? ` <a class="real-tag" href="${c.anchor.explorer}" target="_blank" rel="noopener">⛓ REAL</a>`
       : ` <span class="simtag">PRACTICE · LOCAL</span>`;
@@ -1706,7 +1707,7 @@ function kindBadge(p) {
   if (p.by === "prompt") return ` <span class="tag agent">🤖 prompt${lock}</span>`;
   return ` <span class="tag agent">🤖 rule${lock}</span>`;
 }
-let boardFilter = "all";
+let boardFilter = "all", lastDeployedAgent = null;
 function setBoardFilter(f) { boardFilter = f; document.querySelectorAll('#bfilter button').forEach(s => { const on = s.dataset.f === f; s.classList.toggle('on', on); s.setAttribute('aria-pressed', String(on)); }); renderBoard(); }
 window.setBoardFilter = setBoardFilter;
 /* Live standings: mark-to-market every open position, every tick — the board
@@ -1800,7 +1801,7 @@ function renderBoard() {
   $('boardLive').innerHTML = allDone ? '<span class="tag human" style="color:var(--lime);border-color:#3a5a1d">FINAL</span>'
     : '<span class="tag api">● LIVE STANDINGS</span>';
   // ranks are within the CURRENT filter view
-  $('board').innerHTML = board.length ? board.map((p, i) => `<button type="button" class="prophet${p.wallet === ME ? " you" : ""}" onclick="openProfile('${p.wallet}')" aria-label="Open ${p.wallet} profile, rank ${i + 1}, score ${p.shrunk >= 0 ? "plus " : "minus "}${Math.abs(p.shrunk).toFixed(0)}">
+  $('board').innerHTML = board.length ? board.map((p, i) => `<button type="button" class="prophet${p.wallet === ME ? " you" : ""}${p.wallet === lastDeployedAgent ? " fresh" : ""}" onclick="openProfile('${p.wallet}')" aria-label="Open ${p.wallet} profile, rank ${i + 1}, score ${p.shrunk >= 0 ? "plus " : "minus "}${Math.abs(p.shrunk).toFixed(0)}">
     <span class="rank">${i + 1}</span><span class="name">${following[p.wallet] && following[p.wallet].state === "ACTIVE" ? "🔔 " : following[p.wallet] && following[p.wallet].state === "PAUSED" ? "🔕 " : ""}${p.wallet}${kindBadge(p)}</span>
     <span class="${p.shrunk >= 0 ? 'g' : 'r'}">${p.shrunk >= 0 ? "+" : ""}${p.shrunk.toFixed(0)}</span>
     <span class="mut">${p.wins}/${p.resolved || 0}${p.resolved < p.n ? "·" + (p.n - p.resolved) + " open" : ""}${p.burned ? " 🔥" + p.burned : ""}${p.upsetsLanded ? " ⚡" + p.upsetsLanded : ""}${(s => s.best >= 2 ? ` <span class="g" title="best win streak — ${s.best} graded wins in a row">🎯${s.best}</span>` : "")(streakOf(p.wallet))}</span></button>`).join('')
@@ -1991,8 +1992,21 @@ function openAgentBuilder() {
   abRenderBody();
   openModal();
 }
-function abSetMode(m) { abMode = m; document.querySelectorAll('.abtab').forEach(t => { const on = t.dataset.m === m; t.classList.toggle('on', on); t.setAttribute('aria-selected', String(on)); }); abRenderBody(); abPreview(); }
-function abSetVis(v) { abVis = v; [['abPub','public'],['abPriv','private']].forEach(([id,value]) => { const on = v === value; $(id).classList.toggle('on', on); $(id).setAttribute('aria-pressed', String(on)); }); }
+function abSetMode(m) {
+  abMode = m;
+  document.querySelectorAll('.abtab').forEach(t => { const on = t.dataset.m === m; t.classList.toggle('on', on); t.setAttribute('aria-selected', String(on)); });
+  const apiMode = m === "api";
+  if (apiMode) abVis = "private";
+  ['abPub', 'abPriv'].forEach(id => { $(id).disabled = apiMode; });
+  [['abPub','public'],['abPriv','private']].forEach(([id,value]) => { const on = abVis === value; $(id).classList.toggle('on', on); $(id).setAttribute('aria-pressed', String(on)); });
+  abRenderBody(); abPreview();
+}
+function abSetVis(v) {
+  if (abMode === "api") return;
+  abVis = v;
+  [['abPub','public'],['abPriv','private']].forEach(([id,value]) => { const on = v === value; $(id).classList.toggle('on', on); $(id).setAttribute('aria-pressed', String(on)); });
+  abPreview();
+}
 function abRenderBody() {
   const b = $('abBody');
   if (abMode === "rule") {
@@ -2024,14 +2038,15 @@ function abRenderBody() {
     b.querySelector('#abPrompt').addEventListener('input', abPreview);
   } else {
     b.innerHTML = `
-      <div class="small mut">External algos (your own ML, wired to Polymarket / multiple books) POST signed picks to Foresight and get the <b>same provable track record</b> — the black box stays yours, the record becomes public. Endpoint contract:</div>
-      <div class="abprev">POST /api/agents/{id}/commit
-{ "fixtureId": 18222446,
-  "pick": "part2",
-  "ts": 1783818600000,
-  "sig": "&lt;wallet signature&gt;" }
-→ hashed, timestamped, graded like any commit</div>
-      <div class="small mut">This static demo can't run a server, so the API path is shown as a documented contract; <code>@polyquant-ml</code> on the board is a labeled example of an API-fed agent. Deploy here registers a local stand-in so you can see where it lands.</div>`;
+      <div class="small mut">External algos POST signed, commit-only predictions and get the <b>same provable track record</b>. The implemented service verifies owner auth, Ed25519 signatures, fixture/proof allowlists, freshness, replay protection, and idempotency. It never executes a trade.</div>
+      <div class="abprev">POST /v1/agent-commits
+Authorization: Bearer &lt;owner credential&gt;
+{ "payload": { "version": "FORESIGHT_AGENT_COMMIT_V1",
+  "agentId": "my-model", "fixtureId": 18222446,
+  "market": "MATCH_WINNER", "selection": "part2", … },
+  "signature": "&lt;base64url Ed25519&gt;" }
+→ immutable receipt or a fail-closed error</div>
+      <div class="small mut"><b>IMPLEMENTED · NOT DEPLOYED</b> — the authenticated Worker lives in <code>agent-ingest/</code> and its security contract is tested locally. This static public app has no production bindings. Deploying below creates an explicitly local stand-in so you can inspect the UX.</div>`;
   }
   abPreview();
 }
@@ -2073,6 +2088,16 @@ function deployAgent() {
   let name = ($('abName') && $('abName').value || "").trim();
   if (!name) name = "@you-" + spec.kind;
   if (name[0] !== "@") name = "@" + name;
+  if (!/^@[A-Za-z0-9][A-Za-z0-9_-]{1,31}$/.test(name)) {
+    toast("agent name must be 2–32 letters, numbers, dashes, or underscores after @", true, "act");
+    $('abName').focus();
+    return;
+  }
+  if (agentRegistry[name]) {
+    toast(`${name} already exists — choose a unique agent name`, true, "act");
+    $('abName').focus();
+    return;
+  }
   const vis = spec.kind === "api" ? "private" : abVis;
   const agent = { name, kind: spec.kind, visibility: vis, strategy: spec.strategy, rules: spec.rules };
   agentRegistry[name] = agent;
@@ -2081,9 +2106,10 @@ function deployAgent() {
   for (const F of FIXTURES) if (FO.runAgentOnTape(agent, F.tape, F.id, league)) picks++;
   // grade its picks on already-settled fixtures so it lands on the board immediately
   for (const F of FIXTURES) if (F.settled) league.gradeAll(F.outcome.winner, 100, F.id);
-  closeModal();
-  toast(`🚀 ${name} deployed — backtested on ${FIXTURES.length} fixtures, ${picks} pick${picks !== 1 ? "s" : ""} fired`, false, "act");
+  lastDeployedAgent = name;
   renderAll();
+  toast(`🚀 ${name} deployed — backtested on ${FIXTURES.length} fixtures, ${picks} pick${picks !== 1 ? "s" : ""} fired`, false, "act");
+  openProfile(name);
 }
 window.openAgentBuilder = openAgentBuilder; window.abSetMode = abSetMode; window.abSetVis = abSetVis;
 window.deployAgent = deployAgent;
