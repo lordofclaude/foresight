@@ -587,6 +587,7 @@ main{grid-template-columns:270px minmax(560px,1fr) 330px;gap:10px}
 #monitor{display:none}
 .chart-summary{margin:0 0 .65rem;padding:.6rem .7rem;border-color:#304259;border-radius:6px;background:#0d1722;font-size:.8rem;color:#b9c4d2}
 .chart-summary strong{display:none}
+.tape-switcher{display:flex;gap:6px;margin:0 0 .65rem;overflow-x:auto;scrollbar-width:thin}.tape-switcher button{flex:1 0 auto;min-height:36px;padding:.45rem .7rem;border:1px solid #344258;border-radius:5px;background:#101925;color:#a6b2c1;font:800 .75rem var(--fbody);cursor:pointer;white-space:nowrap}.tape-switcher button:hover{border-color:#5b6c84;color:#e5ebf3}.tape-switcher button.on{border-color:#ff9d2e;background:#25190d;color:#ffc278;box-shadow:inset 0 -2px 0 #ff9d2e}.trend-readout{display:grid;grid-template-columns:auto 1fr;gap:7px 12px;align-items:center;margin:0 0 .65rem;padding:.7rem .75rem;border:1px solid #2d3d52;border-radius:6px;background:#0d1621}.trend-readout strong{color:#f2f5f9;font-size:.82rem}.trend-edge{display:inline-flex;align-items:center;width:max-content;padding:.2rem .48rem;border-radius:4px;background:#172230;color:#c8d1de;font:850 .75rem var(--fbody)}.trend-edge.home{background:#2b1d0e;color:#ffc278}.trend-edge.away{background:#0d2832;color:#82e5ff}.trend-facts{grid-column:1/3;display:flex;gap:12px;flex-wrap:wrap;color:#b0bdcc;font-size:.76rem}.trend-facts b{color:#f1f4f8}.trend-method{grid-column:1/3;color:#8797aa;font-size:.74rem;line-height:1.4}.trend-method b{color:#aab8c8}
 
 .match-stat-strip{border-color:#2c394c;border-radius:6px}.match-stat{padding:.65rem .4rem;border-color:#2c394c}.match-stat b{font:800 1.1rem var(--fmono)}.match-stat span{font-size:.75rem;color:#94a3b6}
 .timeline-filters,.intel-tabs{gap:6px;margin-bottom:.75rem}
@@ -620,6 +621,7 @@ body:has(#demoRail:not([hidden])) .workspace-nav{display:none}
   .left-column{display:flex}.card{padding:.9rem}.card h3{font-size:.98rem}
   .compare-head,.compare-row{grid-template-columns:minmax(88px,1fr) 62px 72px 80px;gap:5px}.compare-head{font-size:.75rem}.compare-price{font-size:1.05rem}.compare-div{font-size:.75rem}
   .timeline-event{grid-template-columns:42px 32px minmax(0,1fr)}.timeline-team{display:none}
+  .tape-switcher button{flex:0 0 auto}.trend-readout{grid-template-columns:1fr}.trend-facts,.trend-method{grid-column:1}.trend-facts{gap:7px 12px}
 }
 @media(max-width:430px){.radar{display:flex}.compare-head{display:none}.compare-row{grid-template-columns:minmax(96px,1fr) 70px 78px}.compare-div{grid-column:2/4}.pickrow{grid-template-columns:repeat(3,1fr)}.pick{min-height:68px}}
 @media(prefers-reduced-data:reduce){.compare-card,.intel-card{background-image:none}}
@@ -773,8 +775,15 @@ body.detail-open>.workspace-nav,body.detail-open>#tickerbar,body.detail-open>.de
   </div>
   <div class="card" id="tapeCard">
     <h3><span id="tapeTitle">consensus tape</span>
-      <span class="r2">Drag to inspect</span></h3>
+      <span class="r2" id="tapeViewMeta">Drag to inspect</span></h3>
     <div id="monitor" aria-hidden="true"></div>
+    <div class="tape-switcher" id="tapeSwitcher" role="tablist" aria-label="Match trend chart">
+      <button type="button" role="tab" class="on" aria-selected="true" data-tape-view="probability">Probability</button>
+      <button type="button" role="tab" aria-selected="false" data-tape-view="shots">Shot momentum</button>
+      <button type="button" role="tab" aria-selected="false" data-tape-view="possession">Possession · 5m</button>
+      <button type="button" role="tab" aria-selected="false" data-tape-view="pressure">Attack pressure</button>
+    </div>
+    <div class="trend-readout" id="trendReadout" role="region" aria-label="Recent match trend"></div>
     <div class="chart-summary" role="region" aria-labelledby="chartSummaryTitle"><strong id="chartSummaryTitle">Accessible market snapshot</strong><span id="chartSummaryText">Loading selected market…</span></div>
     <canvas id="cv" height="360" aria-hidden="true"></canvas>
     <div id="cvTip"></div>
@@ -1705,7 +1714,8 @@ function renderStats() {
   $('sScore').className = "v " + (p.pnl >= 0 ? "v2" : "r");
   const verifiedLive = isVerifiedLiveFixture(F);
   $('fixture').textContent = `${F.fx.Competition || "World Cup"} · fixture ${F.id}${verifiedLive ? " · VERIFIED LIVE" : F.liveMatch ? " · CAPTURED TAPE" : " · PRACTICE REPLAY"}`;
-  $('tapeTitle').textContent = `${F.p1} v ${F.p2} — probability tape`;
+  $('tapeTitle').textContent = `${F.p1} v ${F.p2} — ${TAPE_VIEWS[tapeView]}`;
+  $('tapeViewMeta').textContent = tapeView === "probability" ? "Drag to inspect" : tapeView === "possession" ? "5-minute TxLINE state signal" : tapeView === "shots" ? "Confirmed actions · 5-minute buckets" : "Derived signal · transparent weights";
   $('n1').textContent = F.p1; $('n2').textContent = F.p2;
   // HERO band — the selected match, broadcast scale
   const t = fxT(F);
@@ -2203,6 +2213,88 @@ $('forgeBtn').onclick = () => {
 const cv = $('cv'), ctx = cv.getContext('2d');
 const PAD_L = 44, PAD_R = 12, TOP = 8, CH = 250, LANE = 300;
 let W = 0, dpr = 1, yLo = .2, yHi = .8;
+const TAPE_VIEWS = Object.freeze({ probability: "probability tape", shots: "shot momentum", possession: "possession signal", pressure: "attack pressure" });
+let tapeView = "probability";
+/* Pure five-minute event aggregation. Confirmed TxLINE updates are counted
+   once by source action id. Possession is time-weighted from the feed's
+   possession-state updates; it is a signal, not an official optical stat. */
+function trendBuckets(events, playhead, bucketSec = 300) {
+  const limit = Math.max(0, Number(playhead) || 0), width = Math.max(60, Number(bucketSec) || 300);
+  const end = Math.max(width, Math.ceil(Math.max(1, limit) / width) * width);
+  const buckets = Array.from({ length: Math.ceil(end / width) }, (_, i) => ({
+    start: i * width, end: (i + 1) * width, shots1: 0, shots2: 0, onTarget1: 0, onTarget2: 0,
+    corners1: 0, corners2: 0, danger1: 0, danger2: 0, goals1: 0, goals2: 0,
+    possSeconds1: 0, possSeconds2: 0, possCoverage: 0, possession1: null, possession2: null,
+    pressure1: 0, pressure2: 0,
+  }));
+  const canonical = new Map();
+  for (const event of Array.isArray(events) ? events : []) {
+    if (!event || !Number.isFinite(Number(event.t)) || event.t < 0 || event.t > limit) continue;
+    const raw = event.raw && typeof event.raw === "object" ? event.raw : {};
+    if (raw.Confirmed === false || raw.confirmed === false) continue;
+    const sourceId = raw.Id != null ? raw.Id : raw.id;
+    const key = sourceId != null ? `${event.type}:${sourceId}` : `${event.type}:${event.team || 0}:${event.seq != null ? event.seq : event.t}`;
+    const previous = canonical.get(key);
+    if (!previous || Number(event.seq || 0) >= Number(previous.seq || 0)) canonical.set(key, event);
+  }
+  const accepted = [...canonical.values()].sort((a, b) => a.t - b.t);
+  const possession = [];
+  for (const event of accepted) {
+    const bucket = buckets[Math.min(buckets.length - 1, Math.floor(event.t / width))]; if (!bucket) continue;
+    const team = Number(event.team), detail = String(event.detail || ""), raw = event.raw || {};
+    if (event.type === "shot" && (team === 1 || team === 2)) {
+      bucket[`shots${team}`]++;
+      if (/ontarget|woodwork/i.test(detail)) bucket[`onTarget${team}`]++;
+    }
+    if (event.type === "corner" && (team === 1 || team === 2)) bucket[`corners${team}`]++;
+    if (event.type === "goal" && (team === 1 || team === 2)) bucket[`goals${team}`]++;
+    if ((event.type === "penalty" || (event.type === "freekick" && /danger|attack/i.test(`${detail} ${raw.PossessionType || raw.possessionType || ""}`))) && (team === 1 || team === 2)) bucket[`danger${team}`]++;
+    const poss = Number(raw.Possession != null ? raw.Possession : raw.possession);
+    if (poss === 1 || poss === 2) possession.push({ t: event.t, team: poss });
+  }
+  for (const bucket of buckets) {
+    const stop = Math.min(limit, bucket.end); if (stop <= bucket.start) continue;
+    let state = 0, cursor = bucket.start;
+    for (const observation of possession) { if (observation.t <= bucket.start) state = observation.team; else break; }
+    for (const observation of possession) {
+      if (observation.t <= bucket.start) continue; if (observation.t >= stop) break;
+      if (state) bucket[`possSeconds${state}`] += observation.t - cursor;
+      state = observation.team; cursor = observation.t;
+    }
+    if (state) bucket[`possSeconds${state}`] += stop - cursor;
+    bucket.possCoverage = bucket.possSeconds1 + bucket.possSeconds2;
+    if (bucket.possCoverage > 0) {
+      bucket.possession1 = bucket.possSeconds1 / bucket.possCoverage * 100;
+      bucket.possession2 = bucket.possSeconds2 / bucket.possCoverage * 100;
+    }
+    bucket.pressure1 = bucket.shots1 * 3 + bucket.onTarget1 * 2 + bucket.corners1 * 2 + bucket.danger1 * 2 + bucket.goals1 * 4;
+    bucket.pressure2 = bucket.shots2 * 3 + bucket.onTarget2 * 2 + bucket.corners2 * 2 + bucket.danger2 * 2 + bucket.goals2 * 4;
+  }
+  return buckets;
+}
+function recentTrend(buckets) {
+  const recent = (Array.isArray(buckets) ? buckets : []).filter(bucket => bucket.possCoverage > 0 || bucket.shots1 + bucket.shots2 + bucket.corners1 + bucket.corners2 + bucket.danger1 + bucket.danger2 + bucket.goals1 + bucket.goals2 > 0).slice(-2);
+  const out = { shots1: 0, shots2: 0, onTarget1: 0, onTarget2: 0, corners1: 0, corners2: 0, pressure1: 0, pressure2: 0, possession1: null, possession2: null };
+  let poss1 = 0, poss2 = 0;
+  for (const bucket of recent) {
+    for (const key of ["shots1", "shots2", "onTarget1", "onTarget2", "corners1", "corners2", "pressure1", "pressure2"]) out[key] += bucket[key];
+    poss1 += bucket.possSeconds1; poss2 += bucket.possSeconds2;
+  }
+  const coverage = poss1 + poss2;
+  if (coverage) { out.possession1 = poss1 / coverage * 100; out.possession2 = poss2 / coverage * 100; }
+  out.edge = out.pressure1 > out.pressure2 ? 1 : out.pressure2 > out.pressure1 ? 2 : out.shots1 > out.shots2 ? 1 : out.shots2 > out.shots1 ? 2 : out.possession1 != null && Math.abs(out.possession1 - out.possession2) >= 10 ? (out.possession1 > out.possession2 ? 1 : 2) : 0;
+  return out;
+}
+function setTapeView(view, focus) {
+  if (!TAPE_VIEWS[view]) return;
+  tapeView = view; xhairT = null; $('cvTip').style.display = "none";
+  document.querySelectorAll("#tapeSwitcher button").forEach(button => { const on = button.dataset.tapeView === tapeView; button.classList.toggle("on", on); button.setAttribute("aria-selected", String(on)); if (on && focus) button.focus(); });
+  renderStats(); renderMonitor(true); drawChart();
+}
+document.querySelectorAll("#tapeSwitcher button").forEach((button, index, buttons) => {
+  button.addEventListener("click", () => setTapeView(button.dataset.tapeView));
+  button.addEventListener("keydown", event => { if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return; event.preventDefault(); const next = (index + (event.key === "ArrowRight" ? 1 : -1) + buttons.length) % buttons.length; setTapeView(buttons[next].dataset.tapeView, true); });
+});
 /* Crosshair + tooltip — the lightweight-charts affordances our tape lacked
    (borrowed pattern, not the library: our overlays are too custom to swap). */
 let xhairT = null;
@@ -2214,10 +2306,17 @@ function xhairAt(clientX, clientY) {
   drawChart();
   const tip = $('cvTip');
   if (xhairT === null) { tip.style.display = "none"; return; }
-  const q = oddsAt(F, Math.min(xhairT, fxT(F)));
-  const near = F.tape.events.filter(ev => Math.abs(ev.t - xhairT) <= 90 && ["goal", "card", "var", "var_verdict"].includes(ev.type))
-    .sort((a, b) => Math.abs(a.t - xhairT) - Math.abs(b.t - xhairT))[0];
-  tip.innerHTML = `<b>${fmtMin(Math.min(xhairT, F.endT))}</b> · ${F.p1} <b style="color:#c2f04a">${(q.home * 100).toFixed(1)}%</b> · draw <b>${(q.draw * 100).toFixed(1)}%</b> · ${F.p2} <b style="color:#3b8bf5">${(q.away * 100).toFixed(1)}%</b>${near ? `<br>${near.type === "goal" ? "⚽" : near.type === "card" ? "🟨" : "📺"} ${near.type}${near.team ? " — " + (near.team === 1 ? F.p1 : F.p2) : ""} @ ${fmtMin(near.t)}` : ""}`;
+  const inspectT = Math.min(xhairT, fxT(F));
+  if (tapeView === "probability") {
+    const q = oddsAt(F, inspectT);
+    const near = F.tape.events.filter(ev => Math.abs(ev.t - xhairT) <= 90 && ["goal", "card", "var", "var_verdict"].includes(ev.type))
+      .sort((a, b) => Math.abs(a.t - xhairT) - Math.abs(b.t - xhairT))[0];
+    tip.innerHTML = `<b>${fmtMin(Math.min(xhairT, F.endT))}</b> · ${F.p1} <b style="color:#ff9d2e">${(q.home * 100).toFixed(1)}%</b> · draw <b>${(q.draw * 100).toFixed(1)}%</b> · ${F.p2} <b style="color:#35c9f2">${(q.away * 100).toFixed(1)}%</b>${near ? `<br>${near.type === "goal" ? "⚽" : near.type === "card" ? "🟨" : "📺"} ${near.type}${near.team ? " — " + (near.team === 1 ? F.p1 : F.p2) : ""} @ ${fmtMin(near.t)}` : ""}`;
+  } else {
+    const buckets = trendBuckets(F.tape.events, fxT(F)), bucket = buckets[Math.min(buckets.length - 1, Math.floor(inspectT / 300))];
+    const range = `${Math.floor(bucket.start / 60)}'–${Math.ceil(Math.min(bucket.end, fxT(F)) / 60)}'`;
+    tip.innerHTML = tapeView === "shots" ? `<b>${range}</b><br>${F.p1} <b style="color:#ff9d2e">${bucket.shots1} shots (${bucket.onTarget1} on target)</b><br>${F.p2} <b style="color:#35c9f2">${bucket.shots2} shots (${bucket.onTarget2} on target)</b>` : tapeView === "possession" ? `<b>${range} · TxLINE possession signal</b><br>${bucket.possession1 == null ? "No possession-state coverage" : `${F.p1} <b style="color:#ff9d2e">${bucket.possession1.toFixed(0)}%</b> · ${F.p2} <b style="color:#35c9f2">${bucket.possession2.toFixed(0)}%</b>`}` : `<b>${range} · pressure index</b><br>${F.p1} <b style="color:#ff9d2e">${bucket.pressure1}</b> · ${F.p2} <b style="color:#35c9f2">${bucket.pressure2}</b><br><span class="mut">3× shots + 2× on-target + 2× corners/danger + 4× goals</span>`;
+  }
   tip.style.display = "block";
   const card = cv.parentElement, cr = card.getBoundingClientRect();
   const x = clientX - cr.left + 14, flip = x + tip.offsetWidth + 20 > cr.width;
@@ -2244,6 +2343,54 @@ function chartYRange(ticks) {
   if (hi < lo) { lo = .2; hi = .8; }            // empty-tape guard (defaults, never inverted)
   return { yLo: lo - .05, yHi: hi + .05 };
 }
+function renderTrendReadout(F, t) {
+  const buckets = trendBuckets(F.tape.events, t), recent = recentTrend(buckets), root = $('trendReadout');
+  const edge = recent.edge === 1 ? F.p1 : recent.edge === 2 ? F.p2 : "Balanced";
+  const cls = recent.edge === 1 ? "home" : recent.edge === 2 ? "away" : "";
+  const possession = recent.possession1 == null ? "unavailable" : `${recent.possession1.toFixed(0)}–${recent.possession2.toFixed(0)}%`;
+  root.innerHTML = `<strong>Recent ≤10' trend</strong><span class="trend-edge ${cls}">${edge}${recent.edge ? " on top" : ""}</span><div class="trend-facts"><span>Shots <b>${recent.shots1}–${recent.shots2}</b></span><span>On target <b>${recent.onTarget1}–${recent.onTarget2}</b></span><span>Corners <b>${recent.corners1}–${recent.corners2}</b></span><span>Possession signal <b>${possession}</b></span><span>Pressure <b>${recent.pressure1}–${recent.pressure2}</b></span></div><div class="trend-method"><b>${F.p1} first · ${F.p2} second.</b> Pressure: 3× shots + 2× on-target + 2× corners/danger + 4× goals. Possession is time-weighted from real TxLINE possession-state updates, not an official optical time-on-ball statistic.</div>`;
+}
+function drawTrendChart(F, t) {
+  const buckets = trendBuckets(F.tape.events, t), plotTop = 34, plotBottom = 282, mid = 158;
+  const xOf = value => PAD_L + (value / F.endT) * (W - PAD_L - PAD_R);
+  ctx.clearRect(0, 0, W, 360); ctx.font = "12px Consolas,monospace";
+  ctx.strokeStyle = "#202b38"; ctx.fillStyle = "#95a3b5"; ctx.lineWidth = 1;
+  for (let m = 0; m <= F.endT / 60; m += 15) { const x = xOf(m * 60); ctx.beginPath(); ctx.moveTo(x, plotTop); ctx.lineTo(x, plotBottom + 20); ctx.stroke(); ctx.fillText(m + "'", x - 8, plotBottom + 40); }
+  ctx.fillStyle = "#ff9d2e"; ctx.fillText(F.p1, PAD_L + 4, 18); ctx.fillStyle = "#35c9f2"; ctx.fillText(F.p2, PAD_L + 54, 18);
+  if (tapeView === "possession") {
+    const yOf = pct => plotBottom - pct / 100 * (plotBottom - plotTop);
+    for (const pct of [0, 50, 100]) { const y = yOf(pct); ctx.strokeStyle = pct === 50 ? "#425066" : "#202b38"; ctx.beginPath(); ctx.moveTo(PAD_L, y); ctx.lineTo(W - PAD_R, y); ctx.stroke(); ctx.fillStyle = "#8291a4"; ctx.fillText(pct + "%", 7, y + 4); }
+    for (const bucket of buckets) {
+      if (bucket.start >= t) continue;
+      const x = xOf(bucket.start) + 1, width = Math.max(3, xOf(Math.min(bucket.end, t)) - x - 2);
+      if (bucket.possession1 == null) { ctx.fillStyle = "#17212d"; ctx.fillRect(x, plotTop, width, plotBottom - plotTop); continue; }
+      const split = yOf(bucket.possession1);
+      ctx.fillStyle = "rgba(255,157,46,.72)"; ctx.fillRect(x, split, width, plotBottom - split);
+      ctx.fillStyle = "rgba(53,201,242,.58)"; ctx.fillRect(x, plotTop, width, split - plotTop);
+    }
+    ctx.fillStyle = "#a7b3c2"; ctx.fillText("5-minute share of time covered by each TxLINE possession state", PAD_L + 100, 18);
+  } else {
+    const key1 = tapeView === "shots" ? "shots1" : "pressure1", key2 = tapeView === "shots" ? "shots2" : "pressure2";
+    const max = Math.max(1, ...buckets.flatMap(bucket => [bucket[key1], bucket[key2]]));
+    const scale = (mid - plotTop - 18) / max;
+    ctx.strokeStyle = "#425066"; ctx.beginPath(); ctx.moveTo(PAD_L, mid); ctx.lineTo(W - PAD_R, mid); ctx.stroke();
+    ctx.fillStyle = "#8291a4"; ctx.fillText(String(max), 18, plotTop + 4); ctx.fillText("0", 26, mid + 4); ctx.fillText(String(max), 18, plotBottom);
+    for (const bucket of buckets) {
+      if (bucket.start >= t) continue;
+      const x1 = xOf(bucket.start), x2 = xOf(Math.min(bucket.end, t)), barW = Math.max(3, (x2 - x1) * .64), x = x1 + (x2 - x1 - barW) / 2;
+      const h1 = bucket[key1] * scale, h2 = bucket[key2] * scale;
+      ctx.fillStyle = "rgba(255,157,46,.78)"; ctx.fillRect(x, mid - h1, barW, h1);
+      ctx.fillStyle = "rgba(53,201,242,.68)"; ctx.fillRect(x, mid + 1, barW, h2);
+      if (tapeView === "shots") {
+        ctx.fillStyle = "#ffe0b3"; ctx.fillRect(x, mid - bucket.onTarget1 * scale, barW, Math.min(3, bucket.onTarget1 * scale));
+        ctx.fillStyle = "#b8f2ff"; ctx.fillRect(x, mid + Math.max(1, bucket.onTarget2 * scale - 2), barW, Math.min(3, bucket.onTarget2 * scale));
+      }
+    }
+    ctx.fillStyle = "#a7b3c2"; ctx.fillText(tapeView === "shots" ? "confirmed shots per 5 minutes · bright cap = on target" : "transparent pressure index per 5 minutes · mirrored by team", PAD_L + 100, 18);
+  }
+  if (t > 0 && t < F.endT) { const x = xOf(t); ctx.strokeStyle = "rgba(255,255,255,.5)"; ctx.beginPath(); ctx.moveTo(x, plotTop); ctx.lineTo(x, plotBottom); ctx.stroke(); }
+  if (xhairT !== null) { const x = xOf(xhairT); ctx.save(); ctx.setLineDash([4, 4]); ctx.strokeStyle = "rgba(230,245,255,.55)"; ctx.beginPath(); ctx.moveTo(x, plotTop); ctx.lineTo(x, plotBottom); ctx.stroke(); ctx.restore(); }
+}
 function sizeCanvas() {
   dpr = window.devicePixelRatio || 1; W = cv.clientWidth;
   cv.width = W * dpr; cv.height = 360 * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -2252,6 +2399,7 @@ function sizeCanvas() {
 }
 function drawChart() {
   const F = FIXTURES[sel], t = fxT(F);
+  if (tapeView !== "probability") { drawTrendChart(F, t); return; }
   const xOf = x => PAD_L + (x / F.endT) * (W - PAD_L - PAD_R);
   const yOf = p => TOP + (yHi - p) / (yHi - yLo) * CH;
   ctx.clearRect(0, 0, W, 360); ctx.font = "12px Consolas,monospace";
@@ -2371,7 +2519,12 @@ function renderMonitor(force) {
   const sc = ev.length ? ev[ev.length - 1].stats : { g1: 0, g2: 0 };
   const r = FO.upsetRisk(F.tape.ticks, F.tape.events, t);
   const summary = $('chartSummaryText');
-  if (summary) summary.textContent = `${F.p1} ${sc.g1}–${sc.g2} ${F.p2} · ${F.liveMatch ? "captured/live" : "practice"} ${fmtMin(t)} · ${F.p1} ${(q.home * 100).toFixed(1)}% · Draw ${(q.draw * 100).toFixed(1)}% · ${F.p2} ${(q.away * 100).toFixed(1)}% · risk ${r.risk}/100`;
+  if (summary) {
+    const buckets = trendBuckets(F.tape.events, t), latest = buckets[buckets.length - 1], recent = recentTrend(buckets);
+    $('chartSummaryTitle').textContent = tapeView === "probability" ? "Accessible market snapshot" : "Accessible match trend snapshot";
+    summary.textContent = tapeView === "probability" ? `${F.p1} ${sc.g1}–${sc.g2} ${F.p2} · ${F.liveMatch ? "captured/live" : "practice"} ${fmtMin(t)} · ${F.p1} ${(q.home * 100).toFixed(1)}% · Draw ${(q.draw * 100).toFixed(1)}% · ${F.p2} ${(q.away * 100).toFixed(1)}% · risk ${r.risk}/100` : tapeView === "shots" ? `${F.p1} ${sc.g1}–${sc.g2} ${F.p2} · ${fmtMin(t)} · latest 5-minute shots ${latest.shots1}–${latest.shots2}, on target ${latest.onTarget1}–${latest.onTarget2} · recent shots ${recent.shots1}–${recent.shots2}` : tapeView === "possession" ? `${F.p1} ${sc.g1}–${sc.g2} ${F.p2} · ${fmtMin(t)} · latest 5-minute TxLINE possession signal ${latest.possession1 == null ? "unavailable" : `${latest.possession1.toFixed(0)}–${latest.possession2.toFixed(0)}%`} · time-weighted state coverage, not official time on ball` : `${F.p1} ${sc.g1}–${sc.g2} ${F.p2} · ${fmtMin(t)} · latest pressure ${latest.pressure1}–${latest.pressure2} · recent pressure ${recent.pressure1}–${recent.pressure2}`;
+  }
+  renderTrendReadout(F, t);
 }
 
 /* ---------------- misc ---------------- */

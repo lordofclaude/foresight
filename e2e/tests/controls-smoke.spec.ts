@@ -50,6 +50,7 @@ test.describe('remaining interactive controls', () => {
     await expect(page.locator('#sSettled')).toContainText('4/4')
 
     const canvas = page.locator('#cv')
+    await canvas.scrollIntoViewIfNeeded()
     const box = await canvas.boundingBox()
     expect(box).not.toBeNull()
     await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2)

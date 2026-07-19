@@ -47,6 +47,9 @@ has("390px controls reflow", /@media\(max-width:430px\)\{\.pickrow\{grid-templat
 has("detail pages expose native open and back controls", /id="detailBack"[\s\S]*id="portfolioOpen"[\s\S]*id="newsOpen"[\s\S]*id="leaderboardOpen"/);
 has("portfolio summary chart supports keyboard activation", /id="pfSpark" role="button" tabindex="0"[\s\S]*event\.key === "Enter" \|\| event\.key === " "/);
 has("mobile detail pages collapse KPI and news grids", /@media\(max-width:820px\)[^{]*\{[\s\S]*\.detail-kpis\{grid-template-columns:1fr 1fr\}[\s\S]*\.detail-news-layout\{grid-template-columns:1fr\}/);
+has("trend chart switcher uses an accessible tablist", /id="tapeSwitcher" role="tablist" aria-label="Match trend chart"[\s\S]*role="tab" class="on" aria-selected="true"/);
+has("trend tabs support arrow-key navigation", /event\.key !== "ArrowRight" && event\.key !== "ArrowLeft"[\s\S]*setTapeView\(buttons\[next\]\.dataset\.tapeView, true\)/);
+lacks("fast-changing trend readout avoids live announcements", /id="trendReadout"[^>]*aria-live=/);
 has("hydrated DOM budget is published", /hydratedDomElements: 1000/);
 const worldStageImages = fs.readdirSync(worldStageDir).filter(file => file.endsWith(".webp"));
 const worldStageBytes = worldStageImages.reduce((sum, file) => sum + fs.statSync(path.join(worldStageDir, file)).size, 0);

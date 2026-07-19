@@ -69,6 +69,27 @@ eq("empty tape guard never inverted", r.yLo < r.yHi, true);
 r = chartYRange([{ t: 0, home: 0.5, away: 0.5 }]);
 eq("flat tape still ordered", r.yLo < r.yHi, true);
 
+/* ---------- match trend buckets: confirmed real events + 5m possession ---------- */
+const trendBuckets = extractFn("trendBuckets");
+const recentTrend = extractFn("recentTrend");
+const trend = trendBuckets([
+  { t: 20, type: "shot", team: 2, seq: 1, raw: { Id: 9, Confirmed: false, Possession: 2 } },
+  { t: 30, type: "shot", team: 1, detail: "OnTarget", seq: 2, raw: { Id: 1, Confirmed: true, Possession: 1 } },
+  { t: 30, type: "shot", team: 1, detail: "OnTarget", seq: 3, raw: { Id: 1, Confirmed: true, Possession: 1 } },
+  { t: 90, type: "corner", team: 2, seq: 4, raw: { Id: 2, Confirmed: true, Possession: 2 } },
+  { t: 310, type: "shot", team: 2, detail: "Blocked", seq: 5, raw: { Id: 3, Confirmed: true, Possession: 2 } },
+  { t: 450, type: "freekick", team: 1, detail: "Danger", seq: 6, raw: { Id: 4, Confirmed: true, Possession: 1 } },
+  { t: 500, type: "goal", team: 1, seq: 7, raw: { Id: 5, Confirmed: true, Possession: 1 } },
+], 600, 300);
+eq("trend chart creates two five-minute buckets", trend.length, 2);
+eq("unconfirmed and duplicate shots are not double counted", [trend[0].shots1, trend[0].shots2], [1, 0]);
+eq("confirmed on-target shots are preserved", trend[0].onTarget1, 1);
+eq("corners feed the correct team bucket", trend[0].corners2, 1);
+close("first bucket time-weights home possession states", trend[0].possession1, 60 / 270 * 100);
+close("second bucket splits possession from state transitions", trend[1].possession1, 50);
+eq("pressure formula stays transparent and deterministic", [trend[0].pressure1, trend[0].pressure2, trend[1].pressure1, trend[1].pressure2], [5, 2, 6, 3]);
+eq("recent edge follows the stronger pressure window", recentTrend(trend).edge, 1);
+
 /* ---------- market divergence: same-outcome source comparison ---------- */
 const marketDivergence = extractFn("marketDivergence");
 let divergence = marketDivergence(
@@ -171,6 +192,9 @@ has("leaderboard news and portfolio have URL-addressable detail views", /const D
 has("detail pages reuse the live leaderboard portfolio and news state", /function renderLeaderboardDetail\(\)[\s\S]*liveLeaderboard\(1\)[\s\S]*function renderPortfolioDetail\(\)[\s\S]*portfolioSnapshot\(\)[\s\S]*function renderNewsDetail\(\)[\s\S]*newsByFixture\.get/);
 has("browser back synchronizes detail page state", /addEventListener\("popstate", syncDetailFromUrl\)/);
 has("replay refreshes an open detail page", /function renderAll\(\) \{[\s\S]*renderDetailView\(\); \}/);
+has("tape switcher exposes probability shots possession and pressure", /data-tape-view="probability"[\s\S]*data-tape-view="shots"[\s\S]*data-tape-view="possession"[\s\S]*data-tape-view="pressure"/);
+has("non-probability tape views use five-minute real-event buckets", /if \(tapeView !== "probability"\) \{ drawTrendChart\(F, t\); return; \}/);
+has("possession is explicitly not presented as official time on ball", /time-weighted from real TxLINE possession-state updates, not an official optical time-on-ball statistic/);
 lacks("known-missing final tape is not requested", /src="real-data\/18257739\.tape\.js"/);
 has("relay input assigned through DOM property", /\$\('relayUrl'\)\.value = RELAY_BASE/);
 has("relay URL is allowlisted", /throw new Error\("relay URL is not allowlisted"\)/);
