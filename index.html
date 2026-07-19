@@ -1305,7 +1305,7 @@ async function connectWallet() {
   const provider = getSolanaProvider();
   if (!provider) {
     $('modalbox').innerHTML = `<h4>Connect Wallet <button type="button" class="modal-close" onclick="closeModal()">✕ close</button></h4>
-      <div class="stratbox priv">No Solana wallet extension detected. Real on-chain commits need a browser wallet — <a href="https://phantom.app" target="_blank" rel="noopener" style="color:var(--blue)">Phantom</a> is the most common. Install it, switch it to <b>Devnet</b>, then reconnect.</div>
+      <div class="stratbox priv">No compatible Solana wallet is exposed to this browser. If <a href="https://phantom.app" target="_blank" rel="noopener" style="color:var(--blue)">Phantom</a> is already installed, open Foresight in the same extension-enabled Chrome, Brave, or Edge profile, then reconnect. Otherwise install Phantom and switch it to <b>Devnet</b>.</div>
       <div class="small mut" style="margin-top:.5rem">Until then, commits stay local sim-slots — same hash logic, no wallet required, zero friction for the demo.</div>`;
     openModal();
     return;
