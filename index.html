@@ -487,6 +487,141 @@ main{display:grid;grid-template-columns:250px minmax(520px,1fr) 340px;gap:12px;m
 @media(max-width:960px){main{grid-template-columns:1fr}.left-column{display:grid;grid-template-columns:1fr 1fr;gap:10px}.left-column .card{margin-bottom:0}.intel-card{order:-1}.radar{grid-template-columns:repeat(2,1fr)}.stats{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:640px){body>header,.demo-rail,.mode-stack,.stats,.hero,#radarBar,.radar,main,.footer-strip,footer{width:min(calc(100% - 24px),1440px)}header{padding:10px 0}.brandwrap{flex:1}.fx,.identity-chip{display:none}.datatag{order:2}.wallet-btn{order:3;min-width:0}.live-ctl{width:100%}.live-panel{position:static;width:100%}.mode-banner{align-items:flex-start}.hero{min-height:112px;padding:15px 12px;gap:7px}.hero-team{font-size:1.3rem}.hero-score{font-size:2.15rem}.hero-flag .flag{width:30px;height:22px}.stats{grid-template-columns:repeat(3,1fr);gap:6px}.stat{padding:.45rem .55rem}.radar{grid-template-columns:1fr 1fr}.left-column{display:flex}.compare-head,.compare-row{grid-template-columns:minmax(82px,1fr) 58px 66px 76px;gap:4px}.compare-head{padding-left:5px;padding-right:5px}.compare-row{padding-left:5px;padding-right:5px}.compare-price{font-size:.96rem}.compare-div{font-size:.6rem;padding:.2rem .32rem}.match-stat-strip{grid-template-columns:repeat(2,1fr)}.match-stat:nth-child(2){border-right:0}.match-stat:nth-child(-n+2){border-bottom:1px solid #1c304b}.timeline-event{grid-template-columns:36px 26px minmax(0,1fr)}.timeline-team{display:none}.prophet:nth-child(n+6){display:none}}
 @media(max-width:430px){.radar{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.compare-head{display:none}.compare-row{grid-template-columns:minmax(82px,1fr) 62px 70px}.compare-div{grid-column:2/4;justify-self:stretch;justify-content:center;margin-top:-2px}.timeline-filters button{padding:.38rem .48rem}}
+
+/* ---- Bloomberg-inspired match desk -----------------------------------
+   Launchpad principles, not a visual clone: predictable modules, one
+   command strip, fast scanning, generous type, and semantic color. */
+body{
+  --bg:#06090f;--panel:#0b111a;--panel2:#101925;--line:#273244;
+  --ink:#f5f7fb;--txt:#d7dee8;--mut:#98a6b8;
+  --lime:#ff9d2e;--blue:#35c9f2;--white:#f5f7fb;--red:#ff6678;--amber:#ffb84d;
+  --green:#44d18a;--cyan:#35c9f2;--violet:#ff9d2e;--pink:#ff6678;
+  background:radial-gradient(900px 440px at 78% -15%,rgba(53,201,242,.08),transparent 64%),#06090f;
+  color:var(--txt);font-size:15px;line-height:1.5
+}
+/* The landing is already working. Pin its original palette while the
+   platform beneath it receives the new desk theme. */
+#gate{--bg:#0a1322;--panel:#0e1c33;--panel2:#12233f;--line:#20385c;--ink:#eef4ff;--txt:#c2d2ea;--mut:#8299b8;--lime:#c2f04a;--blue:#3b8bf5;--white:#eef4ff;--red:#ff5a74;--amber:#f5b73d;--green:#c2f04a;--cyan:#3b8bf5;--violet:#c2f04a;--pink:#ff5a74}
+body>header,.workspace-nav,.demo-rail,.mode-stack,.stats,.hero,#radarBar,.radar,main,.footer-strip,footer{width:min(calc(100% - 40px),1500px)}
+
+header{min-height:72px;padding:13px 2px;background:rgba(6,9,15,.96);border-bottom:1px solid #303c4f;box-shadow:none;backdrop-filter:blur(18px)}
+header h1{font-size:2.05rem;font-style:normal;letter-spacing:-.015em}
+header h1 b{color:#ff9d2e}
+.tagline{display:none}
+.datatag{padding:.36rem .72rem;border:1px solid #ff9d2e;border-radius:4px;background:#ff9d2e;color:#16100a;font:800 .75rem var(--fmono);letter-spacing:.035em}
+.fx{font:600 .82rem var(--fbody);color:#afbac9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wallet-btn,.google-btn,.live-ctl>summary{min-height:40px;font-size:.8rem;border-radius:6px}
+.identity-chip{max-width:240px;font:600 .75rem var(--fmono);color:#9ba9bb}
+.live-panel{background:#0b111a;border-color:#35435a;box-shadow:0 18px 50px rgba(0,0,0,.45)}
+#liveStatus{font-size:.75rem}
+#tickerbar{display:none}
+
+.workspace-nav{display:flex;align-items:center;gap:4px;margin:10px auto 0;padding:5px;background:#090e15;border:1px solid #263143;border-radius:8px;overflow-x:auto;scrollbar-width:none}
+.workspace-nav::-webkit-scrollbar{display:none}
+.workspace-nav .workspace-label{flex:none;padding:7px 12px;color:#ffad49;font:800 .76rem var(--fmono);letter-spacing:.08em}
+.workspace-nav a{display:inline-flex;align-items:center;gap:7px;flex:none;padding:7px 11px;border-radius:5px;color:#bac5d3;font:700 .82rem var(--fbody);text-decoration:none}
+.workspace-nav a:hover{background:#151e2a;color:#fff}
+.workspace-nav kbd{display:grid;place-items:center;min-width:20px;height:20px;padding:0 4px;border:1px solid #3a485d;border-radius:4px;background:#111923;color:#7f90a5;font:700 .75rem var(--fmono);box-shadow:none}
+
+.demo-rail{top:6px;margin-top:8px;padding:7px;background:rgba(10,18,24,.96);border-color:#315241;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.22)}
+.demo-rail strong{display:flex;align-items:center;padding:0 8px;color:#61dfa0;font:800 .78rem var(--fbody)}
+.demo-nav{min-height:36px;padding:7px 10px;border-color:#334357;background:#101923;color:#cbd4e0;border-radius:5px;font:700 .78rem var(--fbody)}
+.demo-nav:hover{border-color:#ff9d2e;color:#fff}.demo-nav.done::before{color:#44d18a}
+.mode-stack{margin-top:8px;margin-bottom:10px}
+.mode-banner{min-height:42px;padding:10px 13px;border-radius:7px;background:#17130c;border-color:#5c4a28;color:#cdbb9b}
+.mode-banner strong{font:800 .8rem var(--fmono);letter-spacing:.03em}.mode-banner span{font-size:.82rem;color:#b7a789}
+
+.stats{grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}
+.stats .stat:nth-child(4),.stats .stat:nth-child(5){display:none}
+.stat{min-height:70px;padding:.7rem .85rem;background:#0b111a;border-color:#273244;border-radius:7px;box-shadow:none}
+.stat .l{font:700 .75rem var(--fbody);letter-spacing:.02em;text-transform:none;color:#98a6b8}
+.stat .v{margin-top:.2rem;font:800 1.55rem var(--fmono);font-style:normal;color:#f5f7fb}
+.stat .c{color:#35c9f2}.stat .v2,.stat .g{color:#44d18a}
+
+.hero{min-height:164px;margin-bottom:10px;padding:22px 34px;border-radius:10px;border-color:#34435a;background-image:linear-gradient(90deg,rgba(5,9,15,.94),rgba(5,9,15,.48) 50%,rgba(5,9,15,.94)),url("assets/world-cup/stadium-night-panorama.webp");box-shadow:0 18px 55px rgba(0,0,0,.3)}
+.hero-team{font-style:normal;font-size:clamp(2.15rem,4vw,3.7rem);letter-spacing:-.025em;text-shadow:0 3px 18px rgba(0,0,0,.65)}
+.hero-score{font-style:normal;font-size:clamp(3rem,5.2vw,4.8rem);letter-spacing:-.04em}
+.hero-min{margin-top:9px;padding:.2rem .75rem;border-color:#35c9f2;border-radius:4px;color:#58d9fb;font:800 .78rem var(--fmono);font-style:normal}
+.hero-min.ft{background:#44d18a;border-color:#44d18a;color:#06110b}
+
+#radarBar{min-height:35px;margin-bottom:6px}
+#radarBar .rb-l{color:#dfe5ed;font:800 .82rem var(--fbody);font-style:normal;letter-spacing:.04em}
+.viewtoggle button{min-height:30px;padding:.32rem .7rem;border-color:#35435a;background:#0b111a;color:#98a6b8;font:700 .75rem var(--fbody)}
+.viewtoggle button.on{background:#ff9d2e;border-color:#ff9d2e;color:#160f08}
+.radar{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:12px}
+.tile{min-height:96px;padding:.78rem .9rem;border-radius:7px;background:#0b111a;border-color:#273244}
+.tile:hover{border-color:#4d6078;background:#101925}.tile.sel{border-color:#ff9d2e;background:#17140f;box-shadow:inset 3px 0 0 #ff9d2e}
+.tile .m{font-size:1.05rem;font-style:normal;letter-spacing:-.01em}.tile .rk{font-size:1.42rem;font-style:normal}.tile .sc,.tile .ft{font-size:.75rem}.tile .sc{color:#94a3b6}.tile .ft{color:#44d18a}.tile .bar{height:4px}
+
+main{grid-template-columns:270px minmax(560px,1fr) 330px;gap:10px}
+.card{margin-bottom:10px;padding:1rem;background:#0b111a;border-color:#273244;border-radius:8px;box-shadow:none}
+.card h3{margin-bottom:.8rem;color:#f5f7fb;font:750 1rem var(--fbody);font-style:normal;letter-spacing:-.01em;text-transform:none}
+.card h3 .r2{font:650 .75rem var(--fbody);font-style:normal;letter-spacing:0;text-transform:none;color:#94a3b6}
+.section-kicker{margin-bottom:.32rem;color:#ffad49;font:800 .75rem var(--fmono);letter-spacing:.08em}
+.small{font-size:.78rem}.mut{color:#98a6b8}
+.btn{min-height:42px;padding:.65rem;border-radius:6px;border-color:#344258;background:#111b28;color:#5bd5f5;font:800 .82rem var(--fbody);font-style:normal;letter-spacing:.025em}
+.btn:hover{background:#172435;border-color:#52647e}
+.btn.violet{background:#ff9d2e;border-color:#ff9d2e;color:#171006}.btn.violet:hover{background:#ffb14f}
+.pickrow{gap:6px}.pick{min-height:66px;padding:.6rem .35rem;border-radius:6px;background:#101925;border-color:#2e3a4e}
+.pick:hover{border-color:#5b6c84}.pick.sel{border-color:#ff9d2e;background:#20170d;box-shadow:inset 0 -3px 0 #ff9d2e}
+.pick .nm{font-size:.75rem;font-style:normal;color:#a4b0c0}.pick .pr{font-size:1.35rem;font-style:normal}
+.poly-btn{color:#69dcfb;background:#0d1a24;border-color:#28485c}
+.infotoggle{font-size:.75rem;color:#69dcfb}.infobox{font-size:.78rem;line-height:1.58}
+.pfsub,.posrow,.commitrow,.receipt,.vd,.feeditem{font-size:.78rem}.pfval{font-style:normal}.simtag,.real-tag,.st,.tag,.anchor-live{font-size:.75rem}.anchor-hash,.anchor-sig a,.vd pre{font-size:.75rem!important}
+#portfolioCard.is-empty{display:none}.league-formula{display:none}
+
+.compare-card{background-image:linear-gradient(90deg,rgba(8,13,20,.97),rgba(8,13,20,.9)),url("assets/world-cup/tactical-data-pitch.webp");background-size:cover;background-position:center;border-color:#46586f}
+.compare-card::before{width:220px;height:220px;background:radial-gradient(circle,rgba(255,157,46,.13),transparent 68%)}
+.compare-thesis{margin:-.35rem 0 .9rem;color:#abb7c6;font-size:.82rem}
+.compare-head,.compare-row{grid-template-columns:minmax(120px,1.25fr) minmax(80px,.8fr) minmax(90px,.9fr) minmax(100px,.9fr);gap:12px}
+.compare-head{padding:0 11px 7px;color:#9aa8b9;font:800 .75rem var(--fbody);letter-spacing:.035em}
+.compare-row{min-height:64px;padding:10px 11px;border-color:#2b3749}
+.compare-outcome{font-size:.88rem}.compare-outcome small{font-size:.75rem;color:#91a0b3}
+.compare-price{font:800 1.28rem var(--fmono);color:#f5f7fb}.compare-price span{font:600 .75rem var(--fbody);color:#8f9db0}
+.compare-div{min-height:32px;padding:.3rem .55rem;border-radius:5px;font-size:.78rem;background:#152131;border-color:#34455c}
+.compare-div.edge{color:#8cebb6;background:#10251b;border-color:#2a6b4c}.compare-div.fade{color:#ff9aab;background:#2b151c;border-color:#693241}
+.compare-empty{padding:1rem;font-size:.8rem;color:#9ba8ba}
+.compare-foot{margin-top:.8rem;padding-top:.75rem;color:#9aa8b9;font:600 .75rem var(--fbody)}
+.compare-foot a{color:#68dafa}
+#monitor{display:none}
+.chart-summary{margin:0 0 .65rem;padding:.6rem .7rem;border-color:#304259;border-radius:6px;background:#0d1722;font-size:.8rem;color:#b9c4d2}
+.chart-summary strong{display:none}
+
+.match-stat-strip{border-color:#2c394c;border-radius:6px}.match-stat{padding:.65rem .4rem;border-color:#2c394c}.match-stat b{font:800 1.1rem var(--fmono)}.match-stat span{font-size:.75rem;color:#94a3b6}
+.timeline-filters,.intel-tabs{gap:6px;margin-bottom:.75rem}
+.timeline-filters button,.intel-tabs button{min-height:34px;padding:.42rem .62rem;border-color:#35435a;background:#101925;color:#a7b3c2;border-radius:5px;font:700 .75rem var(--fbody)}
+.timeline-filters button.on,.intel-tabs button.on{border-color:#ff9d2e;background:#25190d;color:#ffc278}
+.match-timeline{max-height:430px;scrollbar-color:#3b4b60 #0a0f16}
+.timeline-event{grid-template-columns:46px 34px minmax(0,1fr) auto;gap:10px;min-height:51px;padding:.58rem .25rem;border-color:#222e3e}
+.timeline-minute{font-size:.77rem;color:#9aa8ba}.timeline-icon{width:30px;height:30px;border-radius:5px;background:#152131;font-size:.95rem}.timeline-copy{font-size:.82rem}.timeline-copy span{display:none}.timeline-team{font-size:.75rem;color:#9aa8ba}.timeline-more{min-height:38px;font-size:.78rem;border-radius:5px}
+
+.intel-card{background-image:linear-gradient(160deg,rgba(10,17,26,.97),rgba(10,17,26,.92)),url("assets/world-cup/global-fixture-network.webp");background-size:cover;background-position:center;border-color:#34475e}
+.news-list{gap:8px}.news-item{padding:.75rem;border-color:#2a3749;border-radius:6px;background:rgba(13,21,32,.88)}.news-item:hover{border-color:#50627a;background:#111d2b}
+.news-source,.news-time,.news-tag{font-size:.75rem}.news-source{color:#ffad49}.news-title{font-size:.82rem;line-height:1.45}.news-tag{color:#95a4b6}.x-intro,.x-links a{font-size:.77rem}
+.detail-card summary{min-height:48px;padding:.85rem 1rem;font-size:.84rem}.detail-card summary span{font-size:.75rem}.detail-body{padding:.35rem 1rem 1rem}
+.prophet{min-height:42px;padding:.55rem .3rem;font-size:.82rem}.prophet .rank{font-style:normal}.bfilter button{min-height:32px;font-size:.75rem}
+main>div:last-child{display:flex;flex-direction:column}
+#verifyCard{order:1}#anchorCard{order:2}#intelCard{order:3}#intelCard+.card{order:4}
+footer{font-size:.76rem;color:#98a6b8}.footer-strip{padding:11px 14px;border-radius:7px;background:#0a1018;border-color:#273244}.footer-strip .fs-l{font-size:.8rem;font-style:normal}.footer-strip .fs-r{font-size:.75rem;font-style:normal;color:#a6b2c1}
+
+@media(max-width:1180px){main{grid-template-columns:250px minmax(500px,1fr) 300px}.radar{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:1380px){header .google-btn{display:none}}
+body:has(#demoRail:not([hidden])) .workspace-nav{display:none}
+@media(max-width:960px){main{grid-template-columns:1fr}.left-column{display:grid;grid-template-columns:1fr 1fr}.stats{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:640px){
+  body>header,.workspace-nav,.demo-rail,.mode-stack,.stats,.hero,#radarBar,.radar,main,.footer-strip,footer{width:min(calc(100% - 24px),1500px)}
+  header{padding:10px 0;gap:8px}.brandwrap{flex:1}header h1{font-size:1.75rem}.datatag{font-size:.75rem}.wallet-btn{width:auto!important;min-width:0}.google-btn{display:none}.live-ctl{width:100%}
+  .workspace-nav{margin-top:8px}.workspace-nav .workspace-label{display:none}.workspace-nav a{padding:8px 10px}
+  .demo-rail{top:4px;flex-wrap:wrap}.demo-rail strong{width:100%}.demo-nav{flex:1 1 40%}.mode-banner{gap:3px}.mode-banner span{font-size:.76rem}
+  .stats{display:none}
+  .hero{min-height:124px;padding:16px 12px}.hero-team{font-size:1.45rem}.hero-score{font-size:2.35rem}.hero-min{font-size:.75rem}
+  .radar{display:flex;overflow-x:auto;scroll-snap-type:x proximity;overscroll-behavior-inline:contain}.tile{flex:0 0 min(78vw,280px);min-height:88px;scroll-snap-align:start}
+  .left-column{display:flex}.card{padding:.9rem}.card h3{font-size:.98rem}
+  .compare-head,.compare-row{grid-template-columns:minmax(88px,1fr) 62px 72px 80px;gap:5px}.compare-head{font-size:.75rem}.compare-price{font-size:1.05rem}.compare-div{font-size:.75rem}
+  .timeline-event{grid-template-columns:42px 32px minmax(0,1fr)}.timeline-team{display:none}
+}
+@media(max-width:430px){.radar{display:flex}.compare-head{display:none}.compare-row{grid-template-columns:minmax(96px,1fr) 70px 78px}.compare-div{grid-column:2/4}.pickrow{grid-template-columns:repeat(3,1fr)}.pick{min-height:68px}}
+@media(prefers-reduced-data:reduce){.compare-card,.intel-card{background-image:none}}
 </style></head><body>
 
 <!-- Landing gate: AetherFlow-style particle hero (vanilla canvas port — this is
@@ -529,21 +664,30 @@ main{display:grid;grid-template-columns:250px minmax(520px,1fr) 340px;gap:12px;m
   <details class="live-ctl" id="liveCtl"><summary>Live / diagnostics</summary><div class="live-panel"><div class="row"><button id="goLiveBtn" type="button">🔴 GO LIVE</button><input id="relayUrl" aria-label="Allowed TxLINE relay URL"></div><div id="liveStatus">Checking relay…</div></div></details>
 </header>
 
+<nav class="workspace-nav" aria-label="Match desk sections">
+  <span class="workspace-label">WORLD CUP DESK</span>
+  <a href="#commitCard" data-workspace-key="1" aria-keyshortcuts="Alt+1"><kbd>1</kbd>Commit</a>
+  <a href="#marketCompareCard" data-workspace-key="2" aria-keyshortcuts="Alt+2"><kbd>2</kbd>Markets</a>
+  <a href="#timelineCard" data-workspace-key="3" aria-keyshortcuts="Alt+3"><kbd>3</kbd>Events</a>
+  <a href="#verifyCard" data-workspace-key="4" aria-keyshortcuts="Alt+4"><kbd>4</kbd>Verify</a>
+  <a href="#anchorCard" data-workspace-key="5" aria-keyshortcuts="Alt+5"><kbd>5</kbd>Proof</a>
+</nav>
+
 <!-- TICKER TAPE (TradingView idiom): every market, scrolling — implied H/D/A,
      10-min deltas, σ. Content doubled for a seamless CSS loop; static under
      prefers-reduced-motion; pauses on hover so numbers can be read. -->
 <div id="tickerbar" aria-hidden="true" title="live implied probabilities · Δ vs 10 min ago · σ volatility"><div class="inner" id="tickerInner"></div></div>
 
-<aside class="demo-rail" id="demoRail" hidden aria-label="Guided demo"><strong>90-second demo</strong><button class="demo-nav" data-demo-step="1" data-focus="pickrow">1 · Commit practice call</button><button class="demo-nav" data-demo-step="2" data-focus="run">2 · Run / instant</button><button class="demo-nav" data-demo-step="3" data-focus="forgeBtn">3 · Verify / forge</button><button class="demo-nav" data-demo-step="4" data-focus="anchorCard">4 · Real anchor</button></aside>
+<aside class="demo-rail" id="demoRail" hidden aria-label="Guided demo"><strong>90-second demo</strong><button class="demo-nav" aria-label="1 · Commit practice call" data-demo-step="1" data-focus="pickrow">01 Commit</button><button class="demo-nav" aria-label="2 · Run / instant" data-demo-step="2" data-focus="run">02 Settle</button><button class="demo-nav" aria-label="3 · Verify / forge" data-demo-step="3" data-focus="forgeBtn">03 Verify</button><button class="demo-nav" aria-label="4 · Real anchor" data-demo-step="4" data-focus="anchorCard">04 Proof</button></aside>
 <section class="mode-stack" aria-label="Current proof mode"><div class="mode-banner" id="modeBanner"><strong id="globalMode">PRACTICE REPLAY</strong><span id="globalModeCopy">Historical TxLINE tape · local demo commits.</span></div><div class="proof-flow"><div class="proof-head"><h2>Truth-labeled data flow</h2><span id="proofMode">Current mode: PRACTICE REPLAY</span></div><div class="proof-steps"><div class="proof-step"><b>TxLINE quotes/events</b><span class="truth-tag">[REAL]</span></div><div class="proof-step"><b>Commit + hash</b><span class="truth-tag practice" id="commitTruth">[PRACTICE · LOCAL]</span></div><div class="proof-step"><b>Solana timestamp</b><span class="truth-tag">[WALLET / PRE-KICKOFF]</span></div><div class="proof-step"><b>TxLINE final statKeys</b><span class="truth-tag">[REAL]</span></div><div class="proof-step"><b>Deterministic grade/profile</b><span class="truth-tag practice">[LOCAL DEMO]</span></div></div></div></section>
 
 <div class="stats">
-  <div class="stat"><div class="l">Match clock</div><div class="v c" id="sClock">0'</div></div>
-  <div class="stat"><div class="l">Realized</div><div class="v v2" id="sScore">—</div></div>
-  <div class="stat"><div class="l">Mark-to-mkt value</div><div class="v c" id="sMTM">$0</div></div>
+  <div class="stat"><div class="l">Clock</div><div class="v c" id="sClock">0'</div></div>
+  <div class="stat"><div class="l">Your record</div><div class="v v2" id="sScore">—</div></div>
+  <div class="stat"><div class="l">Open value</div><div class="v c" id="sMTM">$0</div></div>
   <div class="stat"><div class="l">Your picks</div><div class="v" id="sPicks">0</div></div>
   <div class="stat"><div class="l">Commits</div><div class="v" id="sCommits">0</div></div>
-  <div class="stat"><div class="l">Matches settled</div><div class="v" id="sSettled">0/0</div></div>
+  <div class="stat"><div class="l">Settled</div><div class="v" id="sSettled">0/0</div></div>
 </div>
 
 <!-- HERO: the selected match, broadcast-scale -->
@@ -561,32 +705,32 @@ main{display:grid;grid-template-columns:250px minmax(520px,1fr) 340px;gap:12px;m
 <main>
 <div class="left-column"><!-- LEFT: portfolio + selected-match radar detail + commit flow -->
   <div class="card" id="portfolioCard">
-    <h3>Portfolio — mark to market <span class="r2">cash-out value, live</span></h3>
+    <h3>Portfolio <span class="r2">Live receipt value</span></h3>
     <div class="pfhead"><div class="pfval c" id="pfTotal">$0</div><div class="pfsub" id="pfUnreal">no open positions</div></div>
     <canvas id="pfSpark" aria-hidden="true"></canvas>
-    <div id="pfRows" class="small mut">Commit a call — its live value re-prices with the market every tick, like cashing out on an exchange.</div>
+    <div id="pfRows" class="small mut">No open receipts.</div>
   </div>
   <div class="card" id="riskCard">
-    <h3>Upset radar — selected match <span class="r2">consensus decay × trailing × pressure</span></h3>
+    <h3>Match signal <span class="r2">Upset risk · 0–100</span></h3>
     <div style="display:flex;align-items:center;gap:.7rem"><div style="font-size:1.7rem" id="riskNum">—</div>
       <div id="riskMeter" role="progressbar" aria-label="Upset risk" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" style="flex:1;height:8px;background:#0d1826;border-radius:4px;overflow:hidden"><i id="riskBar" style="display:block;height:100%;background:linear-gradient(90deg,var(--green),var(--amber),var(--red));width:0%"></i></div></div>
     <div class="small mut" id="riskWhy" style="margin-top:.4rem">—</div>
   </div>
   <div class="card" id="commitCard">
-    <h3>Commit a call <span class="r2">hash locks the call now</span></h3>
+    <h3>Commit prediction <span class="r2">Price sealed now</span></h3>
     <div class="pickrow" id="pickrow" tabindex="-1">
       <button type="button" class="pick" data-pick="part1" aria-pressed="false"><span class="nm" id="n1">HOME</span><span class="pr" id="p1">—</span></button>
       <button type="button" class="pick" data-pick="draw" aria-pressed="false"><span class="nm">DRAW</span><span class="pr" id="pX">—</span></button>
       <button type="button" class="pick" data-pick="part2" aria-pressed="false"><span class="nm" id="n2">AWAY</span><span class="pr" id="p2">—</span></button>
     </div>
     <button type="button" class="btn violet" id="commitBtn" disabled>◆ COMMIT — select a side</button>
-    <a class="btn poly-btn" id="polyBtn" target="_blank" rel="noopener">🔷 Trade this on Polymarket ↗</a>
+    <a class="btn poly-btn" id="polyBtn" target="_blank" rel="noopener">Open on Polymarket ↗</a>
     <div id="mycommits"></div>
     <button type="button" class="infotoggle" aria-expanded="false" aria-controls="commitInfo" onclick="toggleInfo('commitInfo',this)">ⓘ how commits work</button>
-    <div class="small mut infobox" id="commitInfo">Prices = StablePrice implied % at the playhead of the selected match — the exact triple your hash commits to (provable via <code>/api/odds/validation</code>). Polymarket opens their real market search in a new tab — you trade there on your own account; Foresight never touches funds.</div>
+    <div class="small mut infobox" id="commitInfo">The StablePrice probability triple is sealed inside the hash. The validation route is an unwired production seam. Polymarket opens externally: you trade there on your own account; Foresight never touches funds.</div>
   </div>
   <div class="card" id="replayCard">
-    <h3>Replay <span class="r2">all matches advance together</span></h3>
+    <h3>Replay <span class="r2">Tournament clock</span></h3>
     <button type="button" class="btn" id="run">▶ RUN REPLAY (all fixtures)</button>
     <div class="ctl">
       <label class="sr-only" for="speed">Replay speed</label><select id="speed"><option value="2" selected>2×</option><option value="4">4×</option><option value="8">8×</option><option value="16">16×</option></select>
@@ -597,10 +741,10 @@ main{display:grid;grid-template-columns:250px minmax(520px,1fr) 340px;gap:12px;m
 
 <div><!-- CENTER: tape -->
   <div class="card compare-card" id="marketCompareCard" aria-labelledby="compareTitle">
-    <div class="section-kicker">MARKET INTELLIGENCE</div>
-    <h3 id="compareTitle"><span>Where the market disagrees</span><span class="r2" id="compareStatus">Connecting public prices…</span></h3>
-    <div class="compare-thesis" id="compareThesis">TxLINE consensus versus Polymarket moneyline at the same replay timestamp.</div>
-    <div class="compare-head" aria-hidden="true"><span>Outcome</span><span>TxLINE</span><span>Polymarket</span><span>Divergence</span></div>
+    <div class="section-kicker">TXLINE × POLYMARKET</div>
+    <h3 id="compareTitle"><span>Market divergence</span><span class="r2" id="compareStatus">Connecting…</span></h3>
+    <div class="compare-thesis" id="compareThesis">Same match. Same replay time. Different prices.</div>
+    <div class="compare-head" aria-hidden="true"><span>Outcome</span><span>TxLINE</span><span>Poly</span><span>Δ</span></div>
     <div id="compareRows" class="compare-rows" role="table" aria-label="TxLINE and Polymarket implied probability comparison">
       <div class="compare-empty">Resolving the matching Polymarket event…</div>
     </div>
@@ -608,7 +752,7 @@ main{display:grid;grid-template-columns:250px minmax(520px,1fr) 340px;gap:12px;m
   </div>
   <div class="card" id="tapeCard">
     <h3><span id="tapeTitle">consensus tape</span>
-      <span class="r2">hover / drag to inspect · ◆ commits · ● moves · brackets = market lag</span></h3>
+      <span class="r2">Drag to inspect</span></h3>
     <div id="monitor" aria-hidden="true"></div>
     <div class="chart-summary" role="region" aria-labelledby="chartSummaryTitle"><strong id="chartSummaryTitle">Accessible market snapshot</strong><span id="chartSummaryText">Loading selected market…</span></div>
     <canvas id="cv" height="360" aria-hidden="true"></canvas>
@@ -616,53 +760,53 @@ main{display:grid;grid-template-columns:250px minmax(520px,1fr) 340px;gap:12px;m
   </div>
   <div class="card timeline-card" id="timelineCard">
     <div class="section-kicker">MATCH SIGNALS</div>
-    <h3><span>Match timeline</span><span class="r2" id="timelineCount">all key events</span></h3>
+    <h3><span>Key events</span><span class="r2" id="timelineCount">all events</span></h3>
     <div id="matchStatStrip" class="match-stat-strip" aria-label="Selected match statistics"></div>
     <div class="timeline-filters" id="timelineFilters" role="group" aria-label="Filter match events">
       <button type="button" class="on" data-event-filter="all" aria-pressed="true">All</button>
-      <button type="button" data-event-filter="attack" aria-pressed="false">Shots + goals</button>
-      <button type="button" data-event-filter="setpiece" aria-pressed="false">Set pieces</button>
-      <button type="button" data-event-filter="discipline" aria-pressed="false">Cards + VAR</button>
+      <button type="button" data-event-filter="attack" aria-pressed="false">Attack</button>
+      <button type="button" data-event-filter="setpiece" aria-pressed="false">Set plays</button>
+      <button type="button" data-event-filter="discipline" aria-pressed="false">Cards / VAR</button>
     </div>
     <div id="matchTimeline" class="match-timeline" aria-live="polite"></div>
     <button type="button" class="timeline-more" id="timelineMore" hidden>Show all events</button>
   </div>
   <div class="card" id="feedCard">
-    <h3>League activity <span class="r2">all matches · calls · moves · settlements</span></h3>
-    <div id="receipts" class="small mut">Run the replay to see match events, market moves, commits, and settlements across the tournament.</div>
+    <h3>Activity <span class="r2">All matches</span></h3>
+    <div id="receipts" class="small mut">Replay to populate activity.</div>
   </div>
 </div>
 
 <div><!-- RIGHT: league + verify -->
   <div class="card intel-card" id="intelCard">
-    <div class="section-kicker">CONTEXT</div>
-    <h3><span>News + social pulse</span><span class="r2" id="intelStatus">public sources</span></h3>
+    <div class="section-kicker">LIVE CONTEXT</div>
+    <h3><span>News desk</span><span class="r2" id="intelStatus">Public sources</span></h3>
     <div class="intel-tabs" role="tablist" aria-label="Context sources">
       <button type="button" role="tab" aria-selected="true" class="on" data-intel-tab="news">News</button>
-      <button type="button" role="tab" aria-selected="false" data-intel-tab="x">X / Twitter</button>
+      <button type="button" role="tab" aria-selected="false" data-intel-tab="x">X pulse</button>
     </div>
     <div id="newsPanel" role="tabpanel"><div id="newsList" class="news-list"><div class="compare-empty">Loading football headlines…</div></div></div>
     <div id="xPanel" role="tabpanel" hidden>
-      <div class="x-intro">Official World Cup timeline, loaded from X only when this tab is opened.</div>
+      <div class="x-intro">Official World Cup posts load only when opened.</div>
       <a class="twitter-timeline" data-theme="dark" data-chrome="noheader nofooter transparent" data-height="430" href="https://x.com/FIFAWorldCup">Posts by FIFAWorldCup</a>
       <div class="x-links"><a id="xMatchLink" href="https://x.com/search?q=World%20Cup" target="_blank" rel="noopener">Search this matchup on X ↗</a></div>
     </div>
   </div>
   <div class="card">
-    <h3>Prophet league <span id="boardLive" class="r2"></span></h3>
-    <button type="button" class="btn violet" id="buildAgentBtn" style="margin:0 0 .5rem">🤖 Build an agent</button>
+    <h3>Leaderboard <span id="boardLive" class="r2"></span></h3>
+    <button type="button" class="btn violet" id="buildAgentBtn" style="margin:0 0 .5rem">Build agent</button>
     <div class="bfilter" id="bfilter" role="group" aria-label="Prophet league filter">
       <button type="button" class="on" data-f="all" aria-pressed="true" onclick="setBoardFilter('all')">all</button>
       <button type="button" data-f="human" aria-pressed="false" onclick="setBoardFilter('human')">👤 humans</button>
       <button type="button" data-f="agent" aria-pressed="false" onclick="setBoardFilter('agent')">🤖 agents</button>
     </div>
-    <div class="small mut" style="margin:-.1rem 0 .35rem">score = avg $/pick (shrunk) · 🎯 streak · ⚡ upsets · 🔥 burned · 🔔 receipt watchlist</div>
+    <div class="small mut league-formula" style="margin:-.1rem 0 .35rem">Verified receipt performance, adjusted for sample size.</div>
     <div class="feed" id="board"><div class="mut small">field is loading…</div></div>
     <button type="button" class="infotoggle" aria-expanded="false" aria-controls="leagueInfo" onclick="toggleInfo('leagueInfo',this)">ⓘ how the league works</button>
     <div class="small mut infobox" id="leagueInfo">Real agents, not opaque bots: 🤖 rule &amp; 🔓 public-prompt strategies you can inspect, 🔒 private ones, a 🛰️ external API/ML algo, and 👤 manual humans — all making calls on the same real World Cup tapes through the identical hash→reveal→burn→grade pipeline. Standings are LIVE mark-to-market until every match settles. Follow adds verified prediction-receipt alerts to a local demo watchlist only — never copied execution or automatic bets.</div>
   </div>
   <details class="card detail-card" id="verifyCard" open>
-    <summary>Verify / forge <span>the trust demo</span></summary>
+    <summary>Verify receipt <span>Tamper test</span></summary>
     <div class="detail-body">
     <button class="btn" id="verifyBtn" disabled>✓ verify my last commit</button>
     <button class="btn" id="forgeBtn">✗ try to forge a backdated call</button>
@@ -670,7 +814,7 @@ main{display:grid;grid-template-columns:250px minmax(520px,1fr) 340px;gap:12px;m
     </div>
   </details>
   <details class="card detail-card" id="anchorCard" tabindex="-1">
-    <summary>⛓ Real on-chain anchor <span>inspect proof</span></summary>
+    <summary>Solana proof <span>Pre-kickoff anchor</span></summary>
     <div class="detail-body">
     <div id="anchorBody" class="small mut">loading proof…</div>
     </div>
@@ -683,7 +827,7 @@ main{display:grid;grid-template-columns:250px minmax(520px,1fr) 340px;gap:12px;m
 <div id="modal" role="dialog" aria-modal="true" aria-label="Details" aria-hidden="true"><div id="modalbox" tabindex="-1"></div></div>
 
 <div class="footer-strip">
-  <span class="fs-l">⚡ Built for fans. Backed by evidence.</span>
+  <span class="fs-l">World Cup intelligence desk</span>
   <span class="fs-r">Practice stays local · eligible wallet calls are on-chain · truth-labeled demo</span>
 </div>
 
@@ -903,6 +1047,7 @@ function portfolioSnapshot() {
 }
 function renderPortfolio() {
   const snap = portfolioSnapshot();
+  $('portfolioCard').classList.toggle('is-empty', myCommits.length === 0);
   $('sMTM').textContent = "$" + snap.totalValue.toFixed(0);
   $('pfTotal').textContent = "$" + snap.totalValue.toFixed(0);
   $('pfTotal').className = "pfval " + (snap.totalUnrealized >= 0 ? "c" : "r");
@@ -1060,7 +1205,7 @@ function polymarketUrl(F, pickSide) {
 function updatePolyBtn() {
   const F = FIXTURES[sel];
   $('polyBtn').href = polymarketUrl(F, selPick);
-  $('polyBtn').textContent = selPick ? `🔷 Trade ${selPick === "part1" ? F.p1 : selPick === "part2" ? F.p2 : "the draw"} on Polymarket ↗` : "🔷 Find this match on Polymarket ↗";
+  $('polyBtn').textContent = selPick ? `Open ${selPick === "part1" ? F.p1 : selPick === "part2" ? F.p2 : "draw"} market on Polymarket ↗` : "Open match on Polymarket ↗";
 }
 /* ---------------- commit flow (on the SELECTED match) ---------------- */
 let selPick = null;
@@ -1677,7 +1822,7 @@ function renderAnchor() {
   }
   const S = window.SETTLEMENT_PROOF;
   if (S) html += `<div class="small" style="margin-top:.55rem;border-top:1px solid #16283c;padding-top:.45rem">
-    <b>⚖ SETTLED ON-CHAIN</b> — the anchored England–Argentina pick (<span class="anchor-hash" style="font-size:.62rem">${S.commitHash.slice(0, 18)}…</span>, Argentina) was graded <b class="g">${S.result}</b> in an <b>atomic devnet transaction</b>: TxLINE's <code>validateStatV2</code> verified the final score <b>${S.values[0]}–${S.values[1]}</b> against the on-chain Merkle root, and the grade memo landed <b>in the same transaction</b> — the grade record can only exist because the chain verified the outcome first. Instruction composition from the client (not a custom-program CPI), and the docs say so.
+    <b>ATOMIC DEVNET MECHANISM RECEIPT</b> — post-match mechanism evidence, not a persisted or program-owned Foresight profile grade. For the England–Argentina pick (<span class="anchor-hash">${S.commitHash.slice(0, 18)}…</span>, Argentina), TxLINE's <code>validateStatV2</code> verified the final score <b>${S.values[0]}–${S.values[1]}</b> against the on-chain Merkle root and the grade memo landed <b>in the same transaction</b>. Instruction composition from the client (not a custom-program CPI).
     <a href="${S.explorer}" target="_blank" rel="noopener">settlement tx ↗</a></div>`;
   html += `<div class="small mut" style="margin-top:.35rem">On an <b>eligible pre-kickoff or fresh verified-live fixture</b>, connect a wallet to sign a devnet memo. Completed historical replays always stay practice-local.</div>`;
   el.innerHTML = html;
@@ -2039,24 +2184,24 @@ function drawChart() {
   const F = FIXTURES[sel], t = fxT(F);
   const xOf = x => PAD_L + (x / F.endT) * (W - PAD_L - PAD_R);
   const yOf = p => TOP + (yHi - p) / (yHi - yLo) * CH;
-  ctx.clearRect(0, 0, W, 360); ctx.font = "10px Consolas,monospace";
-  ctx.strokeStyle = "#0d1721"; ctx.fillStyle = "#7c93a6";
+  ctx.clearRect(0, 0, W, 360); ctx.font = "12px Consolas,monospace";
+  ctx.strokeStyle = "#202b38"; ctx.fillStyle = "#95a3b5";
   for (let m = 0; m <= F.endT / 60; m += 15) { const x = xOf(m * 60); ctx.beginPath(); ctx.moveTo(x, TOP); ctx.lineTo(x, LANE + 40); ctx.stroke(); ctx.fillText(m + "'", x - 8, LANE + 52); }
   for (let p = Math.ceil(yLo * 10) / 10; p <= yHi; p += .1) { const y = yOf(p); ctx.beginPath(); ctx.moveTo(PAD_L, y); ctx.lineTo(W - PAD_R, y); ctx.stroke(); ctx.fillText((p * 100).toFixed(0) + "%", 6, y + 3); }
   const upto = F.tape.ticks.filter(k => k.t <= t);
-  ctx.strokeStyle = "rgba(59,139,245,.30)"; ctx.lineWidth = 1.4; ctx.beginPath();
+  ctx.strokeStyle = "rgba(53,201,242,.42)"; ctx.lineWidth = 1.4; ctx.beginPath();
   upto.forEach((k, i) => { const x = xOf(k.t), y = yOf(k.away); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.stroke();
   // area gradient under the home line (lightweight-charts style)
   if (upto.length > 1) {
     const grad = ctx.createLinearGradient(0, TOP, 0, TOP + CH);
-    grad.addColorStop(0, "rgba(194,240,74,.20)"); grad.addColorStop(1, "rgba(194,240,74,0)");
+    grad.addColorStop(0, "rgba(255,157,46,.20)"); grad.addColorStop(1, "rgba(255,157,46,0)");
     ctx.fillStyle = grad; ctx.beginPath();
     upto.forEach((k, i) => { const x = xOf(k.t), y = yOf(k.home); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
     ctx.lineTo(xOf(upto[upto.length - 1].t), TOP + CH); ctx.lineTo(xOf(upto[0].t), TOP + CH); ctx.closePath(); ctx.fill();
   }
-  ctx.strokeStyle = "#c2f04a"; ctx.lineWidth = 2; ctx.beginPath();
+  ctx.strokeStyle = "#ff9d2e"; ctx.lineWidth = 2; ctx.beginPath();
   upto.forEach((k, i) => { const x = xOf(k.t), y = yOf(k.home); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.stroke(); ctx.lineWidth = 1;
-  ctx.fillStyle = "#c2f04a"; ctx.fillText(F.p1 + " WIN PROBABILITY", PAD_L + 4, TOP + 10);
+  ctx.fillStyle = "#ff9d2e"; ctx.fillText(F.p1 + " WIN PROBABILITY", PAD_L + 4, TOP + 12);
   // floating last-value labels on the right edge (lightweight-charts style) — both series
   if (upto.length) {
     const last = upto[upto.length - 1];
@@ -2067,20 +2212,20 @@ function drawChart() {
       ctx.roundRect ? ctx.roundRect(W - PAD_R - tw, y - 8, tw, 16, 4) : ctx.rect(W - PAD_R - tw, y - 8, tw, 16); ctx.fill();
       ctx.fillStyle = fg; ctx.fillText(txt, W - PAD_R - tw + 5, y + 3.5);
     };
-    if (Math.abs(yOf(last.home) - yOf(last.away)) > 18) label(last.away, "#1c3f66", "#9fc6f5"); // skip if overlapping
-    label(last.home, "#c2f04a", "#0a1322");
+    if (Math.abs(yOf(last.home) - yOf(last.away)) > 18) label(last.away, "#17465a", "#b8efff"); // skip if overlapping
+    label(last.home, "#ff9d2e", "#171006");
   }
   for (const e of F.tape.events) {
     if (e.t > t) break;
     const x = xOf(e.t);
-    if (e.type === "goal") { ctx.fillStyle = e.team === 1 ? "#c2f04a" : "#3b8bf5"; ctx.beginPath(); ctx.arc(x, LANE + 16, 5, 0, 7); ctx.fill(); ctx.fillStyle = "#0a1322"; ctx.fillText("G", x - 3, LANE + 19); }
-    else if (e.type === "card" && e.detail === "Red") { ctx.fillStyle = "#ff5a74"; ctx.fillRect(x - 3, LANE + 10, 6, 11); }
-    else if (e.type === "var") { ctx.fillStyle = "#f5b73d"; ctx.fillText("VAR", x - 9, LANE + 20); }
+    if (e.type === "goal") { ctx.fillStyle = e.team === 1 ? "#ff9d2e" : "#35c9f2"; ctx.beginPath(); ctx.arc(x, LANE + 16, 5, 0, 7); ctx.fill(); ctx.fillStyle = "#171006"; ctx.fillText("G", x - 3, LANE + 19); }
+    else if (e.type === "card" && e.detail === "Red") { ctx.fillStyle = "#ff6678"; ctx.fillRect(x - 3, LANE + 10, 6, 11); }
+    else if (e.type === "var") { ctx.fillStyle = "#ffb84d"; ctx.fillText("VAR", x - 9, LANE + 20); }
   }
   for (const mv of F.moves) {
     const tm = mv.emittedT != null ? mv.emittedT : mv.t;
     if (tm > t) continue;
-    ctx.fillStyle = mv.dir === 1 ? "#c2f04a" : "#ff5a74";
+    ctx.fillStyle = mv.dir === 1 ? "#44d18a" : "#ff6678";
     ctx.beginPath(); ctx.arc(xOf(mv.t), yOf(mv.price), 3.5, 0, 7); ctx.fill();
   }
   for (const c of league.commits) {
@@ -2088,19 +2233,19 @@ function drawChart() {
     const you = c.wallet === ME;
     const pk = c.pick || (you ? (mySecrets[c.id] || {}).pick : null);
     const y = yOf(c.mktAtCommit.home);
-    ctx.fillStyle = you ? "#c2f04a" : "rgba(194,240,74,.35)";
+    ctx.fillStyle = you ? "#ff9d2e" : "rgba(255,157,46,.35)";
     ctx.save(); ctx.translate(xOf(c.tCommit), y); ctx.rotate(Math.PI / 4); ctx.fillRect(-3.6, -3.6, 7.2, 7.2); ctx.restore();
-    if (you) { ctx.fillStyle = "#c2f04a"; ctx.fillText("YOU", xOf(c.tCommit) - 8, y - 8); }
+    if (you) { ctx.fillStyle = "#ff9d2e"; ctx.fillText("YOU", xOf(c.tCommit) - 8, y - 8); }
     if (F.settled && you && pk && c.grade && c.grade.won) {
       const e = FO.earliness(c.tCommit, pk, F.moves);
       if (e) {
         const x1 = xOf(c.tCommit), x2 = xOf(e.move.emittedT != null ? e.move.emittedT : e.move.t), yb = TOP + 16;
-        ctx.strokeStyle = "#c2f04a"; ctx.beginPath(); ctx.moveTo(x1, yb + 5); ctx.lineTo(x1, yb); ctx.lineTo(x2, yb); ctx.lineTo(x2, yb + 5); ctx.stroke();
-        ctx.fillStyle = "#c2f04a"; ctx.fillText("market lag " + Math.round(e.leadSec / 60) + "min", (x1 + x2) / 2 - 34, yb - 4);
+        ctx.strokeStyle = "#ff9d2e"; ctx.beginPath(); ctx.moveTo(x1, yb + 5); ctx.lineTo(x1, yb); ctx.lineTo(x2, yb); ctx.lineTo(x2, yb + 5); ctx.stroke();
+        ctx.fillStyle = "#ff9d2e"; ctx.fillText("market lag " + Math.round(e.leadSec / 60) + "min", (x1 + x2) / 2 - 34, yb - 4);
       }
     }
   }
-  if (t > 0 && t < F.endT) { const x = xOf(t); ctx.strokeStyle = "rgba(34,211,238,.5)"; ctx.beginPath(); ctx.moveTo(x, TOP); ctx.lineTo(x, LANE + 40); ctx.stroke(); }
+  if (t > 0 && t < F.endT) { const x = xOf(t); ctx.strokeStyle = "rgba(53,201,242,.55)"; ctx.beginPath(); ctx.moveTo(x, TOP); ctx.lineTo(x, LANE + 40); ctx.stroke(); }
   // crosshair (dashed) + marker dot on the home line at the hovered minute
   if (xhairT !== null) {
     const x = xOf(xhairT);
@@ -2108,7 +2253,7 @@ function drawChart() {
     ctx.beginPath(); ctx.moveTo(x, TOP); ctx.lineTo(x, LANE + 40); ctx.stroke(); ctx.restore();
     let kk = null; for (const k of F.tape.ticks) { if (k.t <= Math.min(xhairT, t)) kk = k; else break; }
     if (kk) { ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(x, yOf(kk.home), 3.4, 0, 7); ctx.fill();
-      ctx.fillStyle = "#c2f04a"; ctx.beginPath(); ctx.arc(x, yOf(kk.home), 2, 0, 7); ctx.fill(); }
+      ctx.fillStyle = "#ff9d2e"; ctx.beginPath(); ctx.arc(x, yOf(kk.home), 2, 0, 7); ctx.fill(); }
   }
 }
 
@@ -2156,7 +2301,7 @@ function renderMonitor(force) {
   const sc = ev.length ? ev[ev.length - 1].stats : { g1: 0, g2: 0 };
   const r = FO.upsetRisk(F.tape.ticks, F.tape.events, t);
   const summary = $('chartSummaryText');
-  if (summary) summary.textContent = `${F.fx.Participant1} ${sc.g1}, ${F.fx.Participant2} ${sc.g2}, ${F.liveMatch ? "captured or live" : "practice replay"} at ${fmtMin(t)}. Implied chances: ${F.p1} ${(q.home * 100).toFixed(1)}%, draw ${(q.draw * 100).toFixed(1)}%, ${F.p2} ${(q.away * 100).toFixed(1)}%. Upset risk ${r.risk} out of 100.`;
+  if (summary) summary.textContent = `${F.p1} ${sc.g1}–${sc.g2} ${F.p2} · ${F.liveMatch ? "captured/live" : "practice"} ${fmtMin(t)} · ${F.p1} ${(q.home * 100).toFixed(1)}% · Draw ${(q.draw * 100).toFixed(1)}% · ${F.p2} ${(q.away * 100).toFixed(1)}% · risk ${r.risk}/100`;
 }
 
 /* ---------------- misc ---------------- */
@@ -2295,7 +2440,7 @@ function renderMarketCompare() {
     const loading = marketCompareState.status === "loading" || marketCompareState.status === "refreshing";
     status.textContent = loading ? "Resolving exact moneyline…" : marketCompareState.status === "error" ? "Public comparison unavailable" : "No equivalent market found";
     root.innerHTML = `<div class="compare-empty">${loading ? "Matching this fixture to Polymarket and aligning its price history…" : marketCompareState.status === "error" ? `${escapeHtml(marketCompareState.error)}. TxLINE data remains available.` : "No like-for-like 1X2 moneyline was found for this fixture."}</div>`;
-    thesis.textContent = "TxLINE consensus versus Polymarket moneyline at the same replay timestamp.";
+    thesis.textContent = "Same match. Same replay time. Different prices.";
     freshness.textContent = "TxLINE StablePrice · Polymarket public API · read only";
     link.href = polymarketUrl(F, selPick); link.textContent = "Search Polymarket ↗";
     if (!loading) scheduleMarketComparison(false);
@@ -2568,6 +2713,26 @@ function setDemoDone(step) { if (demoMode) document.querySelectorAll(`[data-demo
 (function initGuidedDemo() {
   const rail = $('demoRail'); if (!rail || !demoMode) return; rail.hidden = false;
   rail.querySelectorAll('.demo-nav').forEach(btn => btn.addEventListener('click', () => { const target = $(btn.dataset.focus); if (!target) return; target.scrollIntoView({ behavior: 'smooth', block: 'center' }); target.focus({ preventScroll: true }); if (btn.dataset.demoStep === "4") setDemoDone(4); }));
+})();
+
+/* Bloomberg-style workspace index: the same five destinations work by click
+   or Alt+1…5. Native links remain available when JavaScript is disabled. */
+(function initWorkspaceNav() {
+  const links = [...document.querySelectorAll('.workspace-nav [data-workspace-key]')];
+  const openDeskSection = link => {
+    const target = document.querySelector(link.getAttribute('href'));
+    if (!target) return;
+    if (target.tagName === 'DETAILS') target.open = true;
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (target.matches('[tabindex],details')) target.focus({ preventScroll: true });
+  };
+  links.forEach(link => link.addEventListener('click', event => { event.preventDefault(); openDeskSection(link); }));
+  document.addEventListener('keydown', event => {
+    if (!event.altKey || event.ctrlKey || event.metaKey || /^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement && document.activeElement.tagName || '')) return;
+    const link = links.find(item => item.dataset.workspaceKey === event.key);
+    if (!link) return;
+    event.preventDefault(); openDeskSection(link);
+  });
 })();
 
 /* ================= landing gate (particle hero + login) =================

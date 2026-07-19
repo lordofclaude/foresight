@@ -15,6 +15,15 @@ test.describe('mobile and keyboard access', () => {
     expect(dimensions.bodyScrollWidth).toBeLessThanOrEqual(dimensions.clientWidth)
     await expect(page.locator('#walletBtn')).toBeVisible()
     await expect(page.locator('#commitCard')).toBeVisible()
+    const demoSteps = await page.locator('#demoRail .demo-nav').evaluateAll(buttons => buttons.map(button => {
+      const rect = button.getBoundingClientRect()
+      return { left: rect.left, right: rect.right, viewport: document.documentElement.clientWidth }
+    }))
+    expect(demoSteps).toHaveLength(4)
+    for (const step of demoSteps) {
+      expect(step.left).toBeGreaterThanOrEqual(0)
+      expect(step.right).toBeLessThanOrEqual(step.viewport)
+    }
     await page.locator('#instant').click()
     await expect(page.locator('#compareRows .compare-row')).toHaveCount(3)
     await expect(page.locator('#matchTimeline .timeline-event').first()).toBeVisible()
@@ -37,5 +46,13 @@ test.describe('mobile and keyboard access', () => {
     await page.keyboard.press('Space')
     await expect(home).toHaveAttribute('aria-pressed', 'true')
     await expect(page.locator('#commitBtn')).toBeEnabled()
+  })
+
+  test('workspace keyboard shortcuts open and focus proof surfaces', async ({ page }) => {
+    await openDemo(page)
+    await page.keyboard.press('Alt+5')
+    const anchor = page.locator('#anchorCard')
+    await expect(anchor).toHaveAttribute('open', '')
+    await expect(anchor).toBeFocused()
   })
 })
