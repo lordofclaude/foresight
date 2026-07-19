@@ -2288,7 +2288,8 @@ function scheduleMarketComparison(force) {
 }
 function renderMarketCompare() {
   const F = FIXTURES[sel], root = $("compareRows"); if (!F || !root) return;
-  const tx = FO.devig(oddsAt(F, fxT(F))), data = marketCompareState.key.startsWith(`${F.id}:`) ? marketCompareState.data : null;
+  const target = marketCompareTarget(F), tx = FO.devig(oddsAt(F, fxT(F)));
+  const data = marketCompareState.key === target.key ? marketCompareState.data : null;
   const status = $("compareStatus"), freshness = $("compareFreshness"), link = $("compareLink"), thesis = $("compareThesis");
   if (!data || !data.matched) {
     const loading = marketCompareState.status === "loading" || marketCompareState.status === "refreshing";

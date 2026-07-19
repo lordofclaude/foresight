@@ -52,7 +52,15 @@ const server = createServer(async (req, res) => {
       return send(res, 200, await fixture('news.json'), types['.json'])
     }
     if (url.pathname === '/api/polymarket') {
-      return send(res, 200, await fixture('polymarket.json'), types['.json'])
+      const payload = JSON.parse((await fixture('polymarket.json')).toString('utf8'))
+      const requestedAtMs = Number(url.searchParams.get('atMs')) || payload.requestedAtMs
+      payload.requestedAtMs = requestedAtMs
+      payload.quoteTimes = {
+        home: requestedAtMs - 3000,
+        draw: requestedAtMs - 2000,
+        away: requestedAtMs - 1000,
+      }
+      return send(res, 200, JSON.stringify(payload), types['.json'])
     }
     if (url.pathname === '/api/scores/stream') {
       return send(res, 200, await fixture('live-score.sse'), 'text/event-stream; charset=utf-8')

@@ -152,6 +152,7 @@ has("old anchor honestly labeled post-match", /Anchored <b>post-match<\/b>/);
 has("newsDriver requires a team keyword", /if \(!teamHit\) continue;/);
 has("newsDriver recency bonus capped at 1", /Math\.min\(1, Math\.max\(0, 1 - dt \/ \(45 \* 60000\)\)\)/);
 has("Polymarket comparison aligns by replay quote timestamp", /params\.set\("atMs"[\s\S]*api\/polymarket\?\$\{params\}/);
+has("Polymarket rows require the current replay-time bucket", /marketCompareState\.key === target\.key \? marketCompareState\.data : null/);
 has("market comparison stays read only", /Polymarket public API · read only/);
 has("news context loads for the selected fixture", /fetchNewsOnce\(F\)/);
 has("X widget is lazy-loaded from the official host", /script\.src = "https:\/\/platform\.x\.com\/widgets\.js"/);

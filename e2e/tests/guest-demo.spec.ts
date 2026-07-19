@@ -60,8 +60,11 @@ test.describe('guest demo golden path', () => {
     await expect(page.locator('#compareThesis')).toContainText('largest disagreement')
     await expect(page.locator('#compareStatus')).toContainText('timestamp aligned')
     await expect(page.locator('#newsList .news-item')).toHaveCount(3)
+    const openingQuoteTime = await page.locator('#compareFreshness').textContent()
 
     await page.locator('#instant').click()
+    await expect.poll(() => page.locator('#compareFreshness').textContent()).not.toBe(openingQuoteTime)
+    await expect(page.locator('#compareStatus')).toContainText('timestamp aligned')
     await expect(page.locator('#matchTimeline')).toContainText('Shot')
     await expect(page.locator('#matchTimeline')).toContainText('Corner')
     await expect(page.locator('#matchTimeline')).toContainText('Goal')
