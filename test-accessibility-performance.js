@@ -37,7 +37,7 @@ has("modal traps tab and supports escape", /if \(e\.key === 'Escape'\)[\s\S]*if 
 has("reduced motion has discrete replay budget", /reducedMotionReplayHz: 2[\s\S]*PREFERS_REDUCED_MOTION \? 1000 \/ PERF_BUDGET\.reducedMotionReplayHz/);
 has("normal replay render budget is 10Hz", /replayRenderHz: 10[\s\S]*1000 \/ PERF_BUDGET\.replayRenderHz/);
 lacks("replay uses the former 20Hz interval", /setInterval\([\s\S]{0,220}, 50\)/);
-lacks("boot autoplays replay", /__onGateClosed = \(\) => \{ if \(!liveOn\) startReplay\(\); \}|else startReplay\(\);/);
+has("guided autoplay is opt-out and fixed at 30x", /demoAutoplay = demoMode && qs\.get\("autoplay"\) !== "0"[\s\S]*\$\('speed'\)\.value = "30"/);
 lacks("media autoplays", /<(audio|video)[^>]*\bautoplay\b/i);
 has("font stylesheet is nonblocking", /rel="preload" as="style"[\s\S]*onload="this\.onload=null;this\.rel='stylesheet'"/);
 has("optional wallet CDN has failure fallback", /defer src="https:\/\/unpkg\.com\/@solana\/web3\.js[\s\S]*SOLANA_WEB3_LOAD_FAILED/);

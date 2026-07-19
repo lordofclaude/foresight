@@ -109,13 +109,15 @@ test.describe('remaining interactive controls', () => {
     await expect(page.locator('#toasts')).toContainText('Relay URL blocked')
   })
 
-  test('wallet fallback, proof recompute, and accessible share-card download complete', async ({ page }) => {
+  test('demo wallet fallback, proof recompute, and accessible share-card download complete', async ({ page }) => {
     await openDemo(page)
 
+    await expect(page.locator('#walletBtn')).toContainText('USE DEMO WALLET')
     await page.locator('#walletBtn').click()
-    await expect(page.locator('#modalbox')).toContainText('No compatible Solana wallet is exposed to this browser')
-    await expect(page.locator('#modalbox')).toContainText('same extension-enabled Chrome, Brave, or Edge profile')
-    await page.getByRole('button', { name: /close/i }).click()
+    await expect(page.locator('#modal')).toHaveAttribute('aria-hidden', 'true')
+    await expect(page.locator('#walletBtn')).toContainText('DEMO WALLET · LOCAL')
+    await expect(page.locator('#identityState')).toContainText('practice local · no signature')
+    await expect(page.locator('#toasts')).toContainText('no extension, signature, funds, or on-chain transaction')
 
     await page.locator('.pick[data-pick="draw"]').click()
     await page.locator('#commitBtn').click()
@@ -135,5 +137,12 @@ test.describe('remaining interactive controls', () => {
     for (const link of await page.locator('#anchorBody a[target="_blank"]').all()) {
       await expect(link).toHaveAttribute('rel', 'noopener')
     }
+  })
+
+  test('standard mode still explains the real Phantom requirement when no provider exists', async ({ page }) => {
+    await page.goto(`/?nogate=1&relay=${encodeURIComponent(relayBase)}`)
+    await page.locator('#walletBtn').click()
+    await expect(page.locator('#modalbox')).toContainText('No compatible Solana wallet is exposed to this browser')
+    await expect(page.locator('#modalbox')).toContainText('same extension-enabled Chrome, Brave, or Edge profile')
   })
 })

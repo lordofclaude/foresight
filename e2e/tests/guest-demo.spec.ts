@@ -1,8 +1,8 @@
 import { expect, test } from '@playwright/test'
-import { openDemo } from './helpers'
+import { openDemo, relayBase } from './helpers'
 
 test.describe('guest demo golden path', () => {
-  test('demo mode skips the gate and does not autoplay', async ({ page }) => {
+  test('autoplay=0 keeps deterministic tests paused at the opening historical frame', async ({ page }) => {
     await openDemo(page)
 
     await expect(page.locator('#gate')).toHaveClass(/hidden/)
@@ -12,6 +12,18 @@ test.describe('guest demo golden path', () => {
 
     await page.waitForTimeout(600)
     await expect(page.locator('#sClock')).toHaveText("0'")
+  })
+
+  test('guided demo autoplays the historical probability tape at a true 30×', async ({ page }) => {
+    await page.goto(`/?demo=1&relay=${encodeURIComponent(relayBase)}`)
+    await expect(page.locator('#gate')).toHaveClass(/hidden/)
+    await expect(page.locator('#speed')).toHaveValue('30')
+    await expect(page.locator('#run')).toContainText('PLAYING · PRACTICE REPLAY ×30')
+    const openingSummary = await page.locator('#chartSummaryText').textContent()
+
+    await expect.poll(() => page.locator('#sClock').textContent(), { timeout: 5_000 }).not.toBe("0'")
+    await expect.poll(() => page.locator('#chartSummaryText').textContent()).not.toBe(openingSummary)
+    await expect(page.locator('#chartSummaryText')).toContainText(/practice [1-9]\d*'/)
   })
 
   test('commit, verify, reject a forgery, and settle instantly', async ({ page }) => {

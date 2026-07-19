@@ -23,7 +23,7 @@ function buildEligibleOddsWindow(seed: string) {
 }
 
 export async function openDemo(page: Page, extra = '') {
-  await page.goto(`/?demo=1&relay=${encodeURIComponent(relayBase)}${extra}`)
+  await page.goto(`/?demo=1&autoplay=0&relay=${encodeURIComponent(relayBase)}${extra}`)
   await expect(page.locator('#globalMode')).toHaveText('PRACTICE REPLAY')
   await expect(page.locator('#sClock')).toHaveText("0'")
 }

@@ -734,7 +734,7 @@ body:has(#demoRail:not([hidden])) .workspace-nav{display:none}
     <h3>Replay <span class="r2">Tournament clock</span></h3>
     <button type="button" class="btn" id="run">▶ RUN REPLAY (all fixtures)</button>
     <div class="ctl">
-      <label class="sr-only" for="speed">Replay speed</label><select id="speed"><option value="2" selected>2×</option><option value="4">4×</option><option value="8">8×</option><option value="16">16×</option></select>
+      <label class="sr-only" for="speed">Replay speed</label><select id="speed"><option value="2" selected>2×</option><option value="4">4×</option><option value="8">8×</option><option value="16">16×</option><option value="30">30×</option></select>
       <button type="button" class="btn" id="instant" style="margin:0">⚡ INSTANT</button>
     </div>
   </div>
@@ -946,7 +946,7 @@ let followController = FollowSemantics.createController({ mode: FollowSemantics.
 /* Your identity. Guest = "@you". Clerk sessions use the immutable user.id as
    the domain key; the friendly label is display-only. Wallet possession is a
    separate claim and stays pending until the nonce-verification seam succeeds. */
-let ME = "@you", ME_LABEL = "@you";
+let ME = "@you", ME_LABEL = "@you", demoWalletActive = false;
 const identityBinding = IdentityBinding.createController({
   // Production may inject a same-origin backend seam. Without it, a valid
   // wallet signature is labeled pending and never promoted to a durable link.
@@ -960,6 +960,7 @@ function renderIdentityState() {
   if (state.status === "PENDING_BACKEND") copy = `${ME_LABEL} · signature checked · backend link pending (session-only)`;
   if (state.status === "VERIFIED") copy = `${ME_LABEL} ↔ ${state.walletAddress.slice(0, 4)}…${state.walletAddress.slice(-4)} · verified (session-only)`;
   if (state.status === "GUEST" && solWallet) copy = `${solWallet.slice(0, 4)}…${solWallet.slice(-4)} · wallet connected · not account-linked`;
+  else if (state.status === "GUEST" && demoWalletActive) copy = "Demo wallet · practice local · no signature";
   el.dataset.state = state.status; el.dataset.linked = state.walletAddress ? "1" : "0";
   el.querySelector('span').textContent = copy;
 }
@@ -1305,6 +1306,15 @@ $('modal').addEventListener('keydown', e => {
 async function connectWallet() {
   const provider = getSolanaProvider();
   if (!provider) {
+    if (demoMode) {
+      demoWalletActive = true;
+      $('walletBtn').classList.add('connected');
+      $('walletBtn').textContent = "◇ DEMO WALLET · LOCAL";
+      $('walletBtn').title = "Practice-only demo identity; no extension, signature, balance, or on-chain claim";
+      renderIdentityState(); renderModeUI();
+      toast("◇ demo wallet enabled — practice-local only; no extension, signature, funds, or on-chain transaction", false, "act");
+      return;
+    }
     $('modalbox').innerHTML = `<h4>Connect Wallet <button type="button" class="modal-close" onclick="closeModal()">✕ close</button></h4>
       <div class="stratbox priv">No compatible Solana wallet is exposed to this browser. If <a href="https://phantom.app" target="_blank" rel="noopener" style="color:var(--blue)">Phantom</a> is already installed, open Foresight in the same extension-enabled Chrome, Brave, or Edge profile, then reconnect. Otherwise install Phantom and switch it to <b>Devnet</b>.</div>
       <div class="small mut" style="margin-top:.5rem">Until then, commits stay local sim-slots — same hash logic, no wallet required, zero friction for the demo.</div>`;
@@ -1312,6 +1322,7 @@ async function connectWallet() {
     return;
   }
   try {
+    demoWalletActive = false;
     $('walletBtn').classList.add('wallet-pending'); $('walletBtn').disabled = true;
     const resp = await provider.connect();
     solWallet = resp.publicKey.toString();
@@ -1476,7 +1487,7 @@ function startReplay() {
   const frameMs = PREFERS_REDUCED_MOTION ? 1000 / PERF_BUDGET.reducedMotionReplayHz : 1000 / PERF_BUDGET.replayRenderHz;
   timer = setInterval(() => {
     const prevT = simT;
-    simT = Math.min(GLOBAL_END, simT + speed * 60 * (frameMs / 1000));
+    simT = Math.min(GLOBAL_END, simT + speed * (frameMs / 1000));
     tickActivity(prevT); tickFeed(prevT); tickSettlements(); renderAll();
     if (simT >= GLOBAL_END) stopReplay("↻ RE-RUN");
   }, frameMs);
@@ -2426,7 +2437,7 @@ async function restoreClerkSession() {
   try { const c = await ensureClerk(); if (c.user) bindClerkUser(c.user); }
   catch (e) { /* offline / blocked — stay guest, honestly */ }
 }
-const demoMode = qs.get("demo") === "1", DEFAULT_RELAY = "https://foresight-relay.lordofclaude.workers.dev";
+const demoMode = qs.get("demo") === "1", demoAutoplay = demoMode && qs.get("autoplay") !== "0", DEFAULT_RELAY = "https://foresight-relay.lordofclaude.workers.dev";
 function safeRelayBase(candidate) {
   const u = new URL(candidate), local = (u.hostname === "localhost" || u.hostname === "127.0.0.1") && /https?:/.test(u.protocol), deployed = u.protocol === "https:" && u.hostname === "foresight-relay.lordofclaude.workers.dev";
   if ((!local && !deployed) || u.username || u.password || (u.pathname !== "/" && u.pathname !== "") || u.search || u.hash) throw new Error("relay URL is not allowlisted");
@@ -2869,8 +2880,8 @@ function setDemoDone(step) { if (demoMode) document.querySelectorAll(`[data-demo
 
 resetLeague();
 renderAnchor();
-// Land on a useful in-progress snapshot. Replay begins only from the visible
-// RUN / INSTANT controls: no hidden CPU loop, surprise motion, or judge-blocking autoplay.
+// Normal entry lands on a useful in-progress snapshot. Guided demo entry starts
+// the checked-in historical TxLINE tape at a true 30× unless ?autoplay=0.
 (function bootLive() {
   const eng = FIXTURES.findIndex(F => /england/i.test(F.fx.Participant1 + F.fx.Participant2) && /argentina/i.test(F.fx.Participant1 + F.fx.Participant2));
   sel = eng >= 0 ? eng : 0;
@@ -2878,7 +2889,12 @@ renderAnchor();
   tickSettlements();
   announcedIds = new Set(league.commits.filter(c => c.tCommit <= simT).map(c => c.id));
   renderAll();
-  restoreClerkSession();                       // returning Clerk users re-bind silently; replay remains explicit
+  restoreClerkSession();
+  if (demoMode && !getSolanaProvider()) {
+    $('walletBtn').textContent = "◇ USE DEMO WALLET";
+    $('walletBtn').title = "Enable a practice-only local demo identity; real wallets still require Phantom";
+  }
+  if (demoAutoplay) { $('speed').value = "30"; startReplay(); }
 
 })();
 </script>
