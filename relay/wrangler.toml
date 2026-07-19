@@ -10,3 +10,14 @@ compatibility_date = "2026-07-01"
 
 [observability]
 enabled = true
+
+# Shared token buckets, concurrent-SSE admission, and freshness telemetry.
+# The Worker retains a reported per-isolate compatibility path when this binding
+# is absent from an older deployment, but new deployments should keep it.
+[[durable_objects.bindings]]
+name = "RELAY_SHARED_STATE"
+class_name = "RelaySharedState"
+
+[[migrations]]
+tag = "relay-shared-state-v1"
+new_sqlite_classes = ["RelaySharedState"]

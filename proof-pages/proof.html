@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src https://foresight-ledger.lordofclaude.workers.dev http://127.0.0.1:8787 http://localhost:8787; img-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="referrer" content="no-referrer">
+  <title>Foresight public proof</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#proof-root">Skip to proof</a>
+  <nav class="topbar" aria-label="Proof navigation"><a href="proof.html?receipt=r_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa">Foresight / Proof</a><span>Public, read-only ledger view</span></nav>
+  <p id="load-status" class="load-status" role="status" aria-live="polite">Loading public proof…</p>
+  <main id="proof-root" class="page-shell" tabindex="-1"></main>
+  <footer>Verify the receipt, evidence status, and Explorer transaction independently. Context-only evidence is never counted as an authoritative result.</footer>
+  <script src="config.js"></script>
+  <script type="module" src="proof-page.js"></script>
+</body>
+</html>

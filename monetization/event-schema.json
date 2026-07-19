@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://foresight.local/schemas/monetization-event-v1.json",
+  "title": "Foresight monetization funnel event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "eventId", "stage", "occurredAt", "experimentId", "variant", "offerId", "source"],
+  "oneOf": [
+    { "required": ["actorHash"] },
+    { "required": ["anonymousSessionHash"] }
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "eventId": { "type": "string", "pattern": "^[-_a-zA-Z0-9]{8,128}$" },
+    "stage": { "enum": ["offer_viewed", "purchase_intent", "checkout_started", "subscription_active", "refund_recorded", "churn_recorded"] },
+    "occurredAt": { "type": "string", "format": "date-time" },
+    "actorHash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "anonymousSessionHash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "experimentId": { "type": "string", "pattern": "^[-_a-zA-Z0-9]{1,64}$" },
+    "variant": { "type": "string", "pattern": "^[-_a-zA-Z0-9]{1,64}$" },
+    "offerId": { "type": "string", "pattern": "^[-_a-zA-Z0-9]{1,64}$" },
+    "feature": { "enum": ["verified_receipt_alerts", "verified_receipt_api"] },
+    "source": { "enum": ["landing", "demo", "concierge", "billing", "support"] },
+    "amountCents": { "type": "integer", "minimum": 0 },
+    "currency": { "type": "string", "pattern": "^[A-Z]{3}$" },
+    "reasonCode": { "enum": ["price", "missing_feature", "no_longer_needed", "unreliable", "support_burden", "other"] }
+  },
+  "description": "Never include email, name, wallet address, Clerk ID, IP address, phone, or user agent. actorHash must be an HMAC pseudonym generated outside analytics storage."
+}

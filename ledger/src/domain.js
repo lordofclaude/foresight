@@ -2,8 +2,12 @@ const OWNER_RE = /^[A-Za-z0-9][A-Za-z0-9:._-]{2,127}$/;
 const HASH_RE = /^[0-9a-f]{64}$/i;
 const IDEMPOTENCY_RE = /^[\x21-\x7e]{8,128}$/;
 const VALIDATION_RECEIPT_RE = /^[A-Za-z0-9][A-Za-z0-9:._-]{7,255}$/;
+const EVIDENCE_ID_RE = /^evd_[0-9a-f]{64}$/;
+const SOLANA_ID_RE = /^[1-9A-HJ-NP-Za-km-z]{32,100}$/;
 const SIDES = new Set(["part1", "draw", "part2"]);
 const LEGACY_SIDES = { home: "part1", away: "part2" };
+export const EVIDENCE_KINDS = Object.freeze(["API_RECEIPT", "SOLANA_MEMO", "ATOMIC_CLIENT_SETTLEMENT", "PROGRAM_STATE"]);
+export const EVIDENCE_STATUSES = Object.freeze(["RECEIVED_UNVERIFIED", "VERIFIED", "MECHANISM_ONLY", "NOT_SHIPPED"]);
 
 export class LedgerError extends Error {
   constructor(status, code, message, details = null) {
@@ -89,6 +93,11 @@ export function validateReceiptId(receiptId) {
   return receiptId;
 }
 
+export function validateEvidenceId(evidenceId) {
+  if (typeof evidenceId !== "string" || !EVIDENCE_ID_RE.test(evidenceId)) throw new LedgerError(400, "invalid_evidence_id", "evidence ID is invalid");
+  return evidenceId;
+}
+
 export function normalizeCommit(ownerId, body) {
   validateOwnerId(ownerId);
   body = object(body, "request body");
@@ -165,6 +174,12 @@ function validationReceiptId(value) {
   return value;
 }
 
+export function normalizeEvidenceRequest(body) {
+  body = object(body, "request body");
+  exactKeys(body, ["validationReceiptId"], "request body");
+  return { validationReceiptId: validationReceiptId(body.validationReceiptId) };
+}
+
 export async function normalizeTransition(body, receipt) {
   body = object(body, "request body");
   exactKeys(body, ["type", "expectedSequence", "payload"], "request body");
@@ -174,30 +189,56 @@ export async function normalizeTransition(body, receipt) {
   const expectedSequence = integer(body.expectedSequence, "expectedSequence");
   const payload = object(body.payload, body.type + " payload");
   if (body.type === "REVEALED") return { type: body.type, expectedSequence, payload: await normalizeReveal(payload, receipt) };
-  exactKeys(payload, ["validationReceiptId"], body.type + " payload");
-  return { type: body.type, expectedSequence, payload: { validationReceiptId: validationReceiptId(payload.validationReceiptId) } };
+  exactKeys(payload, ["evidenceId"], body.type + " payload");
+  return { type: body.type, expectedSequence, payload: { evidenceId: validateEvidenceId(payload.evidenceId) } };
 }
 
-export function normalizeVerifierResult(value, expected) {
+function nullableString(value, label, pattern = null) {
+  if (value === null) return null;
+  if (typeof value !== "string" || !value || value.length > 512 || (pattern && !pattern.test(value))) throw new LedgerError(502, "invalid_proof_verifier_response", label + " is invalid");
+  return value;
+}
+
+export function normalizeEvidenceVerifierResult(value, expected) {
   value = object(value, "proof verifier result");
-  const common = ["status", "validationReceiptId", "action", "receiptId", "ownerId", "commitHash", "fixtureId", "market", "final", "verifiedAt", "verifier"];
-  const allowed = expected.action === "GRADE" ? [...common, "winner"] : expected.action === "INVALID" ? [...common, "reason"] : common;
-  exactKeys(value, allowed, "proof verifier result");
-  if (value.status !== "VERIFIED" || value.validationReceiptId !== expected.validationReceiptId || value.action !== expected.action || value.receiptId !== expected.receiptId || value.ownerId !== expected.ownerId || value.commitHash !== expected.commitHash || value.fixtureId !== expected.fixtureId || value.market !== expected.market || value.final !== true) {
-    throw new LedgerError(409, "validation_receipt_mismatch", "proof verifier did not verify this exact owner, receipt, commitment, fixture, and command");
+  const fields = ["status", "validationReceiptId", "receiptId", "ownerId", "commitHash", "fixtureId", "market", "verifier", "evidenceKind", "evidenceStatus", "purpose", "transitionType", "rootHash", "slot", "txSignature", "messageId", "programId", "programOwned", "final", "winner", "observedAt", "metadata"];
+  exactKeys(value, fields, "proof verifier result");
+  if (value.status !== "VERIFIED" || value.validationReceiptId !== expected.validationReceiptId || value.receiptId !== expected.receiptId || value.ownerId !== expected.ownerId || value.commitHash !== expected.commitHash || value.fixtureId !== expected.fixtureId || value.market !== expected.market) {
+    throw new LedgerError(409, "validation_receipt_mismatch", "proof verifier did not bind evidence to this exact owner, receipt, commitment, fixture, and market");
   }
+  if (!EVIDENCE_KINDS.includes(value.evidenceKind) || !EVIDENCE_STATUSES.includes(value.evidenceStatus)) throw new LedgerError(502, "invalid_proof_verifier_response", "evidence kind or status is invalid");
+  if (!new Set(["PRE_KICKOFF_COMMIT", "OUTCOME_VALIDATION", "SETTLEMENT_MECHANISM", "PROGRAM_OWNED_GRADE"]).has(value.purpose)) throw new LedgerError(502, "invalid_proof_verifier_response", "evidence purpose is invalid");
+  if (!new Set(["NONE", "GRADED", "BURNED", "INVALID"]).has(value.transitionType)) throw new LedgerError(502, "invalid_proof_verifier_response", "evidence transitionType is invalid");
+  if (typeof value.programOwned !== "boolean" || typeof value.final !== "boolean") throw new LedgerError(502, "invalid_proof_verifier_response", "evidence booleans are invalid");
   const normalized = {
-    status: "VERIFIED", validationReceiptId: value.validationReceiptId, action: value.action,
-    receiptId: value.receiptId, ownerId: value.ownerId, commitHash: value.commitHash,
-    fixtureId: value.fixtureId, market: value.market, final: true,
-    verifiedAt: timestamp(value.verifiedAt, "proof verifier verifiedAt"), verifier: validateOwnerId(value.verifier),
+    validationReceiptId: value.validationReceiptId, receiptId: value.receiptId, ownerId: value.ownerId,
+    commitHash: value.commitHash, fixtureId: value.fixtureId, market: value.market,
+    verifier: nullableString(value.verifier, "verifier", OWNER_RE), evidenceKind: value.evidenceKind,
+    evidenceStatus: value.evidenceStatus, purpose: value.purpose, transitionType: value.transitionType,
+    rootHash: value.rootHash === null ? null : nullableString(value.rootHash, "rootHash", HASH_RE)?.toLowerCase(),
+    slot: value.slot === null ? null : integer(value.slot, "slot"),
+    txSignature: nullableString(value.txSignature, "txSignature", SOLANA_ID_RE),
+    messageId: nullableString(value.messageId, "messageId"), programId: nullableString(value.programId, "programId", SOLANA_ID_RE),
+    programOwned: value.programOwned, final: value.final,
+    winner: value.winner === null ? null : normalizedSide(value.winner),
+    observedAt: timestamp(value.observedAt, "observedAt"), metadata: boundedJson(value.metadata, "metadata"),
   };
-  if (expected.action === "GRADE") normalized.winner = normalizedSide(value.winner);
-  if (expected.action === "INVALID") {
-    if (typeof value.reason !== "string" || value.reason.length < 3 || value.reason.length > 256) throw new LedgerError(502, "invalid_proof_verifier_response", "proof verifier INVALID reason must be 3-256 characters");
-    normalized.reason = value.reason;
+  if (normalized.evidenceKind === "API_RECEIPT") {
+    if (normalized.purpose !== "OUTCOME_VALIDATION" || !normalized.messageId || normalized.programOwned) throw new LedgerError(502, "invalid_proof_verifier_response", "API evidence classification is inconsistent");
+    if (normalized.evidenceStatus === "VERIFIED" && !normalized.rootHash) throw new LedgerError(409, "unverifiable_api_receipt", "API evidence needs a verified root before it can be authoritative");
+    if (!["VERIFIED", "RECEIVED_UNVERIFIED"].includes(normalized.evidenceStatus)) throw new LedgerError(502, "invalid_proof_verifier_response", "API evidence status is inconsistent");
+  } else if (normalized.evidenceKind === "SOLANA_MEMO") {
+    if (normalized.evidenceStatus !== "VERIFIED" || normalized.purpose !== "PRE_KICKOFF_COMMIT" || normalized.transitionType !== "NONE" || !normalized.slot || !normalized.txSignature || normalized.programOwned) throw new LedgerError(502, "invalid_proof_verifier_response", "Solana memo evidence classification is inconsistent");
+  } else if (normalized.evidenceKind === "ATOMIC_CLIENT_SETTLEMENT") {
+    if (normalized.evidenceStatus !== "MECHANISM_ONLY" || normalized.purpose !== "SETTLEMENT_MECHANISM" || normalized.transitionType !== "NONE" || !normalized.slot || !normalized.txSignature || normalized.programOwned) throw new LedgerError(409, "fake_program_cpi_claim", "client-composed atomic settlement cannot claim program-owned state");
+  } else if (normalized.evidenceStatus !== "NOT_SHIPPED" || normalized.purpose !== "PROGRAM_OWNED_GRADE" || normalized.programOwned) {
+    throw new LedgerError(409, "program_state_not_shipped", "program-owned grade state is not shipped and cannot be claimed");
   }
   return normalized;
+}
+
+export function isAuthoritativeEvidence(evidence, transitionType) {
+  return !!evidence && evidence.evidenceKind === "API_RECEIPT" && evidence.evidenceStatus === "VERIFIED" && evidence.purpose === "OUTCOME_VALIDATION" && evidence.transitionType === transitionType && evidence.final === true && !!evidence.rootHash && (transitionType !== "GRADED" || !!evidence.winner);
 }
 
 export function assertTransition(current, next) {

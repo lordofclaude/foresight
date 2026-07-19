@@ -6,14 +6,15 @@ import {
   openDemo,
 } from './helpers'
 
+const finalLiveTime = new Date('2026-07-19T20:10:30.000Z')
+
 test.describe('deterministic live relay states', () => {
   test('CONNECTING becomes LIVE only after a frame, then becomes STALE', async ({ page }) => {
     const frames = await holdLiveFrames(page)
-    // France–England's captured fixture is only eligible in its real live
-    // window. Pin wall time to one hour after kickoff so this remains
-    // deterministic long after the hackathon date.
-    await page.clock.setFixedTime(new Date(1_784_412_000_000))
-    await openDemo(page, '&fixture=18257865')
+    // Pin the unfinished final inside its real live window so freshness,
+    // target binding, and non-finalized status remain deterministic.
+    await page.clock.setFixedTime(finalLiveTime)
+    await openDemo(page, '&fixture=18257739')
     await page.locator('#liveCtl').evaluate((el: HTMLDetailsElement) => { el.open = true })
     await page.locator('#goLiveBtn').click()
 
@@ -67,8 +68,8 @@ test.describe('explicit Solana provider test double', () => {
     const frames = await holdLiveFrames(page)
     await installSolanaWeb3Mock(page)
     await installSolanaProviderMock(page, 'confirmed')
-    await page.clock.setFixedTime(new Date(1_784_412_000_000))
-    await openDemo(page, '&fixture=18257865')
+    await page.clock.setFixedTime(finalLiveTime)
+    await openDemo(page, '&fixture=18257739')
 
     await page.locator('#walletBtn').click()
     await expect(page.locator('#walletBtn')).toContainText('2.000 SOL')

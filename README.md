@@ -27,21 +27,26 @@ Requirements: Node.js 18 or newer. The app has no build step.
 ```powershell
 git clone <repository-url> Foresight
 cd Foresight
-node test.js
-node test-ui-logic.js
-node test-inline.js
-Start-Process .\index.html
+npm ci
+npm test
+npm ci --prefix e2e
+npx --prefix e2e playwright install chromium
+npm run test:browser
+python -m http.server 4173
 ```
 
-The three suites last passed in this working tree on 2026-07-18:
+The consolidated suites last passed in this working tree on 2026-07-18:
 
 | Suite | Result | Scope |
 |---|---:|---|
-| `node test.js` | 138 passed | commitment core, scoring, league state, agent rules, and committed-tape integration |
-| `node test-ui-logic.js` | 50 passed | selected pure UI functions and source invariants |
+| `node test.js` | 155 passed | commitment core, scoring, league state, agent rules, and committed-tape integration |
+| `node test-ui-logic.js` | 58 passed | selected pure UI functions and source invariants |
 | `node test-inline.js` | 109 passed | extracted inline UI logic and relay news helpers |
+| `npm run test:domains` | 111 passed | identity binding, proof receipts, live state, capture, follow, and accessibility/performance |
+| `npm run test:services` | 100 passed | ledger, relay, evaluation, agent ingestion, proof pages, and monetization validation |
+| `npm run test:browser` | 9 passed | deterministic guest, live-state, wallet-mock, reload, mobile, and keyboard flows |
 
-These are useful regression suites, not an end-to-end certification. They do not automate a real Clerk session, Phantom popup, active TxLINE stream, browser persistence, or the external agent contract.
+These suites avoid chain mutation. Clerk has a separate three-case Playwright project that skips unless test-instance secrets are supplied; Phantom confirmation is explicitly mocked in CI rather than broadcasting. Active upstream availability and production service bindings still require deployment checks.
 
 If the browser restricts `file://` behavior, serve the directory with any static server; for example, if Python is available:
 
@@ -78,6 +83,8 @@ browser EventSource-compatible fetch client
         -> TxLINE SSE, with credentials held by the Worker
         -> same normalize/detect/render pipeline as replay
 browser -> relay /api/news -> public football RSS -> deterministic tags/dedup
+browser -> relay /api/polymarket -> public Gamma discovery + CLOB price history
+browser -> lazy official X timeline widget (no X credentials or ingestion)
 
 ANCHOR (optional)
 eligible browser call -> connected Solana wallet -> devnet Memo transaction
@@ -90,27 +97,28 @@ browser -> Clerk sign-in UI
         -> no durable account, wallet binding, or persisted record follows
 ```
 
-There is no application database in this repository. League state, follow state, built agents, and profiles are browser-memory demo state; reloading resets them. `localStorage` is used for entry/relay preferences, not as a verified record store.
+The deployed static app still has no application database, so its replay league remains browser-memory demo state. This repository now also contains an append-only D1 ledger implementation, public proof/profile pages, identity binding, and authenticated agent-ingestion services. Those production seams are tested but are **not deployed or configured**, and the main replay UI does not pretend otherwise. `localStorage` is used for entry/relay preferences, never as a verified record store.
 
 ## Claim ledger: REAL vs PRACTICE/SIM vs PLANNED
 
 | Status | Surface | What the repository supports | Boundary |
 |---|---|---|---|
-| **REAL / SHIPPED** | TxLINE inputs | Four checked-in fixture tapes contain match events and StablePrice 1X2 observations captured from TxLINE. | They are pipeline fixtures, not a statistical sample proving edge. The France–England tape has no `game_finalised` event. |
-| **REAL / SHIPPED** | Live relay | The Worker implements `/health`, `/api/scores/stream`, `/api/odds/stream`, and `/api/news`. | Live usefulness depends on upstream availability and fixture activity. Limits and JWT cache are per Worker isolate. |
+| **REAL / SHIPPED** | TxLINE inputs | Four checked-in fixture tapes contain match events, StablePrice 1X2 observations, and final markers captured from TxLINE. | They are pipeline fixtures, not a statistical sample proving edge. |
+| **REAL / SHIPPED** | Live relay | Worker `1.2.1-shared-state-2026-07-18` implements `/health`, score/odds SSE, news, and the three fixed proof routes. Shared rate/concurrency accounting and freshness telemetry use a Durable Object. | Live usefulness still depends on upstream availability and fixture activity; `/health` is readiness, not proof of a fresh frame. |
 | **REAL / SHIPPED** | Pre-kickoff timestamp | `anchored-proof-final.json` records an Argentina pick for Spain–Argentina, anchored on devnet at `2026-07-18T23:50:18Z`, before the `2026-07-19T19:00:00Z` kickoff. | This proves that committed payload existed by that Solana block time. It does not yet show the final grade or a long track record. |
 | **REAL / SHIPPED** | Post-match mechanism anchor | `anchored-proof.json` contains a real devnet memo for Argentina–Switzerland. | Its block time is `2026-07-18T17:42:55Z`, while kickoff was `2026-07-12T01:00:00Z`; it is post-match and proves only memo/hash plumbing. |
 | **REAL / SHIPPED** | Atomic settlement receipt | `settlement-proof.json` records a successful devnet transaction that composed TxLINE `validateStatV2` for England–Argentina and a `FSGHT1-SETTLE` grade memo in the same transaction. | This is client-side instruction composition, not a custom Foresight-program CPI. The referenced commit was made after the match, so this is a settlement mechanism proof, not evidence of foresight. The grade is not written to a persisted Foresight profile. |
 | **REAL / OPTIONAL** | Browser wallet commit | For an eligible future or verified-live fixture, the browser can ask a connected Solana wallet to sign and send the memo transaction. | Completed/captured fixtures remain practice-only. Wallet UI was not covered by the automated suites above. |
-| **REAL / PARTIAL** | Clerk | The landing gate loads Clerk; an authenticated user maps to a sanitized in-memory handle, and new commits in that session hash the handle into `canonicalPick`. | The handle is not a durable identity record: there is no database, stable Clerk-ID profile, account-wallet binding, or history that survives a rebuild/reload. |
-| **REAL / OUTBOUND LINK** | Polymarket | The UI opens a Polymarket search in a new tab. | Foresight does not query positions, place orders, verify execution, or touch funds. |
+| **REAL / PARTIAL** | Clerk | The landing gate loads Clerk; an authenticated user maps to a sanitized in-memory handle. `shared/identity-binding.js` additionally implements stable Clerk subject IDs and signed, expiring wallet-link challenges. | The deployed UI still uses the session label only. The binding service is fail-closed until a real backend is configured and has not been deployed. |
+| **IMPLEMENTED / RELAY DEPLOYMENT PENDING** | Polymarket comparison | The redesigned UI compares TxLINE StablePrice with like-for-like public Polymarket moneylines at the selected replay timestamp. `relay/worker.js` discovers the exact event through Gamma and reads CLOB history without credentials. Missing or post-target history remains unavailable and is labeled as partial coverage; current prices are never substituted into an as-of comparison. | The currently deployed `1.2.1` relay predates `/api/polymarket`; deploy the updated Worker before relying on this panel publicly. Foresight still does not query positions, place orders, verify execution, or touch funds. |
+| **REAL / OPTIONAL EMBED** | X context | The context card lazy-loads X's official `platform.x.com/widgets.js` timeline only when the X tab is opened, with a matchup search link as fallback. | No X API credentials, firehose, sentiment score, or archived tweet dataset exists. Browser/privacy blockers may suppress the embed. |
 | **PRACTICE / LOCAL** | Human replay calls | Hash, reveal, burn, grade, verify, forge demo, and notional P&L run locally against real captured inputs. | No external timestamp unless an eligible wallet flow is used; no persistence after reload. |
 | **PRACTICE / SIM** | League field and agents | Rule, prompt, API-labeled, and manual identities traverse the same local league functions and populate the UI. | These are deterministic demo identities. They are not users or imported performance records. |
 | **PRACTICE / SIM** | Prompt agent | Natural-language-like input is compiled by deterministic keyword rules. | No LLM is called. Unsupported lineup/player triggers are not real data integrations. |
-| **PRACTICE / SIM** | Follow and premium | Follow/auto-allocation UI and a two-step premium unlock are demoable. | No payment processor, subscription, custody, or real allocation is wired. Dollar values are notional. |
-| **PLANNED** | External agent ingestion | The UI documents `POST /api/agents/{id}/commit`. | No such server route exists in the Worker or static app. The API agent shown is a local stand-in. |
-| **PLANNED / UNWIRED** | TxLINE proof lookups | `shared/txline-real.js` has helpers for fixture, odds, and stat validation. | The relay does not expose them and the commit/grade UI does not invoke them. Copy that calls the price “provable” describes the intended seam, not the current runtime path. |
-| **PLANNED** | Durable reputation | Bind Clerk/wallet identities to immutable commits, reveals, grades, and public profiles. | There is no application database or durable record service today. |
+| **PRACTICE / TESTED SEAM** | Follow and premium | Follow is now explicitly a receipt-alert watchlist, labeled local/not persisted. A separate Clerk Billing entitlement/webhook validation module is tested. | No payment processor is enabled, no subscription is sold, and follow never implies copy execution, custody, or portfolio mutation. |
+| **IMPLEMENTED / NOT DEPLOYED** | External agent ingestion | `agent-ingest/` accepts signed commit-only requests with Ed25519 verification, ownership binding, replay protection, rate limits, idempotency, and proof/fixture validation. | Production bindings and an agent registry are not configured; the API-labeled demo agent remains local. |
+| **REAL RELAY / UI UNWIRED** | TxLINE proof lookups | The deployed relay exposes fixture, odds, and stat validation routes; `shared/proof-receipts.js` binds and validates their response contracts. | The main commit/grade UI does not yet persist those receipts into the ledger, and an API response is not mislabeled cryptographically verified. |
+| **IMPLEMENTED / NOT DEPLOYED** | Durable reputation | `ledger/` implements append-only receipts, server-enforced transitions, immutable evidence, authoritative grading, public reads, and profile aggregates. | D1, auth, and proof-verifier bindings are deliberately fail-closed and not provisioned for the public app. |
 | **PLANNED** | On-chain profile state | A program-owned reputation account and contract-enforced reveal/grade state machine. | This deploy repository includes proof artifacts and client composition, not a deployed Foresight reputation program. |
 
 ## The four checked-in fixtures
@@ -120,9 +128,9 @@ There is no application database in this repository. League state, follow state,
 | Argentina–Switzerland (`18222446`) | 239 | 1,726 | yes |
 | France–Spain (`18237038`) | 172 | 2,540 | yes |
 | England–Argentina (`18241006`) | 167 | 2,637 | yes |
-| France–England (`18257865`) | 142 | 2,519 | no |
+| France–England (`18257865`) | 142 | 2,519 | yes |
 
-The tapes are valuable demonstrations of ingestion, normalization, replay, move detection, and settlement guards. Four fixtures—three final and one incomplete—are not enough to estimate predictive performance, calibration stability, or commercial advantage. Any thresholds derived from them should be presented as prototype settings pending out-of-sample evaluation.
+The tapes are valuable demonstrations of ingestion, normalization, replay, move detection, and settlement guards. Four finalized fixtures are still not enough to estimate predictive performance, calibration stability, or commercial advantage. The leakage-safe report currently has only two holdout fixtures versus its minimum of twenty, so it explicitly refuses a performance claim.
 
 ### The Argentina–Switzerland settlement lesson
 
@@ -139,20 +147,21 @@ Separately, the committed `anchored-proof.json` transaction was posted days afte
 | Relay `GET /health` | browser live control | Reports relay readiness/config presence; it does not prove upstream frames are flowing. |
 | Relay `GET /api/scores/stream?fixtureId=...` | browser live mode | Proxies TxLINE score SSE with server-held credentials. |
 | Relay `GET /api/odds/stream?fixtureId=...` | browser live mode | Proxies TxLINE odds SSE with server-held credentials. |
-| Relay `GET /api/news?teams=...` | browser live mode | Fetches public RSS, deduplicates titles, and applies deterministic keyword tags. |
+| Relay `GET /api/news?teams=...` | selected-match context and browser live mode | Fetches public RSS, deduplicates titles, and applies deterministic keyword tags. |
+| Relay `GET /api/polymarket?home=...&away=...&atMs=...` | market-intelligence comparison | Discovers the exact public Polymarket event, resolves its three moneylines, and returns public CLOB prices at or before the TxLINE quote timestamp. Per-outcome timestamps and modes expose partial coverage without substituting current or future prices. Implemented and tested locally; updated Worker deployment pending. |
 | Clerk hosted JavaScript | landing gate | Authenticates entry and labels subsequent in-memory commits with a sanitized session handle; it does not create a durable profile or account-wallet binding. |
 | Solana devnet RPC | wallet/CLI proof flows | Sends memo transactions and queries confirmations. |
-| Polymarket web search | outbound link | Opens a search page only. |
+| Official X website widget | context tab | Lazy-loads the public `FIFAWorldCup` timeline from X; direct matchup search remains available when embeds are blocked. |
 
-The Worker is read-only with respect to Foresight users. Its token buckets, concurrent-stream counter, and JWT cache are per-isolate best efforts rather than globally durable controls.
+The Worker is read-only with respect to Foresight users. Rate/concurrency accounting and upstream freshness telemetry are coordinated through a Durable Object; a compatibility fallback remains for environments without that binding. The public deployment still warns that `ALLOWED_ORIGINS` is unset.
 
 ### Capture helpers and TxLINE seams
 
 `shared/txline-real.js` contains direct TxLINE clients for fixture snapshots, historical score SSE, odds snapshots/updates, live streams, and validation endpoints. At normal app boot, however, replay data comes from checked-in tape files; the browser does not refetch the historical endpoints.
 
-`shared/live-poll.js` is a credentialed local capture helper for score/odds update windows. It is not part of the judge path. Its current default output is relative to `shared/`, while the checked-in tapes live in root `real-data/`; a developer must explicitly pass `--out ../real-data` and provide `shared/.txline.json`. It writes accumulator/tape files.
+`shared/live-poll.js` is a credentialed local capture helper for score/odds update windows. It is not part of the judge path. It is dry-run by default, requires explicit `--write` confirmation, restricts output to the root `real-data/` directory, supports atomic resume/backups and final/incomplete markers, and refuses unsafe credential/config paths. See `shared/LIVE-CAPTURE.md` and the ignored config template.
 
-The following proof seams exist as client helpers but are not wired into the deployed relay or prediction UI:
+The following proof seams are deployed on the relay and have strict client contracts, but are not yet persisted by the main prediction UI:
 
 - `GET /api/fixtures/validation` — intended deadline/start-time proof.
 - `GET /api/odds/validation` — intended anchored-price proof.
@@ -181,23 +190,25 @@ That command is **not a read-only test**. It broadcasts a transaction, pays a de
 
 These are prototype analytics. They need more fixtures, holdout evaluation, sensitivity analysis, and monitoring before being used as performance claims.
 
-## Top limitations and next steps
+## Top 15 production improvements: implementation status
 
-1. **Persist the ledger:** store commits, reveals, burns, validation receipts, and grades in a durable append-only service.
-2. **Bind identity:** map Clerk user IDs and connected wallets to the same Foresight profile, with explicit account-linking and recovery.
-3. **Wire all three TxLINE proof calls:** verify fixture deadline, price/message, and final stats in the production commit/grade path.
-4. **Enforce the state machine:** move hash/reveal/grade rules from browser-only logic into a service or program that cannot silently omit records.
-5. **Persist verified grades:** connect the real atomic settlement receipt to a durable public profile; distinguish program state from a memo receipt.
-6. **Ship authenticated agent ingestion:** implement the documented agent endpoint with signatures, replay protection, rate limits, and fixture/price validation.
-7. **Expand evaluation:** capture a materially larger multi-competition dataset and publish pre-registered, out-of-sample metrics with uncertainty.
-8. **Add browser E2E coverage:** automate guest path, Clerk callback, live relay states, wallet rejection/pending/confirmation, reload behavior, and mobile layouts.
-9. **Harden relay state:** move global rate/concurrency accounting and JWT coordination to durable infrastructure; add observable upstream freshness.
-10. **Make live status evidence-based:** distinguish connected, first frame received, fresh frames, stale, ended, and replay/captured states.
-11. **Fix the capture workflow:** align `shared/live-poll.js` output/config paths with this flattened deploy repository and document safe secret setup.
-12. **Create shareable proof pages:** expose a stable record URL containing commitment, anchor, validation inputs, reveal, and grade.
-13. **Implement follow semantics:** define whether follow means alerts, mirrored practice calls, or real execution; do not imply execution before it exists.
-14. **Validate monetization:** treat premium analytics/follow as hypotheses until payment, entitlement, refunds, and customer demand are tested.
-15. **Complete accessibility/performance QA:** keyboard flow, reduced motion, chart alternatives, contrast, screen-reader labels, low-end devices, and slow networks.
+1. **Durable ledger — implemented, deployment pending:** D1 schema, append-only receipts/events, idempotency, public reads, and fail-closed auth/proof adapters.
+2. **Identity binding — implemented, integration pending:** stable Clerk subjects plus signed, expiring, domain-bound wallet challenges, replay protection, unlink, and account-switch handling.
+3. **Proof receipts — implemented, UI persistence pending:** deadline, quote, and final-stat contracts preserve provenance/root/slot and reject mismatches, staleness, or unsupported verification labels.
+4. **Server state machine — implemented, deployment pending:** only legal COMMITTED → REVEALED → GRADED or terminal BURNED/INVALID transitions are accepted.
+5. **Verified grades/evidence — implemented, deployment pending:** immutable evidence taxonomy prevents memo/mechanism artifacts from becoming authoritative grades.
+6. **Authenticated agent ingestion — implemented, deployment pending:** commit-only Ed25519 API with ownership, nonce/timestamp replay defense, allowlists, proof binding, and idempotency.
+7. **Leakage-safe evaluation — implemented, sample expansion pending:** whole-fixture chronological splits, 90-minute outcomes, baseline metrics, calibration, uncertainty, and explicit low-N refusal.
+8. **Browser E2E — implemented:** deterministic guest, live-state, wallet-mock, reload, mobile, keyboard, and optional Clerk-token projects; Clerk cases skip unless test secrets exist.
+9. **Durable relay state — deployed:** Durable Object coordination, shared rate/concurrency controls, persistent telemetry, freshness states, request IDs, and sanitized errors.
+10. **Evidence-based live state — implemented:** CONNECTING/LIVE/STALE/ERROR/ENDED plus exact fixture/quote freshness guards for wallet eligibility.
+11. **Safe capture workflow — implemented:** dry-run default, explicit write confirmation, safe paths, resume/backups, redaction, and final/incomplete manifests.
+12. **Shareable proof pages — implemented, ledger deployment pending:** receipt/profile entry points, strict origin/ID handling, CSP, accessible sample mode, evidence labels, and print/mobile layouts.
+13. **Follow semantics — implemented as alerts only:** creator+strategy watchlists never imply copying, execution, allocation, persistence, or custody.
+14. **Monetization validation — implemented, disabled:** fail-closed Clerk feature checks, signed/idempotent webhooks, PII-free funnel, concierge pilot, and pricing experiment; no fake checkout.
+15. **Accessibility/performance — implemented:** keyboard-native controls, focus-managed dialogs, chart alternatives, deduplicated announcements, reduced-motion/render budgets, and 390px/200% reflow hardening.
+
+The ranked top-20 judge-facing improvements and pitch rationale are tracked in `HACKATHON-REVIEW.md`. “Implemented” above means source and tests exist; only the relay item is currently deployed as a service.
 
 ## Repository map
 
@@ -206,6 +217,13 @@ These are prototype analytics. They need more fixtures, holdout evaluation, sens
 - [`shared/txline-real.js`](shared/txline-real.js) — TxLINE client, SSE parser, tape normalization, and proof helper seams.
 - [`shared/agent.js`](shared/agent.js) — market-move detector and real-tape adapter.
 - [`relay/worker.js`](relay/worker.js) — deployed SSE/news relay and its route-level controls.
+- [`ledger/`](ledger/) — append-only receipt/evidence service and public profile aggregation.
+- [`agent-ingest/`](agent-ingest/) — signed external-agent commit API.
+- [`proof-pages/`](proof-pages/) — safe public receipt/profile pages with deterministic sample mode.
+- [`evaluation/`](evaluation/) — leakage-safe baseline evaluation and low-sample claim gate.
+- [`e2e/`](e2e/) — Playwright guest, live, wallet-mock, responsive, and optional Clerk tests.
+- [`monetization/`](monetization/) — disabled-by-default entitlement/webhook and demand-validation seam.
+- [`assets/world-cup/`](assets/world-cup/) — ten original, optimized international-football images plus prompt/placement manifest.
 - [`real-data/`](real-data/) — four checked-in fixture tapes.
 - [`anchored-proof-final.json`](anchored-proof-final.json) — real pre-kickoff World Cup Final devnet anchor.
 - [`anchored-proof.json`](anchored-proof.json) — real but post-match Argentina–Switzerland mechanism anchor.

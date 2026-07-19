@@ -17,6 +17,7 @@ const types = {
   '.mjs': 'text/javascript; charset=utf-8',
   '.png': 'image/png',
   '.svg': 'image/svg+xml; charset=utf-8',
+  '.webp': 'image/webp',
 }
 
 function send(res, status, body, contentType) {
@@ -49,6 +50,9 @@ const server = createServer(async (req, res) => {
     }
     if (url.pathname === '/api/news') {
       return send(res, 200, await fixture('news.json'), types['.json'])
+    }
+    if (url.pathname === '/api/polymarket') {
+      return send(res, 200, await fixture('polymarket.json'), types['.json'])
     }
     if (url.pathname === '/api/scores/stream') {
       return send(res, 200, await fixture('live-score.sse'), 'text/event-stream; charset=utf-8')

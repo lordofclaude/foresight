@@ -30,8 +30,30 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run full test suite
+      - name: Run full unit and service test suite
         run: npm test
 
-      - name: Run relay tests
-        run: npm --prefix relay test
+  browser-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: 24
+
+      - name: Install browser test dependencies
+        working-directory: e2e
+        run: npm ci
+
+      - name: Install Chromium
+        working-directory: e2e
+        run: npx playwright install --with-deps chromium
+
+      - name: Run deterministic guest browser flow
+        run: npm run test:browser

@@ -2,7 +2,7 @@ import { LedgerError } from "./src/domain.js";
 import { D1LedgerRepository } from "./src/repository.js";
 import { LedgerService } from "./src/service.js";
 
-const VERSION = "0.2.0";
+const VERSION = "0.3.0";
 
 function headers(extra = {}) {
   return {
@@ -101,9 +101,12 @@ export async function handleRequest(request, env, options = {}) {
     const service = options.service || new LedgerService(repository, options.clock, proofVerifier);
     const receiptMatch = url.pathname.match(/^\/v1\/receipts\/(r_[0-9a-f]{64})$/);
     const transitionMatch = url.pathname.match(/^\/v1\/receipts\/(r_[0-9a-f]{64})\/transitions$/);
+    const receiptEvidenceMatch = url.pathname.match(/^\/v1\/receipts\/(r_[0-9a-f]{64})\/evidence$/);
+    const evidenceMatch = url.pathname.match(/^\/v1\/evidence\/(evd_[0-9a-f]{64})$/);
     const profileMatch = url.pathname.match(/^\/v1\/profiles\/([^/]+)$/);
     if (request.method === "GET" && receiptMatch) return json(await service.getReceipt(receiptMatch[1]), 200, { "Cache-Control": "public, max-age=15" });
     if (request.method === "GET" && profileMatch) return json(await service.getProfile(decodeURIComponent(profileMatch[1])), 200, { "Cache-Control": "public, max-age=15" });
+    if (request.method === "GET" && evidenceMatch) return json(await service.getEvidence(evidenceMatch[1]), 200, { "Cache-Control": "public, max-age=60" });
     if (request.method === "POST" && url.pathname === "/v1/receipts") {
       const ownerId = await authorizeWrite(request, env, options.fetchImpl);
       return json(await service.createReceipt(ownerId, await readBody(request), request.headers.get("Idempotency-Key")), 201);
@@ -111,6 +114,10 @@ export async function handleRequest(request, env, options = {}) {
     if (request.method === "POST" && transitionMatch) {
       const ownerId = await authorizeWrite(request, env, options.fetchImpl);
       return json(await service.appendTransition(ownerId, transitionMatch[1], await readBody(request), request.headers.get("Idempotency-Key")), 201);
+    }
+    if (request.method === "POST" && receiptEvidenceMatch) {
+      const ownerId = await authorizeWrite(request, env, options.fetchImpl);
+      return json(await service.registerEvidence(ownerId, receiptEvidenceMatch[1], await readBody(request), request.headers.get("Idempotency-Key")), 201);
     }
     if (["GET", "POST"].includes(request.method)) return json({ error: "not found", code: "not_found" }, 404);
     return json({ error: "method not allowed", code: "method_not_allowed" }, 405, { Allow: "GET, POST" });

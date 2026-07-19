@@ -1,0 +1,7 @@
+{
+  "host": "https://txline-dev.txodds.com",
+  "network": "devnet",
+  "allowedFixtureIds": [18257865],
+  "jwt": "replace-locally-or-prefer-TXLINE_JWT",
+  "apiToken": "replace-locally-or-prefer-TXLINE_API_TOKEN"
+}

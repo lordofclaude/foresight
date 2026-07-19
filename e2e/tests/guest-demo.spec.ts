@@ -37,7 +37,7 @@ test.describe('guest demo golden path', () => {
     await expect(page.locator('#verifyOut')).toContainText('NO COMMITMENT FOUND')
 
     await page.locator('#instant').click()
-    await expect(page.locator('#sSettled')).toContainText('3/4')
+    await expect(page.locator('#sSettled')).toContainText('4/4')
     await expect(page.locator('#mycommits .commitrow')).toContainText('GRADED')
   })
 
@@ -51,5 +51,24 @@ test.describe('guest demo golden path', () => {
     await expect(page.locator('#sClock')).toHaveText("0'")
     await expect(page.locator('#sPicks')).toHaveText('0')
     await expect(page.locator('#mycommits .commitrow')).toHaveCount(0)
+  })
+
+  test('shows aligned market divergence, headlines, and a rich match timeline', async ({ page }) => {
+    await openDemo(page)
+
+    await expect(page.locator('#compareRows .compare-row')).toHaveCount(3)
+    await expect(page.locator('#compareThesis')).toContainText('largest disagreement')
+    await expect(page.locator('#compareStatus')).toContainText('timestamp aligned')
+    await expect(page.locator('#newsList .news-item')).toHaveCount(3)
+
+    await page.locator('#instant').click()
+    await expect(page.locator('#matchTimeline')).toContainText('Shot')
+    await expect(page.locator('#matchTimeline')).toContainText('Corner')
+    await expect(page.locator('#matchTimeline')).toContainText('Goal')
+    await expect(page.locator('#timelineMore')).toBeVisible()
+    await page.locator('#timelineMore').click()
+    await expect.poll(() => page.locator('#matchTimeline .timeline-event').count()).toBeGreaterThan(40)
+    await page.locator('[data-event-filter="setpiece"]').click()
+    await expect(page.locator('#matchTimeline')).toContainText(/Corner|Free kick|Penalty/)
   })
 })

@@ -15,6 +15,18 @@ test.describe('mobile and keyboard access', () => {
     expect(dimensions.bodyScrollWidth).toBeLessThanOrEqual(dimensions.clientWidth)
     await expect(page.locator('#walletBtn')).toBeVisible()
     await expect(page.locator('#commitCard')).toBeVisible()
+    await page.locator('#instant').click()
+    await expect(page.locator('#compareRows .compare-row')).toHaveCount(3)
+    await expect(page.locator('#matchTimeline .timeline-event').first()).toBeVisible()
+    const keyPanels = await page.locator('#marketCompareCard, #timelineCard, #intelCard').evaluateAll(elements =>
+      elements.map(element => {
+        const rect = element.getBoundingClientRect()
+        return { left: rect.left, right: rect.right, viewport: document.documentElement.clientWidth }
+      }))
+    for (const panel of keyPanels) {
+      expect(panel.left).toBeGreaterThanOrEqual(0)
+      expect(panel.right).toBeLessThanOrEqual(panel.viewport)
+    }
   })
 
   test('prediction choices work with the keyboard', async ({ page }) => {

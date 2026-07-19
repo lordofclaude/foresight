@@ -16,7 +16,7 @@ identity verifier and deployment are ready.
   `503 auth_not_configured`. This service does not pretend to verify Clerk JWTs.
 - Receipt and event rows cannot be updated or deleted; SQL triggers enforce the
   append-only rule for direct database access too.
-- `GRADED`, `BURNED`, and `INVALID` additionally require a server-only
+- Evidence registration additionally requires a server-only
   `PROOF_VERIFY_URL` + `PROOF_VERIFY_TOKEN`. Browser `verified`, winner, result,
   P&L, and proof-status fields are never accepted as authority.
 
@@ -86,19 +86,42 @@ writes fail with `409 stale_sequence`. Reveal commands must arrive by the
 server-enforced `revealDeadline`. Grade and burn commands cannot run before
 `settleAfter`.
 
-Authoritative commands accept only a validation receipt reference:
+Register a verifier-classified, immutable evidence record first:
+
+```http
+POST /v1/receipts/:receiptId/evidence
+{
+  "validationReceiptId": "txline-validation-…"
+}
+```
+
+The proof verifier binds the stored record to the exact owner, receipt,
+commitment hash, fixture and market. Public receipt JSON exposes the ordered
+`evidenceChain`; individual records are readable at `GET /v1/evidence/:id`.
+Classification is explicit:
+
+- `API_RECEIPT`: `RECEIVED_UNVERIFIED` or `VERIFIED`; only a verified record
+  with a root and final outcome can authorize a grade.
+- `SOLANA_MEMO`: a timestamp/commit anchor, never outcome authority.
+- `ATOMIC_CLIENT_SETTLEMENT`: `MECHANISM_ONLY`; same-transaction composition
+  is not a custom-program CPI or a foresight win.
+- `PROGRAM_STATE`: `NOT_SHIPPED`; claims that it already owns grade state fail
+  closed.
+
+Authoritative commands then reference the stored evidence ID:
 
 ```json
 {
   "type": "GRADED",
   "expectedSequence": 1,
-  "payload": { "validationReceiptId": "txline-validation-…" }
+  "payload": { "evidenceId": "evd_<64 lowercase hex characters>" }
 }
 ```
 
-The ledger calls its server-side verifier, requires an exact `VERIFIED` binding
-to the owner, receipt, commitment hash, fixture, market and command, and derives
-winner/result/P&L itself. `GRADED`, `BURNED`, and `INVALID` are terminal. An
+The ledger requires stored authoritative evidence and derives winner/result/P&L
+itself. Public profiles recompute aggregates from that evidence chain and
+exclude any non-authoritative grade even if storage is corrupted. `GRADED`,
+`BURNED`, and `INVALID` are terminal. An
 illegal command returns and logs a deterministic rejection envelope containing
 `rejectionId`, request fingerprint, current state and sequence; request bodies,
 bearer tokens and proof-verifier credentials are never logged.
@@ -108,12 +131,19 @@ bearer tokens and proof-verifier credentials are never logged.
 ```powershell
 cd ledger
 npm test
+npm run evidence:inspect
 npm run db:migrate:local
 npm run dev
 ```
 
 Tests have no credentials, network calls, or third-party packages. They use the
 same service layer with a deterministic in-memory repository.
+
+`evidence:inspect` is read-only. It checks the two checked-in artifacts and the
+real fixture tape without `eval`: the FINAL memo is classified as a pre-kickoff
+commit anchor, while the atomic settlement is classified as post-match,
+client-composed mechanism evidence. Neither artifact is promoted into grade
+authority, and production persistence still requires the server verifier.
 
 ## Deployment checklist (do not put secrets in Git)
 

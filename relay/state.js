@@ -1,11 +1,9 @@
 export const STREAM_STALE_AFTER_MS = 30_000;
 export const STREAM_LEASE_MS = 2 * 60 * 60_000;
-const MAX_BUCKETS = 20_000;
+// Kept below one thousand so the single durable snapshot remains comfortably
+// bounded; oldest inactive rate subjects are evicted first.
+const MAX_BUCKETS = 1_000;
 const MAX_RECENT_STREAMS = 100;
-
-function streamKey(kind, fixtureId) {
-  return `${kind}:${fixtureId}`;
-}
 
 export class RelayStateCore {
   constructor(snapshot) {
@@ -29,7 +27,11 @@ export class RelayStateCore {
       this.finishStream(connection, nowMs, "lease_expired");
     }
     while (this.buckets.size > MAX_BUCKETS) this.buckets.delete(this.buckets.keys().next().value);
-    while (this.streams.size > MAX_RECENT_STREAMS) this.streams.delete(this.streams.keys().next().value);
+    while (this.streams.size > MAX_RECENT_STREAMS) {
+      const endedKey = [...this.streams.keys()].find(key => !this.connections.has(key));
+      if (!endedKey) break;
+      this.streams.delete(endedKey);
+    }
   }
 
   takeRate({ kind, subject, perMinute, nowMs }) {
@@ -37,7 +39,7 @@ export class RelayStateCore {
     const key = `${kind}:${subject || "unknown"}`;
     let bucket = this.buckets.get(key);
     if (!bucket) bucket = { tokens: perMinute, last: nowMs };
-    bucket.tokens = Math.min(perMinute, bucket.tokens + ((nowMs - bucket.last) / 60_000) * perMinute);
+    bucket.tokens = Math.min(perMinute, bucket.tokens + (Math.max(0, nowMs - bucket.last) / 60_000) * perMinute);
     bucket.last = nowMs;
     const allowed = bucket.tokens >= 1;
     if (allowed) bucket.tokens -= 1;
@@ -49,6 +51,7 @@ export class RelayStateCore {
   admitSse(input) {
     const rate = this.takeRate({ kind: "sse", subject: input.subject, perMinute: input.perMinute, nowMs: input.nowMs });
     if (!rate.allowed) return { allowed: false, reason: "rate_limited", retryAfterSeconds: rate.retryAfterSeconds };
+    if (this.connections.has(input.connectionId)) return { allowed: false, reason: "duplicate_connection", retryAfterSeconds: 15 };
     if (this.connections.size >= input.maxConcurrent) {
       return { allowed: false, reason: "concurrency_limited", retryAfterSeconds: 15 };
     }
@@ -66,7 +69,7 @@ export class RelayStateCore {
       leaseExpiresAt: input.nowMs + STREAM_LEASE_MS
     };
     this.connections.set(input.connectionId, connection);
-    this.streams.set(streamKey(input.kind, input.fixtureId), { ...connection, endedAt: null, endReason: null });
+    this.streams.set(input.connectionId, { ...connection, endedAt: null, endReason: null });
     return { allowed: true, activeStreams: this.connections.size };
   }
 
@@ -76,7 +79,7 @@ export class RelayStateCore {
     if (!connection) return { found: false };
     connection.connectedAt = connection.connectedAt || nowMs;
     connection.leaseExpiresAt = nowMs + STREAM_LEASE_MS;
-    this.streams.set(streamKey(connection.kind, connection.fixtureId), { ...connection, endedAt: null, endReason: null });
+    this.streams.set(connection.connectionId, { ...connection, endedAt: null, endReason: null });
     return { found: true };
   }
 
@@ -89,12 +92,12 @@ export class RelayStateCore {
     connection.framesObserved += Math.max(1, Number(frameCount) || 1);
     connection.bytesObserved += Math.max(0, Number(byteCount) || 0);
     connection.leaseExpiresAt = nowMs + STREAM_LEASE_MS;
-    this.streams.set(streamKey(connection.kind, connection.fixtureId), { ...connection, endedAt: null, endReason: null });
+    this.streams.set(connection.connectionId, { ...connection, endedAt: null, endReason: null });
     return { found: true };
   }
 
   finishStream(connection, nowMs, reason) {
-    this.streams.set(streamKey(connection.kind, connection.fixtureId), {
+    this.streams.set(connection.connectionId, {
       ...connection,
       endedAt: nowMs,
       endReason: reason,
@@ -125,6 +128,7 @@ export class RelayStateCore {
           : !hasFirstFrame ? "connected_waiting_first_frame"
             : stale ? "stale" : "fresh";
       return {
+        connectionId: stream.connectionId,
         kind: stream.kind,
         fixtureId: stream.fixtureId,
         requestId: stream.requestId,

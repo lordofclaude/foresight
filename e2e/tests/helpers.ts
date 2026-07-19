@@ -9,6 +9,19 @@ const fixtures = join(here, '..', 'fixtures')
 export const e2ePort = Number(process.env.FORESIGHT_E2E_PORT || 4188)
 export const relayBase = `http://127.0.0.1:${e2ePort}`
 
+function buildEligibleOddsWindow(seed: string) {
+  const dataLine = seed.split(/\r?\n/).find(line => line.startsWith('data: '))
+  if (!dataLine) throw new Error('live odds fixture needs one data frame')
+  const quote = JSON.parse(dataLine.slice(6))
+  // The real-tape builder intentionally requires 50 quotes before the target
+  // becomes selectable; expand one readable seed into that minimum window.
+  return Array.from({ length: 50 }, (_, index) => {
+    const sequence = String(index + 1).padStart(3, '0')
+    const frame = { ...quote, MessageId: `odds-e2e-${sequence}`, Ts: Number(quote.Ts) + index * 500 }
+    return `id: odds-e2e-${sequence}\nevent: message\ndata: ${JSON.stringify(frame)}\n`
+  }).join('\n') + '\n'
+}
+
 export async function openDemo(page: Page, extra = '') {
   await page.goto(`/?demo=1&relay=${encodeURIComponent(relayBase)}${extra}`)
   await expect(page.locator('#globalMode')).toHaveText('PRACTICE REPLAY')
@@ -69,7 +82,7 @@ declare global {
 
 export async function holdLiveFrames(page: Page) {
   const score = await readFile(join(fixtures, 'live-score.sse'), 'utf8')
-  const odds = await readFile(join(fixtures, 'live-odds.sse'), 'utf8')
+  const odds = buildEligibleOddsWindow(await readFile(join(fixtures, 'live-odds.sse'), 'utf8'))
   const pending: Array<{ route: Route; body: string }> = []
 
   await page.route('**/api/scores/stream?**', route => {

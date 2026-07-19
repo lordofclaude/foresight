@@ -12,7 +12,9 @@ The product turns “I called it” into an inspectable sequence: a prediction p
 
 Prediction reputations are easy to edit after the result: winners stay visible, losers disappear, and the claimed timing or price is difficult to audit. Foresight is a prediction league built around receipts. It commits a call before grading, can anchor eligible calls to Solana, and resolves them from TxLINE data. The result is a product prototype for building a track record whose individual verified entries are harder to backdate or rewrite.
 
-The current build proves important pieces of that mechanism. It does not yet provide durable accounts, a production prediction ledger, a large performance sample, or evidence that its demo agents have repeatable edge.
+The current build proves important pieces of that mechanism. It now contains tested implementations for an append-only ledger, public proof/profile views, stable Clerk/wallet binding, signed external-agent commits, and leakage-safe evaluation. Those production services are not yet deployed/configured, the eligible evaluation sample remains below the claim threshold, and there is still no evidence that the demo agents have repeatable edge.
+
+The deployed relay is `1.2.1-shared-state-2026-07-18`: its proof routes, Durable Object rate/concurrency controls, and freshness telemetry are live. The static judge path remains deliberately useful without a live match, wallet popup, OAuth callback, or backend write.
 
 ## 30-second judge path
 
@@ -65,7 +67,7 @@ That ending creates a credible bridge from prototype to product without implying
 
 | Surface | User value | Current reality |
 |---|---|---|
-| Probability tape | See how full-match consensus changed around match events. | Runs on four captured TxLINE fixture tapes; optional live mode uses the shipped relay. |
+| Probability tape | See how full-match consensus changed around match events. | Runs on four finalized captured TxLINE fixture tapes; optional live mode uses the shipped relay. |
 | Upset radar | Prioritize matches whose favorite confidence, score state, and pressure signals look unusual. | Deterministic heuristic, not a probability forecast validated on a large sample. |
 | Commit / reveal / burn | Lock a call, reveal it, and penalize an unrevealed local commit. | Fully functional in local demo state; external timestamp only for eligible wallet-signed calls. |
 | Verify / forge | Recompute the commitment and explain why a prior external timestamp matters. | Local hash verification is real computation; the practice call has no external time proof. |
@@ -92,6 +94,7 @@ browser
      -> TxLINE /api/scores/stream
      -> TxLINE /api/odds/stream
      -> public football RSS for /api/news
+     -> public Polymarket Gamma + CLOB history for /api/polymarket (updated Worker deployment pending)
   -> the same normalization and rendering pipeline
 
 OPTIONAL TIMESTAMP / RECEIPT
@@ -113,7 +116,7 @@ The deploy repository is intentionally small: a static page, shared JavaScript, 
 | Label | Shipped evidence | Do not imply |
 |---|---|---|
 | **REAL** | Four checked-in TxLINE-derived fixture tapes and a shared normalization pipeline. | Four fixtures prove predictive edge, significance, or generalization. |
-| **REAL** | Worker routes: `/health`, `/api/scores/stream`, `/api/odds/stream`, `/api/news`. | The Worker exposes every TxLINE or proof endpoint, or that an open stream always has fresh data. |
+| **REAL** | Deployed Worker routes: `/health`, `/api/scores/stream`, `/api/odds/stream`, `/api/news`. The working tree additionally implements and tests `/api/polymarket`. | The public deployment already includes the new comparison route, or that an open stream always has fresh data. |
 | **REAL** | World Cup Final devnet memo anchored before kickoff. | One timestamp is a completed track record or a winning prediction. |
 | **REAL, POST-MATCH** | Argentina–Switzerland devnet memo/hash artifact. | That artifact predates kickoff or proves foresight. |
 | **REAL MECHANISM RECEIPT** | England–Argentina `validateStatV2` plus grade memo composed atomically on devnet. | It is a custom Foresight-program CPI, a pre-match prediction, or a persisted profile grade. |
@@ -145,9 +148,11 @@ Argentina–Switzerland is particularly useful for settlement correctness. Argen
 - `GET /api/scores/stream?fixtureId=...` proxied to TxLINE SSE.
 - `GET /api/odds/stream?fixtureId=...` proxied to TxLINE SSE.
 - `GET /api/news?teams=...` backed by public RSS with deterministic dedup/tagging.
+- `GET /api/polymarket?home=...&away=...&atMs=...` implemented locally for timestamp-aligned public moneyline comparisons. Missing history stays null and partial coverage is explicit; current or post-target prices are never substituted. Worker deployment pending.
 - Clerk-hosted sign-in UI.
 - Solana devnet RPC for optional memo commits and proof receipts.
-- Polymarket search deep links only—no API execution or account access.
+- Lazy official X timeline widget and matchup search links; no X API credentials or sentiment ingestion.
+- Polymarket search/exact-market deep links remain read-only—no account access or execution.
 
 ### Capture-time helpers
 

@@ -1,4 +1,5 @@
-id: odds-e2e-1
+id: odds-e2e-seed
 event: message
-data: {"FixtureId":18257865,"MessageId":"odds-e2e-1","Ts":"2026-07-18T22:10:01.000Z","BookmakerId":10021,"MarketPeriod":null,"SuperOddsType":"1X2_PARTICIPANT_RESULT","PriceNames":["home","draw","away"],"Pct":["0.43","0.28","0.29"]}
+data: {"FixtureId":18257739,"MessageId":"odds-e2e-seed","Ts":1784491800000,"BookmakerId":10021,"MarketPeriod":null,"SuperOddsType":"1X2_PARTICIPANT_RESULT","PriceNames":["home","draw","away"],"Pct":["0.420","0.280","0.300"]}
 
+: fixture boundary

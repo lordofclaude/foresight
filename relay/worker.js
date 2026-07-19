@@ -1,3 +1,5 @@
+import { DurableRelayStateClient, LocalRelayStateClient, RelayStateCore, STREAM_STALE_AFTER_MS } from "./state.js";
+
 /* Foresight Relay — Cloudflare Worker (runs locally via `wrangler dev`, deploys via `wrangler deploy`).
 
    Why this exists: TxLINE's live endpoints require an Authorization JWT + X-Api-Token.
@@ -16,6 +18,8 @@
      /api/odds/validation?messageId=<id>&ts=<unix-ms>
      /api/scores/stat-validation?fixtureId=<id>&statKey=<key>&value=<n>&seq=<n>
      /api/news?teams=England,France       -> merged football news JSON (RSS, no key)
+     /api/polymarket?home=Spain&away=Argentina&atMs=<unix-ms>
+                                           -> public moneyline comparison (no key)
 
    Secrets (wrangler secret put … ; local: relay/.dev.vars):
      TXLINE_JWT, TXLINE_API_TOKEN, TXLINE_HOST (optional, defaults devnet)
@@ -25,53 +29,37 @@
        CORS stays "*" (needed for file:// local demos + the Vercel site today).
 
    Hardening (2026-07-18): required fixtureId validation, fixed proof routes,
-   upstream timeouts/error shaping, per-IP token-bucket rate limits (SSE 10/min,
-   proof/news 30/min), concurrent-SSE cap (20), and explicit cache policy.
-   NOTE: rate/concurrency state is per-isolate in-memory — best-effort only.
-   Cloudflare may run many isolates across PoPs, each with its own counters.
-   Good enough to stop casual abuse for a hackathon; use Durable Objects or
-   Cloudflare Rate Limiting rules for real global enforcement.
+   upstream timeouts/error shaping, request IDs, per-IP rate limits, shared SSE
+   admission, and server-observed freshness telemetry. RELAY_SHARED_STATE uses
+   one Durable Object across isolates; older deployments without the binding
+   retain a health-labeled per-isolate compatibility limiter.
 */
 
-const VERSION = "1.2.0-proof-relay-2026-07-18";
+const VERSION = "1.3.0-market-intelligence-2026-07-18";
 const DEFAULT_HOST = "https://txline-dev.txodds.com";
 
 // ---- hardening knobs ------------------------------------------------------
 const SSE_CONN_PER_MIN = 10;      // new SSE connections per IP per minute
 const PROOF_REQ_PER_MIN = 30;     // validation receipt lookups per IP per minute
 const NEWS_REQ_PER_MIN = 30;      // /api/news requests per IP per minute
-const MAX_CONCURRENT_SSE = 20;    // simultaneous SSE pass-throughs per isolate
-const MAX_BUCKETS = 2000;         // bound rate-limit memory per isolate
+const MARKET_REQ_PER_MIN = 30;    // /api/polymarket requests per IP per minute
+const MAX_CONCURRENT_SSE = 20;    // simultaneous pass-throughs in the active state scope
 const NEWS_CACHE_SECONDS = 60;    // Cache-Control max-age for /api/news
+const MARKET_CACHE_SECONDS = 60;  // public Polymarket discovery/history cache
 const UPSTREAM_TIMEOUT_MS = 8000; // connect/JSON/RSS deadline; SSE body is not timed
 
 // Module-scoped JWT cache: lets a 401 refresh survive within a warm isolate.
 let JWT_CACHE = null;
 
-// ---- per-isolate rate limiting (best-effort, see header note) -------------
-const BUCKETS = new Map(); // key "kind:ip" -> { tokens, last }
+// Missing RELAY_SHARED_STATE preserves the existing deployed SSE behavior with
+// an explicitly reported per-isolate compatibility limiter.
+const LOCAL_RELAY_STATE = new LocalRelayStateClient();
 
-/** Token bucket: capacity = perMinute, refills continuously. True = allowed. */
-function allowRate(kind, ip, perMinute) {
-  const key = kind + ":" + (ip || "unknown");
-  const now = Date.now();
-  let b = BUCKETS.get(key);
-  if (!b) {
-    if (BUCKETS.size >= MAX_BUCKETS) {          // crude eviction: drop oldest entry
-      const first = BUCKETS.keys().next().value;
-      if (first) BUCKETS.delete(first);
-    }
-    b = { tokens: perMinute, last: now };
-    BUCKETS.set(key, b);
-  }
-  b.tokens = Math.min(perMinute, b.tokens + ((now - b.last) / 60000) * perMinute);
-  b.last = now;
-  if (b.tokens < 1) return false;
-  b.tokens -= 1;
-  return true;
+function relayState(env) {
+  return env && env.RELAY_SHARED_STATE
+    ? new DurableRelayStateClient(env.RELAY_SHARED_STATE)
+    : LOCAL_RELAY_STATE;
 }
-
-let ACTIVE_SSE = 0; // concurrent SSE pass-throughs in this isolate
 
 // ---- CORS -----------------------------------------------------------------
 /** Resolve the ACAO value: "*" when no allowlist, the reflected origin when
@@ -86,8 +74,8 @@ function corsOrigin(request, env) {
 function cors(extra, acao) {
   const h = Object.assign({
     "Access-Control-Allow-Methods": "GET, OPTIONS",
-    "Access-Control-Allow-Headers": "Last-Event-ID, Cache-Control, Content-Type",
-    "Access-Control-Expose-Headers": "Last-Event-ID",
+    "Access-Control-Allow-Headers": "Last-Event-ID, Cache-Control, Content-Type, X-Request-ID",
+    "Access-Control-Expose-Headers": "Last-Event-ID, X-Request-ID, X-Relay-State-Scope",
     "X-Content-Type-Options": "nosniff",
   }, extra || {});
   if (acao) { // null = origin denied by ALLOWED_ORIGINS → no ACAO header, browser blocks
@@ -105,6 +93,35 @@ function json(obj, status, acao, extraHeaders) {
       "Cache-Control": "no-store",
     }, extraHeaders || {}), acao),
   });
+}
+
+function requestIdFor(request) {
+  const supplied = request.headers.get("X-Request-ID");
+  if (supplied && /^[A-Za-z0-9][A-Za-z0-9._-]{7,79}$/.test(supplied)) return supplied;
+  if (globalThis.crypto && typeof globalThis.crypto.randomUUID === "function") return globalThis.crypto.randomUUID();
+  return `relay-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 14)}`;
+}
+
+function connectionIdFor() {
+  if (globalThis.crypto && typeof globalThis.crypto.randomUUID === "function") return globalThis.crypto.randomUUID();
+  return `stream-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 14)}`;
+}
+
+function withRequestId(response, requestId, scope) {
+  const headers = new Headers(response.headers);
+  headers.set("X-Request-ID", requestId);
+  if (scope) headers.set("X-Relay-State-Scope", scope);
+  return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
+}
+
+function stateFailure(acao, requestId, capability) {
+  return json({
+    error: "relay shared state unavailable",
+    code: "state_unavailable",
+    capability,
+    requestId,
+    failure: { category: "shared_state", retryable: true },
+  }, 503, acao, { "Retry-After": "15" });
 }
 
 function host(env) { return (env && env.TXLINE_HOST) || DEFAULT_HOST; }
@@ -165,28 +182,41 @@ async function credentialedFetch(target, env, req, accept) {
   return up;
 }
 
-function upstreamFailure(e, acao, capability) {
+function upstreamFailure(e, acao, capability, requestId) {
   if (e && e.code === "MISSING_CREDENTIALS") {
-    return json({ error: "relay credentials unavailable", code: "relay_not_configured", capability }, 503, acao);
+    return json({ error: "relay credentials unavailable", code: "relay_not_configured", capability, requestId,
+      failure: { category: "configuration", retryable: false } }, 503, acao);
   }
   if (e && e.code === "UPSTREAM_TIMEOUT") {
-    return json({ error: "upstream request timed out", code: "upstream_timeout", capability }, 504, acao);
+    return json({ error: "upstream request timed out", code: "upstream_timeout", capability, requestId,
+      failure: { category: "upstream_timeout", retryable: true } }, 504, acao);
   }
-  return json({ error: "upstream request failed", code: "upstream_unavailable", capability }, 502, acao);
+  return json({ error: "upstream request failed", code: "upstream_unavailable", capability, requestId,
+    failure: { category: "upstream_transport", retryable: true } }, 502, acao);
 }
 
 /** Proxy a TxLINE SSE stream (scores|odds), refreshing the JWT once on 401. */
-async function proxySSE(kind, env, req, url, acao, ctx) {
+async function proxySSE(kind, env, req, url, acao, ctx, state, requestId) {
   const fixtureId = url.searchParams.get("fixtureId");
   if (!fixtureId || !/^[1-9]\d{0,9}$/.test(fixtureId)) {
     return json({ error: "fixtureId is required and must be a positive integer (max 10 digits)", code: "invalid_fixture_id" }, 400, acao);
   }
 
   const ip = req.headers.get("CF-Connecting-IP");
-  if (!allowRate("sse", ip, SSE_CONN_PER_MIN)) {
+  const connectionId = connectionIdFor();
+  let admission;
+  try {
+    admission = await state.admitSse({
+      connectionId, kind, fixtureId, requestId, subject: ip || "unknown",
+      perMinute: SSE_CONN_PER_MIN, maxConcurrent: MAX_CONCURRENT_SSE, nowMs: Date.now(),
+    });
+  } catch {
+    return stateFailure(acao, requestId, kind + "_stream");
+  }
+  if (!admission.allowed && admission.reason === "rate_limited") {
     return json({ error: "rate limited: too many stream connections, retry later" }, 429, acao, { "Retry-After": "60" });
   }
-  if (ACTIVE_SSE >= MAX_CONCURRENT_SSE) {
+  if (!admission.allowed) {
     return json({ error: "busy: too many concurrent streams, retry later" }, 503, acao, { "Retry-After": "15" });
   }
 
@@ -196,25 +226,68 @@ async function proxySSE(kind, env, req, url, acao, ctx) {
   try {
     up = await credentialedFetch(target, env, req, "text/event-stream");
   } catch (e) {
-    return upstreamFailure(e, acao, kind + "_stream");
+    await state.close({ connectionId, nowMs: Date.now(), reason: "upstream_error" }).catch(() => {});
+    return upstreamFailure(e, acao, kind + "_stream", requestId);
   }
   if (!up.ok || !up.body) {
+    await state.close({ connectionId, nowMs: Date.now(), reason: "upstream_rejected" }).catch(() => {});
     return json({
       error: "upstream stream rejected the request",
       code: "upstream_rejected",
       capability: kind + "_stream",
       upstreamStatus: up.status,
+      requestId,
+      failure: { category: "upstream_status", retryable: up.status >= 500 },
     }, 502, acao);
   }
 
-  // Pipe through an identity TransformStream so we can count the connection
-  // open/closed (client disconnects surface as a pipeTo rejection).
-  ACTIVE_SSE++;
-  const { readable, writable } = new TransformStream();
-  const pipe = up.body.pipeTo(writable)
-    .catch(() => {})
-    .finally(() => { ACTIVE_SSE = Math.max(0, ACTIVE_SSE - 1); });
-  if (ctx && ctx.waitUntil) ctx.waitUntil(pipe);
+  try {
+    const connected = await state.connected({ connectionId, nowMs: Date.now() });
+    if (!connected || connected.found !== true) throw new Error("state reservation missing");
+  } catch {
+    await up.body.cancel().catch(() => {});
+    return stateFailure(acao, requestId, kind + "_stream");
+  }
+
+  // Pass bytes through unchanged while observing complete SSE frame boundaries.
+  // Telemetry is asynchronous and never delays or mutates the upstream payload.
+  const decoder = new TextDecoder();
+  let carry = "";
+  let pendingFrames = 0;
+  let pendingBytes = 0;
+  let telemetryQueue = Promise.resolve();
+  const reportFrames = () => {
+    if (!pendingFrames) return;
+    const nowMs = Date.now();
+    const frameCount = pendingFrames;
+    const byteCount = pendingBytes;
+    pendingFrames = 0;
+    pendingBytes = 0;
+    telemetryQueue = telemetryQueue.then(() => state.frame({ connectionId, nowMs, frameCount, byteCount })).catch(() => {});
+  };
+  const observe = (chunk, final) => {
+    const decoded = decoder.decode(chunk || new Uint8Array(), { stream: !final });
+    const pieces = (carry + decoded).replace(/\r\n/g, "\n").split("\n\n");
+    carry = pieces.pop().slice(-8192);
+    pendingFrames += pieces.length;
+    pendingBytes += chunk && chunk.byteLength || 0;
+    reportFrames();
+  };
+  const { readable, writable } = new TransformStream({
+    transform(chunk, controller) {
+      controller.enqueue(chunk);
+      observe(chunk, false);
+    },
+    flush() { observe(new Uint8Array(), true); },
+  });
+  const lifecycle = up.body.pipeTo(writable)
+    .then(() => "upstream_ended", () => "client_disconnect_or_pipe_error")
+    .then(async reason => {
+      reportFrames();
+      await telemetryQueue;
+      await state.close({ connectionId, nowMs: Date.now(), reason }).catch(() => {});
+    });
+  if (ctx && ctx.waitUntil) ctx.waitUntil(lifecycle);
 
   return new Response(readable, {
     status: 200,
@@ -223,6 +296,7 @@ async function proxySSE(kind, env, req, url, acao, ctx) {
       "Cache-Control": "no-cache, no-transform",
       Connection: "keep-alive",
       "X-Accel-Buffering": "no",
+      "X-Relay-State-Scope": state.scope,
     }, acao),
   });
 }
@@ -267,9 +341,15 @@ async function readJsonWithTimeout(res) {
   }
 }
 
-async function proxyProof(capability, upstreamPath, upstreamParams, requested, env, req, acao) {
+async function proxyProof(capability, upstreamPath, upstreamParams, requested, env, req, acao, state, requestId) {
   const ip = req.headers.get("CF-Connecting-IP");
-  if (!allowRate("proof", ip, PROOF_REQ_PER_MIN)) {
+  let rate;
+  try {
+    rate = await state.takeRate({ kind: "proof", subject: ip || "unknown", perMinute: PROOF_REQ_PER_MIN, nowMs: Date.now() });
+  } catch {
+    return stateFailure(acao, requestId, capability);
+  }
+  if (!rate.allowed) {
     return json({ error: "rate limited: retry later", code: "rate_limited" }, 429, acao, { "Retry-After": "60" });
   }
 
@@ -283,6 +363,8 @@ async function proxyProof(capability, upstreamPath, upstreamParams, requested, e
         code: "upstream_rejected",
         capability,
         upstreamStatus: up.status,
+        requestId,
+        failure: { category: "upstream_status", retryable: up.status >= 500 },
       }, 502, acao);
     }
     const body = await readJsonWithTimeout(up);
@@ -293,14 +375,14 @@ async function proxyProof(capability, upstreamPath, upstreamParams, requested, e
       verified: false,
       cryptographicallyVerified: false,
       apiReceived: true,
-      relayReceipt: { capability, requested, receivedAt: new Date().toISOString() },
+      relayReceipt: { capability, requested, receivedAt: new Date().toISOString(), requestId },
     }), 200, acao);
   } catch (e) {
-    return upstreamFailure(e, acao, capability);
+    return upstreamFailure(e, acao, capability, requestId);
   }
 }
 
-function fixtureValidation(env, req, url, acao) {
+function fixtureValidation(env, req, url, acao, state, requestId) {
   if (!hasOnlyParams(url, ["fixtureId", "timestamp"])) {
     return invalidParam(acao, "only fixtureId and timestamp are accepted");
   }
@@ -309,10 +391,10 @@ function fixtureValidation(env, req, url, acao) {
   if (!fixtureId) return invalidParam(acao, "fixtureId is required and must be a positive integer (max 10 digits)", "invalid_fixture_id");
   if (!timestamp) return invalidParam(acao, "timestamp is required and must be a positive safe integer", "invalid_timestamp");
   const params = new URLSearchParams({ fixtureId, timestamp });
-  return proxyProof("fixture_deadline_validation", "/api/fixtures/validation", params, { fixtureId, timestamp }, env, req, acao);
+  return proxyProof("fixture_deadline_validation", "/api/fixtures/validation", params, { fixtureId, timestamp }, env, req, acao, state, requestId);
 }
 
-function oddsValidation(env, req, url, acao) {
+function oddsValidation(env, req, url, acao, state, requestId) {
   if (!hasOnlyParams(url, ["messageId", "ts"])) {
     return invalidParam(acao, "only messageId and ts are accepted");
   }
@@ -323,10 +405,10 @@ function oddsValidation(env, req, url, acao) {
   }
   if (!ts) return invalidParam(acao, "ts is required and must be a positive safe integer", "invalid_timestamp");
   const params = new URLSearchParams({ messageId, ts });
-  return proxyProof("odds_validation", "/api/odds/validation", params, { messageId, ts }, env, req, acao);
+  return proxyProof("odds_validation", "/api/odds/validation", params, { messageId, ts }, env, req, acao, state, requestId);
 }
 
-function statValidation(env, req, url, acao) {
+function statValidation(env, req, url, acao, state, requestId) {
   if (!hasOnlyParams(url, ["fixtureId", "seq", "statKey", "value", "statKeys"])) {
     return invalidParam(acao, "only fixtureId, seq, statKey, value, and statKeys are accepted");
   }
@@ -361,7 +443,7 @@ function statValidation(env, req, url, acao) {
   const params = new URLSearchParams({ fixtureId, seq, statKeys });
   const requested = { fixtureId, seq, statKeys };
   if (value !== null) requested.expectedValue = value;
-  return proxyProof("score_stat_validation", "/api/scores/stat-validation", params, requested, env, req, acao);
+  return proxyProof("score_stat_validation", "/api/scores/stat-validation", params, requested, env, req, acao, state, requestId);
 }
 
 // ---- news lane: public football RSS, no API key ---------------------------
@@ -456,54 +538,303 @@ async function newsLane(env, url, acao) {
   );
 }
 
-export default {
-  async fetch(request, env, ctx) {
-    const url = new URL(request.url);
-    const acao = corsOrigin(request, env); // "*", allowed origin, or null (denied)
-    const suppliedOrigin = request.headers.get("Origin");
-    if (suppliedOrigin && acao === null) {
-      return json({ error: "origin not allowed", code: "origin_not_allowed" }, 403, null);
-    }
-    if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors({ "Cache-Control": "no-store" }, acao) });
-    if (request.method !== "GET") {
-      return json({ error: "method not allowed", code: "method_not_allowed" }, 405, acao, { Allow: "GET, OPTIONS" });
-    }
+// ---- Polymarket comparison: public Gamma discovery + public CLOB history --
+// This route is deliberately read-only. It never accepts credentials, wallet
+// addresses, orders, or trade parameters; it only normalizes public prices so
+// the browser can compare them with TxLINE's 1X2 consensus at the same moment.
+function parseArrayField(value) {
+  if (Array.isArray(value)) return value;
+  if (typeof value !== "string") return [];
+  try { const parsed = JSON.parse(value); return Array.isArray(parsed) ? parsed : []; }
+  catch { return []; }
+}
 
-    try {
-      if (url.pathname === "/health") {
-        const openCors = !(env && env.ALLOWED_ORIGINS && env.ALLOWED_ORIGINS.trim());
-        return json({
-          ok: true, host: host(env), hasCreds: !!(env && env.TXLINE_API_TOKEN),
-          service: "foresight-relay", version: VERSION, activeStreams: ACTIVE_SSE,
-          corsMode: openCors ? "open" : "allowlist",
-          warnings: openCors ? ["ALLOWED_ORIGINS is unset; browser access is allowed from any origin"] : [],
-          capabilities: [
-            "scores_stream", "odds_stream", "football_news",
-            "fixture_deadline_validation", "odds_validation", "score_stat_validation",
-          ],
-        }, 200, acao);
-      }
-      if (url.pathname === "/api/scores/stream") return await proxySSE("scores", env, request, url, acao, ctx);
-      if (url.pathname === "/api/odds/stream") return await proxySSE("odds", env, request, url, acao, ctx);
-      if (url.pathname === "/api/fixtures/validation") return await fixtureValidation(env, request, url, acao);
-      if (url.pathname === "/api/odds/validation") return await oddsValidation(env, request, url, acao);
-      if (url.pathname === "/api/scores/stat-validation") return await statValidation(env, request, url, acao);
-      if (url.pathname === "/api/news") {
-        const ip = request.headers.get("CF-Connecting-IP");
-        if (!allowRate("news", ip, NEWS_REQ_PER_MIN)) {
-          return json({ error: "rate limited: retry later" }, 429, acao, { "Retry-After": "60" });
-        }
-        return await newsLane(env, url, acao);
+function cleanTeam(value) {
+  const team = String(value || "").trim();
+  return /^[A-Za-z][A-Za-z .'-]{1,39}$/.test(team) ? team : null;
+}
+
+function normWords(value) {
+  return String(value || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function pickMatchEvent(events, home, away) {
+  const h = normWords(home), a = normWords(away);
+  const candidates = (Array.isArray(events) ? events : []).filter(event => {
+    const title = normWords(event && event.title);
+    return title.includes(h) && title.includes(a) && Array.isArray(event.markets);
+  });
+  return candidates.sort((x, y) => {
+    const xt = normWords(x.title), yt = normWords(y.title);
+    const exactX = xt === `${h} vs ${a}` || xt === `${a} vs ${h}` ? 1 : 0;
+    const exactY = yt === `${h} vs ${a}` || yt === `${a} vs ${h}` ? 1 : 0;
+    const moneyX = x.markets.filter(m => m && m.sportsMarketType === "moneyline").length;
+    const moneyY = y.markets.filter(m => m && m.sportsMarketType === "moneyline").length;
+    return (exactY - exactX) || (moneyY - moneyX);
+  })[0] || null;
+}
+
+function moneylineSide(market, home, away) {
+  if (!market) return null;
+  const question = normWords(market.question || market.marketTitle);
+  if (!/\bwin\b|\bdraw\b/.test(question)) return null;
+  if (/\bdraw\b/.test(question)) return "draw";
+  if (question.includes(normWords(home))) return "home";
+  if (question.includes(normWords(away))) return "away";
+  return null;
+}
+
+function yesQuote(market) {
+  const outcomes = parseArrayField(market && market.outcomes);
+  const prices = parseArrayField(market && market.outcomePrices);
+  const tokens = parseArrayField(market && market.clobTokenIds);
+  const yes = outcomes.findIndex(value => String(value).toLowerCase() === "yes");
+  const index = yes >= 0 ? yes : 0;
+  const price = Number(prices[index]);
+  return {
+    price: Number.isFinite(price) && price >= 0 && price <= 1 ? price : null,
+    tokenId: tokens[index] ? String(tokens[index]) : null,
+  };
+}
+
+async function historicalQuote(tokenId, atMs) {
+  if (!tokenId || !atMs) return null;
+  const target = Math.floor(atMs / 1000);
+  const endpoint = new URL("https://clob.polymarket.com/prices-history");
+  endpoint.searchParams.set("market", tokenId);
+  endpoint.searchParams.set("startTs", String(target - 15 * 60));
+  endpoint.searchParams.set("endTs", String(target + 15 * 60));
+  endpoint.searchParams.set("fidelity", "1");
+  const response = await fetchWithTimeout(endpoint.toString(), { headers: { Accept: "application/json" }, cf: { cacheTtl: MARKET_CACHE_SECONDS } });
+  if (!response.ok) return null;
+  const body = await response.json();
+  const points = (Array.isArray(body && body.history) ? body.history : [])
+    .map(point => ({ t: Number(point && point.t), p: Number(point && point.p) }))
+    .filter(point => Number.isFinite(point.t) && Number.isFinite(point.p) && point.p >= 0 && point.p <= 1)
+    .sort((x, y) => x.t - y.t);
+  if (!points.length) return null;
+  const past = points.filter(point => point.t <= target);
+  if (!past.length) return null;
+  const point = past[past.length - 1];
+  return { price: point.p, atMs: point.t * 1000 };
+}
+
+async function polymarketLane(url, acao) {
+  const home = cleanTeam(url.searchParams.get("home"));
+  const away = cleanTeam(url.searchParams.get("away"));
+  const atRaw = url.searchParams.get("atMs");
+  const atMs = atRaw && /^\d{13}$/.test(atRaw) ? Number(atRaw) : null;
+  if (!home || !away || normWords(home) === normWords(away)) {
+    return json({ error: "valid distinct home and away teams are required", code: "invalid_teams" }, 400, acao);
+  }
+  if (atRaw && !atMs) return json({ error: "atMs must be a 13-digit unix timestamp", code: "invalid_timestamp" }, 400, acao);
+
+  const search = new URL("https://gamma-api.polymarket.com/public-search");
+  search.searchParams.set("q", `${home} vs. ${away}`);
+  search.searchParams.set("limit_per_type", "20");
+  search.searchParams.set("keep_closed_markets", "1");
+  search.searchParams.set("search_profiles", "false");
+  const response = await fetchWithTimeout(search.toString(), { headers: { Accept: "application/json", "User-Agent": "foresight-relay/1.3" }, cf: { cacheTtl: MARKET_CACHE_SECONDS } });
+  if (!response.ok) return json({ error: "Polymarket discovery unavailable", code: "polymarket_upstream" }, 502, acao);
+  const body = await response.json();
+  const event = pickMatchEvent(body && body.events, home, away);
+  if (!event) return json({ ok: true, matched: false, home, away, prices: { home: null, draw: null, away: null }, fetchedAt: new Date().toISOString() }, 200, acao, { "Cache-Control": "public, max-age=" + MARKET_CACHE_SECONDS });
+
+  const markets = {};
+  for (const market of event.markets || []) {
+    const side = moneylineSide(market, home, away);
+    if (side && !markets[side]) markets[side] = market;
+  }
+  const entries = await Promise.all(["home", "draw", "away"].map(async side => {
+    const market = markets[side];
+    if (!market) return [side, { price: null, atMs: null, slug: null, priceMode: "UNAVAILABLE" }];
+    const current = yesQuote(market);
+    if (!atMs) {
+      return [side, {
+        price: current.price,
+        atMs: null,
+        slug: market.slug || null,
+        priceMode: current.price == null ? "UNAVAILABLE" : "LATEST_AVAILABLE",
+      }];
+    }
+    let quote = null;
+    try { quote = await historicalQuote(current.tokenId, atMs); } catch {}
+    return [side, {
+      price: quote ? quote.price : null,
+      atMs: quote ? quote.atMs : null,
+      slug: market.slug || null,
+      priceMode: quote ? "HISTORICAL_ASOF" : "UNAVAILABLE",
+    }];
+  }));
+  const quotes = Object.fromEntries(entries);
+  const historicalCount = entries.filter(([, quote]) => quote.priceMode === "HISTORICAL_ASOF").length;
+  const mode = !atMs ? "LATEST_AVAILABLE"
+    : historicalCount === entries.length ? "HISTORICAL_ASOF"
+      : historicalCount > 0 ? "PARTIAL_HISTORICAL_ASOF" : "HISTORICAL_UNAVAILABLE";
+  return json({
+    ok: true,
+    matched: true,
+    home,
+    away,
+    event: {
+      title: event.title || `${home} vs. ${away}`,
+      slug: event.slug || null,
+      url: event.slug ? `https://polymarket.com/event/${encodeURIComponent(event.slug)}` : null,
+      status: event.closed ? "RESOLVED" : event.active ? "LIVE" : "INACTIVE",
+      liquidity: Number(event.liquidity) || null,
+      volume: Number(event.volume) || null,
+    },
+    prices: {
+      home: quotes.home.price,
+      draw: quotes.draw.price,
+      away: quotes.away.price,
+    },
+    quoteTimes: {
+      home: quotes.home.atMs,
+      draw: quotes.draw.atMs,
+      away: quotes.away.atMs,
+    },
+    priceModes: {
+      home: quotes.home.priceMode,
+      draw: quotes.draw.priceMode,
+      away: quotes.away.priceMode,
+    },
+    mode,
+    requestedAtMs: atMs,
+    fetchedAt: new Date().toISOString(),
+  }, 200, acao, { "Cache-Control": "public, max-age=" + MARKET_CACHE_SECONDS });
+}
+
+export class RelaySharedState {
+  constructor(state) {
+    this.state = state;
+    this.core = new RelayStateCore();
+    this.queue = Promise.resolve();
+    this.ready = state.blockConcurrencyWhile(async () => {
+      this.core = new RelayStateCore(await state.storage.get("relay-state-v1"));
+    });
+  }
+
+  fetch(request) {
+    const run = () => this.handle(request);
+    this.queue = this.queue.then(run, run);
+    return this.queue;
+  }
+
+  async handle(request) {
+    await this.ready;
+    if (request.method !== "POST") return new Response("method not allowed", { status: 405 });
+    let input;
+    try { input = await request.json(); } catch { return new Response("invalid json", { status: 400 }); }
+    if (!Number.isSafeInteger(input && input.nowMs)) return new Response("invalid timestamp", { status: 400 });
+    const pathname = new URL(request.url).pathname;
+    let result;
+    if (pathname === "/rate") result = this.core.takeRate(input);
+    else if (pathname === "/sse/admit") result = this.core.admitSse(input);
+    else if (pathname === "/sse/connected") result = this.core.connected(input);
+    else if (pathname === "/sse/frame") result = this.core.frame(input);
+    else if (pathname === "/sse/close") result = this.core.close(input);
+    else if (pathname === "/snapshot") result = this.core.snapshot(input.nowMs);
+    else return new Response("not found", { status: 404 });
+    await this.state.storage.put("relay-state-v1", this.core.export());
+    return new Response(JSON.stringify(result), {
+      status: 200, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" },
+    });
+  }
+}
+
+async function dispatch(request, env, ctx, requestId, state) {
+  const url = new URL(request.url);
+  const acao = corsOrigin(request, env); // "*", allowed origin, or null (denied)
+  const suppliedOrigin = request.headers.get("Origin");
+  if (suppliedOrigin && acao === null) {
+    return json({ error: "origin not allowed", code: "origin_not_allowed" }, 403, null);
+  }
+  if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors({ "Cache-Control": "no-store" }, acao) });
+  if (request.method !== "GET") {
+    return json({ error: "method not allowed", code: "method_not_allowed" }, 405, acao, { Allow: "GET, OPTIONS" });
+  }
+
+  try {
+    if (url.pathname === "/health") {
+      const openCors = !(env && env.ALLOWED_ORIGINS && env.ALLOWED_ORIGINS.trim());
+      const warnings = openCors ? ["ALLOWED_ORIGINS is unset; browser access is allowed from any origin"] : [];
+      if (state.scope === "per_isolate_fallback") warnings.push("RELAY_SHARED_STATE is absent; rate and concurrency limits are per-isolate compatibility enforcement");
+      let telemetry;
+      let stateStatus = "ready";
+      try {
+        telemetry = await state.snapshot(Date.now());
+      } catch {
+        telemetry = { activeStreams: 0, staleAfterMs: STREAM_STALE_AFTER_MS, streams: [] };
+        stateStatus = "unavailable";
+        warnings.push("relay shared state is unavailable; state-dependent routes fail closed");
       }
       return json({
-        error: "not found",
-        paths: [
-          "/health", "/api/scores/stream", "/api/odds/stream", "/api/news",
-          "/api/fixtures/validation", "/api/odds/validation", "/api/scores/stat-validation",
+        ok: true, host: host(env), hasCreds: !!(env && env.TXLINE_API_TOKEN),
+        service: "foresight-relay", version: VERSION, activeStreams: telemetry.activeStreams,
+        corsMode: openCors ? "open" : "allowlist", warnings,
+        capabilities: [
+          "scores_stream", "odds_stream", "football_news", "polymarket_public_prices",
+          "fixture_deadline_validation", "odds_validation", "score_stat_validation",
         ],
-      }, 404, acao);
-    } catch (e) {
-      return json({ error: "internal relay error", code: "internal_error" }, 500, acao);
+        capabilityStatus: {
+          stateScope: state.scope,
+          stateStatus,
+          streamTelemetry: "server_observed_sse_frames",
+          streamStates: ["connecting_upstream", "connected_waiting_first_frame", "fresh", "stale", "ended", "error"],
+        },
+        streamTelemetry: telemetry,
+      }, 200, acao);
     }
+    if (url.pathname === "/api/scores/stream") return await proxySSE("scores", env, request, url, acao, ctx, state, requestId);
+    if (url.pathname === "/api/odds/stream") return await proxySSE("odds", env, request, url, acao, ctx, state, requestId);
+    if (url.pathname === "/api/fixtures/validation") return await fixtureValidation(env, request, url, acao, state, requestId);
+    if (url.pathname === "/api/odds/validation") return await oddsValidation(env, request, url, acao, state, requestId);
+    if (url.pathname === "/api/scores/stat-validation") return await statValidation(env, request, url, acao, state, requestId);
+    if (url.pathname === "/api/news") {
+      const ip = request.headers.get("CF-Connecting-IP");
+      let rate;
+      try {
+        rate = await state.takeRate({ kind: "news", subject: ip || "unknown", perMinute: NEWS_REQ_PER_MIN, nowMs: Date.now() });
+      } catch {
+        return stateFailure(acao, requestId, "football_news");
+      }
+      if (!rate.allowed) return json({ error: "rate limited: retry later" }, 429, acao, { "Retry-After": "60" });
+      return await newsLane(env, url, acao);
+    }
+    if (url.pathname === "/api/polymarket") {
+      const ip = request.headers.get("CF-Connecting-IP");
+      let rate;
+      try {
+        rate = await state.takeRate({ kind: "polymarket", subject: ip || "unknown", perMinute: MARKET_REQ_PER_MIN, nowMs: Date.now() });
+      } catch {
+        return stateFailure(acao, requestId, "polymarket_public_prices");
+      }
+      if (!rate.allowed) return json({ error: "rate limited: retry later" }, 429, acao, { "Retry-After": "60" });
+      return await polymarketLane(url, acao);
+    }
+    return json({
+      error: "not found",
+      paths: [
+        "/health", "/api/scores/stream", "/api/odds/stream", "/api/news", "/api/polymarket",
+        "/api/fixtures/validation", "/api/odds/validation", "/api/scores/stat-validation",
+      ],
+    }, 404, acao);
+  } catch {
+    return json({ error: "internal relay error", code: "internal_error", requestId,
+      failure: { category: "internal", retryable: false } }, 500, acao);
+  }
+}
+
+export default {
+  async fetch(request, env, ctx) {
+    const requestId = requestIdFor(request);
+    let state;
+    try { state = relayState(env); } catch { state = null; }
+    const scope = state ? state.scope : "unavailable";
+    const response = state
+      ? await dispatch(request, env, ctx, requestId, state)
+      : stateFailure(corsOrigin(request, env), requestId, "relay_state");
+    return withRequestId(response, requestId, scope);
   },
 };

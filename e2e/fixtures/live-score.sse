@@ -1,4 +1,5 @@
 id: score-e2e-1
 event: message
-data: {"FixtureId":18257865,"Seq":99001,"Ts":"2026-07-18T22:10:00.000Z","Action":"corner","Minute":70,"Period":2,"StatKeys":[]}
+data: {"FixtureId":18257739,"Seq":99001,"Ts":1784491800000,"Action":"corner","Minute":70,"Period":2,"StatKeys":[]}
 
+: fixture boundary

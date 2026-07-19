@@ -5,20 +5,24 @@
   "description": "Provable prediction reputation on TxLINE + Solana — verified prediction league for the TxODDS World Cup Hackathon.",
   "main": "foresight.js",
   "scripts": {
-    "test": "npm run test:all",
+    "test": "npm run test:extended",
     "test:core": "node test.js",
     "test:inline": "node test-inline.js",
     "test:ui": "node test-ui-logic.js",
     "test:smoke": "node test/smoke.js",
     "test:wallet": "node verify-wallet-flow.js --dry-run",
     "test:all": "npm run test:core && npm run test:inline && npm run test:ui && npm run test:smoke && npm run test:wallet",
+    "test:domains": "node test/identity-binding.test.js && node test/proof-receipts.test.js && node test/live-state.test.js && node test/live-poll.test.js && node test/follow.test.js && node test-accessibility-performance.js",
+    "test:services": "npm --prefix ledger test && npm --prefix relay test && npm --prefix evaluation test && npm --prefix agent-ingest test && npm --prefix proof-pages test && npm --prefix monetization test",
+    "test:extended": "npm run test:all && npm run test:domains && npm run test:services",
+    "test:browser": "npm --prefix e2e run test:guest",
     "test:live": "node test/smoke.js --live",
     "anchor": "node anchor-commit.js",
     "verify-wallet-flow": "node verify-wallet-flow.js",
     "live-poll": "node shared/live-poll.js"
   },
   "dependencies": {
-    "@solana/web3.js": "1.95.3"
+    "@solana/web3.js": "1.98.4"
   },
   "engines": {
     "node": ">=18"

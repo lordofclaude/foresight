@@ -5,9 +5,9 @@
   "status": "pipeline-demonstration",
   "claimPolicy": {
     "minimumHoldoutFixtures": 20,
-    "observedHoldoutFixtures": 1,
+    "observedHoldoutFixtures": 2,
     "performanceClaimAllowed": false,
-    "message": "Performance claims refused: 1 holdout fixtures is below the minimum of 20."
+    "message": "Performance claims refused: 2 holdout fixtures is below the minimum of 20."
   },
   "methodology": {
     "unitOfSplit": "fixture",
@@ -21,21 +21,16 @@
     "uncertainty": "95% Wilson interval for accuracy; deterministic fixture bootstrap percentile intervals for continuous metrics when n >= 2"
   },
   "discoveredTapeCount": 4,
-  "eligibleFixtureCount": 3,
-  "excluded": [
-    {
-      "fixtureId": "18257865",
-      "file": "18257865.tape.js",
-      "reason": "no game_finalised regulation outcome"
-    }
-  ],
+  "eligibleFixtureCount": 4,
+  "excluded": [],
   "split": {
     "trainFixtureIds": [
       "18222446",
       "18237038"
     ],
     "holdoutFixtureIds": [
-      "18241006"
+      "18241006",
+      "18257865"
     ]
   },
   "holdoutRecords": [
@@ -58,21 +53,47 @@
         1,
         2
       ]
+    },
+    {
+      "fixtureId": "18257865",
+      "participants": [
+        "France",
+        "England"
+      ],
+      "startTime": 1784408400000,
+      "quoteTs": 1784408398689,
+      "probabilities": {
+        "part1": 0.5688527541101643,
+        "draw": 0.2223288931557262,
+        "part2": 0.20881835273410934
+      },
+      "predicted": "part1",
+      "outcome": "part2",
+      "score90": [
+        4,
+        6
+      ]
     }
   ],
   "metrics": {
-    "sampleSize": 1,
+    "sampleSize": 2,
     "accuracy": 0,
     "accuracyWilson95": [
       0,
-      0.7934506856227626
+      0.6576197724933469
     ],
-    "multiclassBrier": 0.7162141344242356,
-    "multiclassBrierBootstrap95": null,
-    "logLoss": 1.1741357219084274,
-    "logLossBootstrap95": null,
+    "multiclassBrier": 0.8576030629925866,
+    "multiclassBrierBootstrap95": [
+      0.7162141344242356,
+      0.9989919915609377
+    ],
+    "logLoss": 1.3702131262542863,
+    "logLossBootstrap95": [
+      1.1741357219084274,
+      1.5662905306001453
+    ],
     "topLabelCalibration": {
-      "expectedCalibrationError": 0.3547009828918819,
+      "expectedCalibrationError": 0.4617768685010231,
       "bins": [
         {
           "lower": 0.2,
@@ -80,10 +101,20 @@
           "count": 1,
           "meanConfidence": 0.3547009828918819,
           "accuracy": 0
+        },
+        {
+          "lower": 0.4,
+          "upper": 0.6,
+          "count": 1,
+          "meanConfidence": 0.5688527541101643,
+          "accuracy": 0
         }
       ]
     },
-    "calibrationBootstrap95": null,
-    "bootstrapMeaningful": false
+    "calibrationBootstrap95": [
+      0.3547009828918819,
+      0.5688527541101643
+    ],
+    "bootstrapMeaningful": true
   }
 }

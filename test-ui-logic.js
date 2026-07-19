@@ -4,6 +4,8 @@
    Run: node test-ui-logic.js  (separate from the core suite in test.js) */
 const fs = require("fs");
 const path = require("path");
+global.LiveState = require("./shared/live-state");
+global.fixtureFinalized = F => !!(F && F.tape.events.some(e => e.type === "game_finalised"));
 
 const html = fs.readFileSync(path.join(__dirname, "index.html"), "utf8");
 
@@ -67,6 +69,29 @@ eq("empty tape guard never inverted", r.yLo < r.yHi, true);
 r = chartYRange([{ t: 0, home: 0.5, away: 0.5 }]);
 eq("flat tape still ordered", r.yLo < r.yHi, true);
 
+/* ---------- market divergence: same-outcome source comparison ---------- */
+const marketDivergence = extractFn("marketDivergence");
+let divergence = marketDivergence(
+  { home: 0.44, draw: 0.31, away: 0.25 },
+  { home: 0.40, draw: 0.33, away: 0.27 },
+);
+close("home divergence is TxLINE minus Polymarket", divergence[0].delta, 0.04);
+close("draw divergence preserves negative sign", divergence[1].delta, -0.02);
+eq("missing external quote stays unavailable", marketDivergence({ home: 0.4 }, { home: null })[0].delta, null);
+
+/* ---------- timeline: rich events are included and transport duplicates collapse ---------- */
+global.TIMELINE_META = { goal: {}, shot: {}, corner: {}, card: {}, freekick: {} };
+const timelineEvents = extractFn("timelineEvents");
+let timeline = timelineEvents([
+  { type: "shot", team: 1, minute: 4, t: 240, seq: 1, detail: "" },
+  { type: "shot", team: 1, minute: 4, t: 241, seq: 2, detail: "On target" },
+  { type: "corner", team: 2, minute: 7, t: 420, seq: 3 },
+  { type: "goal", team: 1, minute: 9, t: 540, seq: 4, stats: { g1: 1, g2: 0 } },
+  { type: "unknown", team: 1, minute: 10, t: 600, seq: 5 },
+], 500);
+eq("timeline includes shots and corners before playhead", timeline.map(event => event.type), ["corner", "shot"]);
+eq("timeline keeps the richer duplicate detail", timeline[1].detail, "On target");
+
 /* ---------- liveFixturePick: which fixture GO LIVE targets ---------- */
 const liveFixturePick = extractFn("liveFixturePick");
 const KICK = 1784487600000;                    // FINAL kickoff 2026-07-19T19:00:00Z
@@ -110,9 +135,14 @@ has("monitor throttled to 1/sec", /now - monLast < 1000/);
 has("monitor forced on fixture switch", /monLast = 0;/);
 has("gate honors prefers-reduced-motion", /matchMedia\('\(prefers-reduced-motion: reduce\)'\)\.matches/);
 has("tape crosshair bound to pointer events", /addEventListener\("pointermove", xhairPtr\)/);
-has("replay deferred until gate closes", /__onGateClosed = \(\) => \{ if \(!liveOn\) startReplay\(\); \}/);
+has("replay starts only from the visible CTA", /Replay begins only from the visible[\s\S]*RUN \/ INSTANT controls/);
+lacks("normal boot never starts replay implicitly", /__onGateClosed = \(\) => \{ if \(!liveOn\) startReplay\(\); \}|else startReplay\(\);/);
 has("empty live bundle created from registry meta", /TX_TAPES\.push\(\{ fixture: meta, historical: \[\], odds: \[\] \}\)/);
-has("live status names the fixture", /\$\{stale \? "STALE" : "LIVE"\} · \$\{liveName\(\)\}/);
+has("live status names the fixture", /`LIVE · \$\{liveName\(\)\} · last accepted frame/);
+has("only accepted score frames count as live evidence", /if \(liveOn && !liveStat\.endedAt && d && typeof d === "object" && liveMergeScore\(d\)\) \{ noteLiveFrame\("scores"\)/);
+has("only accepted odds frames count as live evidence", /if \(liveOn && !liveStat\.endedAt && d && typeof d === "object" && liveMergeOdds\(d\)\) \{ noteLiveFrame\("odds"\)/);
+has("both live streams report transport state", /onStatus: s => noteLiveStreamStatus\("scores", s\)[\s\S]*onStatus: s => noteLiveStreamStatus\("odds", s\)/);
+has("stopping live clears a queued rebuild", /clearTimeout\(liveRebuildTimer\)/);
 has("Clerk pk passed via script attribute", /data-clerk-publishable-key/);
 has("Clerk prefers the self-initialized instance", /window\.Clerk\.load \? window\.Clerk : new window\.Clerk\(CLERK_PK\)/);
 has("streak badge uses best streak", /s\.best >= 2 \? ` <span class="g" title="best win streak/);
@@ -121,9 +151,14 @@ has("anchor hero is the pre-kickoff FINAL proof", /ANCHOR_PROOF_FINAL/);
 has("old anchor honestly labeled post-match", /Anchored <b>post-match<\/b>/);
 has("newsDriver requires a team keyword", /if \(!teamHit\) continue;/);
 has("newsDriver recency bonus capped at 1", /Math\.min\(1, Math\.max\(0, 1 - dt \/ \(45 \* 60000\)\)\)/);
+has("Polymarket comparison aligns by replay quote timestamp", /params\.set\("atMs"[\s\S]*api\/polymarket\?\$\{params\}/);
+has("market comparison stays read only", /Polymarket public API · read only/);
+has("news context loads for the selected fixture", /fetchNewsOnce\(F\)/);
+has("X widget is lazy-loaded from the official host", /script\.src = "https:\/\/platform\.x\.com\/widgets\.js"/);
+has("timeline exposes shots corners and set pieces", /shot: \{ icon:[\s\S]*corner: \{ icon:[\s\S]*freekick: \{ icon:/);
 has("marketVol deltas stay intra-window", /if \(ticks\[lo\]\.t < t - 600\) lo\+\+;/);
 has("demo mode skips gate", /const skip = demoMode \|\| qs\.get\("nogate"\)/);
-has("demo mode waits for existing replay CTA", /if \(demoMode\) \{ restoreClerkSession\(\); return; \}/);
+has("all boot modes restore identity but leave replay explicit", /restoreClerkSession\(\);\s*\/\/ returning Clerk users re-bind silently; replay remains explicit/);
 has("guided demo focuses existing surfaces", /data-focus="pickrow"[\s\S]*data-focus="run"[\s\S]*data-focus="forgeBtn"[\s\S]*data-focus="anchorCard"/);
 has("prediction choices use native keyboard-accessible buttons", /<button type="button" class="pick" data-pick="part1" aria-pressed="false">[\s\S]*<button type="button" class="pick" data-pick="draw" aria-pressed="false">[\s\S]*<button type="button" class="pick" data-pick="part2" aria-pressed="false">/);
 has("prediction choice state is exposed to assistive technology", /p\.setAttribute\('aria-pressed', String\(selected\)\)/);

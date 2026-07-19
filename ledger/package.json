@@ -1,10 +1,11 @@
 {
   "name": "foresight-ledger",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "scripts": {
     "test": "node --test test/*.test.js",
+    "evidence:inspect": "node tools/import-artifacts.js",
     "dev": "wrangler dev",
     "db:create": "wrangler d1 create foresight-ledger",
     "db:migrate:local": "wrangler d1 execute foresight-ledger --local --file=schema.sql",

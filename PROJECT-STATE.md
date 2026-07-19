@@ -5,6 +5,8 @@
 
 This is a working snapshot, not a claim of finality — a few items below are mid-flight in a parallel work session and marked as such.
 
+> **2026-07-18 consolidation update:** the previously mid-flight identity, proof, ledger, evaluation, ingestion, E2E, follow, monetization, and accessibility work has now been reviewed and incorporated into the root verification path. The relay is deployed at `1.2.1-shared-state-2026-07-18` with Durable Object coordination and all three proof routes. The working tree now contains `1.3.0-market-intelligence-2026-07-18`, including timestamp-honest Polymarket comparison, and passes the Wrangler dry run, but it is **not deployed**. The ledger, public proof/profile backend, production identity binding, agent ingestion, and Billing seam are implemented and fail-closed but **not deployed/configured**. Where older sections below say those sources were unreviewed or that the relay is v1.1, this update supersedes them.
+
 ---
 
 ## 1. What we built
@@ -55,8 +57,8 @@ Single self-contained HTML/JS file (`index.html`), no build step, no framework, 
 
 ### Foresight relay (Cloudflare Worker, deployed)
 `https://foresight-relay.lordofclaude.workers.dev` — the one server-side piece, by design. TxLINE's live streams require credentials that must never reach a public browser page, so this Worker holds them and re-emits the *same real SSE body*, mirroring TxLINE's own paths so the existing tested client (`TxReal.streamLive()`) needs only a host swap. It also serves a merged, deduplicated, keyword-categorized football-news lane (`/api/news`).
-- **Hardened (v1.1.0):** per-IP token-bucket rate limits (10 SSE conns/min, 30 news req/min, documented as best-effort/per-isolate), fixtureId input validation, a concurrent-stream cap, `Cache-Control` on news, optional origin allowlist.
-- **Verified live:** `/health` returns `{ok:true, hasCreds:true, version:"1.1.0-hardened-2026-07-18"}`; SSE streams confirmed delivering real frames end-to-end through the deployed Worker (not just locally).
+- **Hardened (v1.2.1):** Durable Object-coordinated rate/concurrency limits, persistent freshness telemetry, fixture validation, request IDs, sanitized upstream failures, and an optional origin allowlist.
+- **Verified deployed:** `/health` reports `{ok:true, hasCreds:true, version:"1.2.1-shared-state-2026-07-18", capabilityStatus:{stateScope:"durable_object_shared", stateStatus:"ready"}}`; a public proof-route rejection and valid fixture validation response were checked after deployment.
 
 ### Solana (devnet)
 Three genuine, independently-verified transactions — not diagrams, not mocks:
@@ -82,11 +84,11 @@ No database, no persisted backend state. The "backend" for on-chain parts is the
 |---|---|
 | Core test suite | 155 passed, 0 failed |
 | Inline-logic suite (streaks/calibration/marketVol/newsDriver/pundit/relay helpers) | 109 passed, 0 failed |
-| UI-logic suite (chart y-range, live-fixture routing, etc.) | 53 passed, 0 failed |
+| UI-logic suite (chart y-range, live-fixture routing, etc.) | 58 passed, 0 failed |
 | Smoke suite | 15 passed, 0 failed |
 | Sibling SurpriseIndex agent suite (shared dependency) | 70 passed, 0 failed |
-| Production site | HTTP 200, serving the latest commit |
-| Relay `/health` | `ok:true, hasCreds:true`, v1.1.0-hardened |
+| Production site | HTTP 200; current working-tree accessibility/service changes are not yet deployed |
+| Relay `/health` | `ok:true, hasCreds:true`, v1.2.1 shared state ready |
 | All 3 devnet transactions | `finalized`, `err:null`, independently confirmed via RPC |
 | GitHub repo | public (was private — fixed; a private repo is an automatic disqualifier per the rules) |
 | Vercel bot-challenge | disabled (was returning 403 to automated screeners) |
@@ -101,11 +103,11 @@ No database, no persisted backend state. The "backend" for on-chain parts is the
 
 ### Should happen (judge-facing, not launch-blocking)
 3. **One live wallet click-through** — connect Phantom on the deployed site and make one real commit, so the demo video can show a genuine live-signed transaction rather than only the pre-existing anchors. (Blocked on you having the Phantom extension installed — instructions given separately.)
-4. **France–England historical settlement** — the live-polled tape for fixture 18257865 has no `game_finalised` event yet because TxLINE's historical endpoint only unlocks ~6h post-kickoff. A background job is currently waiting until 03:02 UTC to pull it automatically and will retry every 10 minutes if still locked; once it lands, the fixture needs a resync + redeploy so the leaderboard reads 4/4 settled instead of 3/4.
+4. **France–England historical settlement — complete in source:** fixture 18257865 now has its final tape and the local judge path settles 4/4 fixtures. Confirm that this revision is the one deployed before recording.
 5. **GO LIVE on the FINAL** — the app already auto-targets fixture 18257739 (Spain v Argentina) for live streaming once it's within 2 hours of its 19:00 UTC kickoff; no action needed, but worth confirming on the day.
 
-### In progress elsewhere (do not assume done — a parallel work session has uncommitted work in this exact area right now)
-6. There are currently **uncommitted** files (`shared/identity-binding.js`, `shared/proof-receipts.js`, an `evaluation/` directory, a `ledger/` directory, plus edits to `index.html` and `HACKATHON-REVIEW.md`) that look like a deeper identity/proof/ledger pass mid-flight in another session. These have **not** been reviewed, tested, committed, or deployed as part of this document — treat them as work-in-progress, not shipped state, until confirmed otherwise.
+### Reviewed locally, deployment pending
+6. The identity, proof, ledger, evaluation, agent-ingestion, browser-E2E, follow, proof-page, monetization, and accessibility work has been reviewed and included in `npm test`. It remains working-tree source until intentionally committed; only the relay is deployed. Do not present the undeployed services as live production state.
 
 ### Nice-to-have (explicitly out of scope for tonight, documented honestly in-app)
 - A deployed custom settlement **program** doing the CPI into `validate_stat` itself (currently: client-composed atomic transaction, which is honestly labeled as such).
