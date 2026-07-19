@@ -123,7 +123,7 @@ has("newsDriver requires a team keyword", /if \(!teamHit\) continue;/);
 has("newsDriver recency bonus capped at 1", /Math\.min\(1, Math\.max\(0, 1 - dt \/ \(45 \* 60000\)\)\)/);
 has("marketVol deltas stay intra-window", /if \(ticks\[lo\]\.t < t - 600\) lo\+\+;/);
 has("demo mode skips gate", /const skip = demoMode \|\| qs\.get\("nogate"\)/);
-has("demo mode waits for existing replay CTA", /if \(demoMode\) return;\s+\/\/ \?demo=1 skips the gate/);
+has("demo mode waits for existing replay CTA", /if \(demoMode\) \{ restoreClerkSession\(\); return; \}/);
 has("guided demo focuses existing surfaces", /data-focus="pickrow"[\s\S]*data-focus="run"[\s\S]*data-focus="forgeBtn"[\s\S]*data-focus="anchorCard"/);
 lacks("known-missing final tape is not requested", /src="real-data\/18257739\.tape\.js"/);
 has("relay input assigned through DOM property", /\$\('relayUrl'\)\.value = RELAY_BASE/);

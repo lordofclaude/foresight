@@ -111,8 +111,8 @@
     const sum = values[0] + values[1] + values[2];
     if (!Number.isFinite(sum) || sum <= 0) throw new RangeError("market probability sum must be finite and positive");
     if (opts.canonical) {
-      if (!values.every(x => x >= MIN_CANONICAL_PROBABILITY && x <= 1)) {
-        throw new RangeError("canonical market probabilities must be between 0.01 and 1");
+      if (!values.every(x => x <= 1)) {
+        throw new RangeError("canonical market probabilities must be between 0 and 1");
       }
       if (Math.abs(sum - 1) > CANONICAL_SUM_TOLERANCE) {
         throw new RangeError("canonical market probabilities must sum to approximately 1");
@@ -194,15 +194,22 @@
     return { home: mkt.home / s, draw: mkt.draw / s, away: mkt.away / s };
   }
   const PICK_SIDE = { part1: "home", draw: "draw", part2: "away" };
+  function selectedProbability(pick, mkt) {
+    return devig(mkt)[PICK_SIDE[normalizePickSide(pick)]];
+  }
+  function requireSelectedProbability(pick, mkt, boundary) {
+    const qPick = selectedProbability(pick, mkt);
+    if (qPick < MIN_CANONICAL_PROBABILITY) {
+      throw new RangeError("selected market probability is below the 1% " + boundary + " floor");
+    }
+    return qPick;
+  }
   function gradePick(pick, mktAtCommit, winner, stake = 100) {
     const normalizedPick = normalizePickSide(pick);
     const normalizedWinner = normalizePickSide(winner);
     if (!Number.isFinite(stake) || stake <= 0) throw new RangeError("stake must be a finite positive number");
     const q = devig(mktAtCommit);
-    const qPick = q[PICK_SIDE[normalizedPick]];
-    if (qPick < MIN_CANONICAL_PROBABILITY) {
-      throw new RangeError("selected market probability is below the 1% grading floor");
-    }
+    const qPick = requireSelectedProbability(normalizedPick, mktAtCommit, "grading");
     const fairOdds = 1 / qPick;
     const won = normalizedPick === normalizedWinner;
     const favProb = Math.max(q.home, q.draw, q.away);
@@ -246,6 +253,7 @@
         (devnet memo); in replay-sim it is {t} on the tape axis, labeled SIM. */
     function commit(p) {
       const canonical = canonicalPick(p);
+      requireSelectedProbability(p.pick, p.mkt, "acceptance");
       if (!Number.isFinite(p.tCommit) || p.tCommit < 0) throw new RangeError("tCommit must be a finite non-negative timestamp");
       const c = {
         id: nextId++, wallet: p.wallet, fixtureId: p.fixtureId,
@@ -446,6 +454,7 @@
       if (!agent.rules.when.every(c => condTrue(c, st, favP))) continue;
       const side = resolveSide(agent.rules.bet, st, favP);
       if (!side) continue;                       // e.g. "leader" while level → keep waiting
+      if (selectedProbability(side, st.odds) < MIN_CANONICAL_PROBABILITY) continue;
       const salt = "agent:" + agent.name + ":" + fixtureId;
       const c = league.commit({ wallet: agent.name, fixtureId, pick: side, salt,
         tCommit: st.t, mkt: st.odds, oddsTs: Math.round(st.t * 1000),
@@ -518,6 +527,7 @@
         let c0 = ticks[0]; for (const k of ticks) { if (k.t <= tCommit) c0 = k; else break; }
         const mkt = { home: c0.home, draw: Math.max(0.02, 1 - c0.home - c0.away), away: c0.away };
         const pick = ["part1", "draw", "part2"][Math.floor(rnd() * 3)];
+        if (selectedProbability(pick, mkt) < MIN_CANONICAL_PROBABILITY) return;
         const salt = "human:" + wallet + ":" + fixtureId;
         const c = league.commit({ wallet, fixtureId, pick, salt, tCommit, mkt, oddsTs: Math.round(tCommit * 1000), anchor: { sim: true, t: tCommit }, by: "human", visibility: "public" });
         if (!(wallet === "@miguel" && fi === 0)) league.reveal(c.id, { pick, salt });   // @miguel burns one

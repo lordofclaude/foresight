@@ -1,127 +1,222 @@
-# ⚡ Foresight — Provable Bragging Rights
+# Foresight — pitch and product overview
 
-**Live app:** https://foresight-txline.vercel.app
-**Live relay:** https://foresight-relay.lordofclaude.workers.dev (credential relay for live SSE + news)
-**Built for:** TxODDS World Cup Hackathon, Track 1 — Prediction Markets & Settlement ($18,000 pool)
-**Status:** built, deployed, tested (102/102 automated tests passing)
+Foresight is a verified track record for sports predictions.
 
----
+The product turns “I called it” into an inspectable sequence: a prediction payload is hashed, optionally timestamped outside the app, revealed, graded against TxLINE match data, and shown as a record. The hackathon build demonstrates that sequence while clearly separating real integrations and proof artifacts from local practice and simulated league activity.
 
-## The problem
+- **Try it:** [foresight-txline.vercel.app/?nogate=1](https://foresight-txline.vercel.app/?nogate=1)
+- **Technical audit and setup:** [README.md](README.md)
+- **Relay status:** [foresight-relay.lordofclaude.workers.dev/health](https://foresight-relay.lordofclaude.workers.dev/health)
 
-Every match, a million people say "I called it." None of them can prove it.
+## The 20-second pitch
 
-Sports prediction runs entirely on reputation, and every reputation in it is fakeable. Tipster histories are editable. Screenshots are croppable. Winners advertise, losers quietly delete the post. The whole tipster industry monetizes this fog — paid picks, "verified" cappers, cherry-picked odds — with no way for anyone to actually audit anything.
+Prediction reputations are easy to edit after the result: winners stay visible, losers disappear, and the claimed timing or price is difficult to audit. Foresight is a prediction league built around receipts. It commits a call before grading, can anchor eligible calls to Solana, and resolves them from TxLINE data. The result is a product prototype for building a track record whose individual verified entries are harder to backdate or rewrite.
 
-The frustrating part: genuinely skilled predictors exist. They just can't be told apart from the noise, because a prediction is only worth something if you can prove **when** you made it, **at what price**, and **how it graded**. Nobody's product proves all three.
+The current build proves important pieces of that mechanism. It does not yet provide durable accounts, a production prediction ledger, a large performance sample, or evidence that its demo agents have repeatable edge.
 
-## What Foresight is
+## 30-second judge path
 
-A prediction league where every call is cryptographically timestamped *before* the outcome is knowable, graded automatically against real World Cup data, and builds a reputation that literally cannot be faked.
+1. Open [the app with the gate skipped](https://foresight-txline.vercel.app/?nogate=1).
+2. Pick a side under **Commit a call**. Notice the **PRACTICE** label: captured-match calls are local, not silently presented as on-chain history.
+3. Click **⚡ INSTANT**, then verify the hash and try the forge action.
+4. Inspect **Real on-chain anchor**. Lead with the Spain–Argentina World Cup Final artifact, anchored around 19 hours before kickoff.
+5. Show the atomic settlement receipt: one real devnet transaction composed TxLINE `validateStatV2` and a grade memo. Explain that it proves the validation/receipt mechanism, while the static profile is still local.
 
-**The core idea in one sentence:** the prediction and its proof are the same event — there's nothing to fake because there's no separate "record" to fabricate. You commit inside Foresight; the commit *is* the record.
+Avoid relying on GO LIVE during a timed pitch. The relay routes are real, but an inactive fixture may produce no new frames.
 
-No gambling, no custody of real money by default. It's closer to Strava for predictions than a sportsbook — the product is the provable skill record itself, not a bet.
+## The pitch story
 
-## How it's built
+### 1. Start with the human problem
 
-**Data:** [TxLINE](https://txline.txodds.com) — TxODDS's real-time sports data feed (the same company that powers FanDuel and Betfair's odds), with every update cryptographically Merkle-anchored on Solana. Foresight uses **real World Cup fixtures** — actual match events (goals, cards, VAR reviews) and actual consensus betting odds (StablePrice), not synthetic data.
+“Every match, people say ‘I called it.’ The hard part is not publishing a prediction; it is proving when it was made, what market price it faced, and whether the full history includes the losses.”
 
-**Chain:** Solana devnet. Every prediction commit can be signed as a real on-chain transaction (a "memo" transaction — cheap, ~$0.001, and permanently verifiable on Solana's public explorer). The validator's timestamp becomes the unforgeable proof that a call predates its outcome.
+This is narrower and more defensible than claiming the product proves who is skilled or eliminates fraud altogether.
 
-**Frontend:** a single self-contained HTML/JS app (no build step, no framework) — runs from a file or a static host. Broadcast-TV visual style (think Sky Sports graphics): condensed italic type, lime/navy/electric-blue palette, big scorelines, flag chips.
+### 2. Show the product loop
 
-**Backend:** almost none, by design. The app runs entirely client-side; the "backend" for the on-chain parts is the user's own Solana wallet (Phantom) — Foresight never holds a private key or custodies funds. The one server-side piece is a thin **credential relay** (a deployed Cloudflare Worker): TxLINE's live streams require secret API credentials that must never ship to a public page, so the relay holds them server-side and pipes the same real SSE straight through, plus a football-news lane (BBC/ESPN/Guardian RSS — cross-outlet dedup, deterministic keyword categorization, no claimed AI). It's read-only, stores no user data, and is honestly thin: its JWT-refresh cache is per-isolate (best-effort), and v1.1.0 added per-IP rate limits, input validation and a concurrent-stream cap (per-isolate best-effort, documented as such).
+“Foresight locks a canonical call as a hash, optionally gives it an external Solana timestamp, and grades it from TxLINE match data. Reveal-or-burn is designed to make hiding a losing committed call costly inside the record.”
 
+Then make a practice call, run the replay, and verify the hash. The practice label increases trust because the demo does not confuse a local replay interaction with an externally timestamped prediction.
+
+### 3. Show the strongest evidence
+
+The hero timestamp artifact is the Spain–Argentina World Cup Final pick:
+
+- Fixture `18257739`, Argentina/away.
+- Solana devnet block time `2026-07-18T23:50:18Z`.
+- Scheduled kickoff `2026-07-19T19:00:00Z`.
+- The block time is roughly 19 hours before kickoff.
+
+The older Argentina–Switzerland transaction is not the foresight proof. Its kickoff was `2026-07-12T01:00:00Z`, and its memo was anchored at `2026-07-18T17:42:55Z`, after the match. It is useful only as a real memo/hash mechanism demonstration.
+
+The settlement receipt adds a second kind of evidence: transaction `3ukg95uA…JRT1Wybt` successfully composed TxLINE’s devnet `validateStatV2` instruction and a `FSGHT1-SETTLE` memo for England–Argentina in the same transaction. This is client-side instruction composition, not a custom-program CPI. The referenced commit was also posted after that match, so the receipt demonstrates settlement plumbing rather than predictive performance.
+
+### 4. Show why the interface matters
+
+The probability tape, move annotations, upset radar, notional mark-to-market, and profiles make the receipt understandable. They are not independent proof of edge; they are the product surfaces that could make an audited record useful to fans, analysts, and strategy builders.
+
+### 5. End with the product to build
+
+“The hackathon build proves the loop. The next milestone is to persist it: bind Clerk and wallets to an append-only record, wire TxLINE’s price/deadline/stat proof routes into every entry, and expose a shareable profile whose complete history survives reloads.”
+
+That ending creates a credible bridge from prototype to product without implying that persistence, payments, execution, or market adoption already exist.
+
+## What the judge is seeing
+
+| Surface | User value | Current reality |
+|---|---|---|
+| Probability tape | See how full-match consensus changed around match events. | Runs on four captured TxLINE fixture tapes; optional live mode uses the shipped relay. |
+| Upset radar | Prioritize matches whose favorite confidence, score state, and pressure signals look unusual. | Deterministic heuristic, not a probability forecast validated on a large sample. |
+| Commit / reveal / burn | Lock a call, reveal it, and penalize an unrevealed local commit. | Fully functional in local demo state; external timestamp only for eligible wallet-signed calls. |
+| Verify / forge | Recompute the commitment and explain why a prior external timestamp matters. | Local hash verification is real computation; the practice call has no external time proof. |
+| League and profiles | Compare notional, market-relative records and inspect history. | Populated by deterministic simulated identities and browser-local state. |
+| Agent builder | Express rule/prompt/API-shaped strategies and run them through the same replay functions. | Rule/prompt logic is local; API mode is a stand-in because no ingestion route exists. |
+| Follow / premium | Demonstrate a possible discovery and monetization loop. | Local UI simulation; no payment or real allocation. |
+| Clerk gate | Offer Google/Solana account entry. | Real Clerk entry/auth UI, not yet bound to `@you` or persisted records. |
+| Wallet anchor | Give an eligible call a Solana devnet timestamp. | Browser wallet path exists; captured historical calls are deliberately practice-only. |
+| Settlement receipt | Show that TxLINE stat validation and a grade receipt can be atomic. | One real devnet composition artifact exists; profiles and normal replay grades remain local. |
+
+## Architecture and data flow
+
+```text
+CAPTURED REPLAY
+real-data/*.tape.js
+  -> TxReal normalization
+  -> SurpriseAgent wall-clock tape + move detection
+  -> Foresight commit/reveal/burn/grade functions
+  -> browser UI and in-memory profiles
+
+OPTIONAL LIVE
+browser
+  -> Cloudflare Worker relay
+     -> TxLINE /api/scores/stream
+     -> TxLINE /api/odds/stream
+     -> public football RSS for /api/news
+  -> the same normalization and rendering pipeline
+
+OPTIONAL TIMESTAMP / RECEIPT
+browser wallet or proof script
+  -> Solana devnet memo transaction
+settlement composition
+  -> TxLINE validateStatV2 instruction + grade memo in one devnet transaction
+
+ENTRY
+browser -> Clerk hosted sign-in
+        -> no Foresight database/account binding yet
 ```
-browser (static page) ── SSE + JSON ──► foresight-relay (CF Worker, creds server-side) ──► TxLINE
-        └── Phantom wallet ───────────► Solana devnet (memo tx per commit; blockTime = unforgeable timestamp)
+
+The deploy repository is intentionally small: a static page, shared JavaScript, committed tapes, and a Worker relay. That makes the demo inspectable, but it also means durable reputation is not shipped yet.
+
+## Exact claim ledger
+
+| Label | Shipped evidence | Do not imply |
+|---|---|---|
+| **REAL** | Four checked-in TxLINE-derived fixture tapes and a shared normalization pipeline. | Four fixtures prove predictive edge, significance, or generalization. |
+| **REAL** | Worker routes: `/health`, `/api/scores/stream`, `/api/odds/stream`, `/api/news`. | The Worker exposes every TxLINE or proof endpoint, or that an open stream always has fresh data. |
+| **REAL** | World Cup Final devnet memo anchored before kickoff. | One timestamp is a completed track record or a winning prediction. |
+| **REAL, POST-MATCH** | Argentina–Switzerland devnet memo/hash artifact. | That artifact predates kickoff or proves foresight. |
+| **REAL MECHANISM RECEIPT** | England–Argentina `validateStatV2` plus grade memo composed atomically on devnet. | It is a custom Foresight-program CPI, a pre-match prediction, or a persisted profile grade. |
+| **REAL, OPTIONAL** | Connected-wallet memo path for eligible future/verified-live calls. | Every click in the replay is broadcast or automated wallet E2E has passed. |
+| **REAL, PARTIAL** | Clerk can authenticate entry through its hosted UI. | Clerk identity owns the displayed `@you` history or any record survives reload. |
+| **PRACTICE** | Human replay calls, local hash verification, reveal/burn, grade, notional portfolio. | A local practice call has an external timestamp or immutable storage. |
+| **SIM** | League identities, prompt/rule/API-labeled agents, follow, premium unlock. | These are real users, paid accounts, deployed strategies, or executed trades. |
+| **PLANNED** | `POST /api/agents/{id}/commit`, durable profiles, payments, public record URLs, program-owned reputation. | Those systems are present in the static app or Worker. |
+| **PLANNED / UNWIRED** | Runtime use of `/api/fixtures/validation`, `/api/odds/validation`, and `/api/scores/stat-validation`. | The current commit screen already returns these proofs. Client helper functions exist, but the UI and relay do not wire them. |
+
+## Why the four tapes matter—and what they do not prove
+
+The repository contains:
+
+- Argentina–Switzerland (`18222446`): final marker present.
+- France–Spain (`18237038`): final marker present.
+- England–Argentina (`18241006`): final marker present.
+- France–England (`18257865`): captured tape without a `game_finalised` marker.
+
+Together they exercise replay ingestion, odds/event alignment, market-move detection, incomplete-match guards, regulation-time grading, and multi-fixture UI behavior. They are pipeline demos. They are not a sufficient sample for claims about hit rate, calibration, profitability, statistical significance, or competitive advantage.
+
+Argentina–Switzerland is particularly useful for settlement correctness. Argentina won after extra time, but the 90-minute full-time 1X2 result was a 1–1 draw. Foresight reads regulation-period keys from the final update rather than using the eventual extra-time score or an interim total. That is an implementation lesson, not a claim that Foresight predicted the result before kickoff.
+
+## API integration: honest inventory
+
+### Shipped runtime integrations
+
+- `GET /health` on the deployed relay.
+- `GET /api/scores/stream?fixtureId=...` proxied to TxLINE SSE.
+- `GET /api/odds/stream?fixtureId=...` proxied to TxLINE SSE.
+- `GET /api/news?teams=...` backed by public RSS with deterministic dedup/tagging.
+- Clerk-hosted sign-in UI.
+- Solana devnet RPC for optional memo commits and proof receipts.
+- Polymarket search deep links only—no API execution or account access.
+
+### Capture-time helpers
+
+`shared/txline-real.js` includes clients for fixture snapshots, score history, odds snapshots/intervals, update windows, and validation calls. The deployed replay loads checked-in files rather than requesting historical data on boot.
+
+`shared/live-poll.js` can accumulate update windows with local credentials. It writes files and currently needs an explicit `--out ../real-data` to target this flattened repository’s checked-in tape directory; it is not part of the judge setup.
+
+### Present as seams, not shipped flows
+
+- Fixture validation for a commit deadline.
+- Odds validation for the committed price/message.
+- Stat validation for the final result.
+- Authenticated external agent commits.
+- Persisted identity, reveal scheduling, record publication, and payment entitlements.
+
+The one atomic settlement artifact shows that on-chain stat validation can participate in the mechanism. The normal app does not yet request and store those proofs per replay call.
+
+## Current evidence
+
+The evidence available today is engineering evidence:
+
+- Four captured fixture tapes, three with final markers.
+- A real World Cup Final memo timestamped before kickoff.
+- A real but post-match memo mechanism artifact.
+- A real devnet atomic validation-plus-grade-memo settlement artifact.
+- Regression suites last run at 138/138 core, 50/50 UI logic, and 109/109 inline/relay logic.
+- A deployed static app and a deployed relay.
+
+There are no claims here of active customers, revenue, paid conversion, long-run model performance, or completed legal review.
+
+## Business hypotheses
+
+The wedge is an audit trail for prediction history. Potential users include fans who want credible bragging rights, analysts who want a public record, model builders who want third-party-verifiable timestamps, and publishers/platforms that want a consistent record format.
+
+Possible models to test:
+
+1. Paid analytics and private leagues.
+2. Subscription tools for following verified profiles.
+3. B2B verification/profile infrastructure.
+4. Qualified referral traffic to execution venues, without implying Foresight executes or custodies funds.
+
+These are hypotheses, not present traction or a legal conclusion. Payments, execution, copying, and jurisdiction-specific operation would need separate product, security, and compliance work.
+
+## The next product milestone
+
+The highest-value next step is not another visualization. It is a durable verified record:
+
+1. Bind Clerk users and wallets to one explicit identity.
+2. Persist every commit before accepting a reveal.
+3. Wire TxLINE deadline, price, and final-stat validation into the record.
+4. Store anchor and validation receipts with each call.
+5. Enforce reveal-or-burn outside the browser.
+6. Publish stable, shareable profiles with complete histories.
+7. Implement signed external-agent ingestion with replay protection.
+8. Evaluate strategies on a larger, held-out corpus with uncertainty reported.
+9. Add real browser E2E for auth, wallet, relay freshness, and reload behavior.
+10. Only then test payment and follow/notification demand.
+
+That milestone converts the strongest hackathon mechanism into the product promised by the first sentence: a verified track record for sports predictions.
+
+## Local verification
+
+Node.js 18 or newer is sufficient for the read-only suites:
+
+```powershell
+node test.js
+node test-ui-logic.js
+node test-inline.js
 ```
 
-## Key functionality
+The app itself has no build step; open `index.html` or serve the directory statically.
 
-### 1. Upset Radar
-A live grid of every match, each scored 0–100 for "how likely is an upset brewing" — computed from how much the market's confidence in the favorite has decayed, whether the favorite is trailing, and how much pressure the underdog is generating (shots, corners, danger events). It's the "what should I be watching right now" layer.
-
-### 2. Why-It-Moved (the probability tape)
-A live chart of each team's win probability over the match, with every significant jump automatically joined to the event that caused it ("Argentina's odds jumped +47pts — goal, 12th minute"). When the market moves with **no event behind it**, that's flagged too — a "the market knows something" signal; in live mode it's additionally matched against recent team-relevant headlines and printed as *"possible driver … (keyword+recency match, not certainty)"* — a hint, never a claim. Calibrated on real match data: consensus repricing on a major event averages ~34 points; the market front-runs the official data feed by a median of 23 seconds.
-
-The tape reads like a trading terminal: crosshair + hover tooltip (all three implied prices plus the nearest goal/card/VAR event), an area gradient under the price line, a floating last-price label, and an OpenBB-style monitor row above it — one cell per outcome with de-vigged implied %, a colored 10-minute delta, and a sparkline. Each radar tile also carries a **σ volatility chip** (rolling stddev of implied-probability moves over the last ~10 minutes) — "which market is hot right now" at a glance.
-
-### 3. Prophet League (the reputation layer)
-Commit → reveal → grade. You pick a side, your call is hashed and timestamped, and after full time it's graded against the real match result — read from the exact same on-chain-verifiable stat keys a smart contract would check. Reveal-or-burn: hide a losing call and it grades as a full loss automatically (you can't cherry-pick which calls you show). Scoring is dollars-vs-the-market at the de-vigged price, so a positive long-run record is *provably* skill, not luck.
-
-The leaderboard is **live from kickoff**, not just after full time — it mark-to-markets every open position every second, the same way a real exchange computes "value if you cashed out right now."
-
-Profiles carry the receipts: **🎯 win-streaks** (current + best; a hidden/burned pick breaks the streak, because reveal-or-burn counts as a loss everywhere), **calibration bars** (the implied price you took vs how often you actually won, per bucket — above the market is edge, not luck), and a **cumulative dollars-vs-market sparkline** across resolved picks.
-
-### 4. Agent Builder — test a strategy on real data
-Anyone can deploy an automated prediction strategy three ways:
-- **No-code rules** — "when a team leads by 2 goals after 75 minutes, back them"
-- **Natural-language prompts** — compiled to the same rules, public or kept private
-- **External API** — plug in your own ML model; it POSTs signed picks and gets the same provable track record without revealing what's inside the model
-
-Deploying an agent is an instant backtest across every real match — the same run that populates the leaderboard *is* "how would this idea have performed." Every leader on the board is tagged 👤 human, 🤖 rule/prompt agent, or 🛰️ external API, and 🔓 public or 🔒 private, so you always know who or what you're looking at.
-
-### 5. Follow / copy — with a real monetization mechanic
-Follow anyone (human or agent) to mirror their calls into your own portfolio. Every prophet chooses: 🆓 free auto-follow (most start here, to build a track record), or 💎 premium — where tracking (seeing every call) stays free, but auto-allocation requires unlocking. No fake payment processing exists yet (that's explicitly labeled), but the mechanic — the actual product decision of "free to watch, pay to auto-copy" — is fully built and demoable.
-
-### 6. Live mark-to-market portfolio
-Every open pick re-prices every second against the current market, exactly like a real trading position monitor — a Bloomberg-terminal-style ticker showing unrealized P&L, not just a final win/loss.
-
-### 7. Real Solana wallet integration
-Connect a Phantom wallet (devnet) and every commit from then on signs a **genuine on-chain transaction** — confirmed for real, verified end-to-end (the latest end-to-end test transaction confirmed on live Solana devnet in 555ms). No private key ever touches the page; the wallet signs, Foresight never sees it.
-
-### 8. Trade the idea on Polymarket
-Every pick has a "Trade this on Polymarket ↗" button that opens Polymarket's real market search for that exact matchup and side — you execute on your own account. Foresight never places a trade for you or touches your funds; it's a pointer to real liquidity, not a broker.
-
-### 9. Unified live feed
-One scrolling ticker across every match — goals, red cards, VAR reviews, big odds swings, commits, and settlements, all in real time.
-
-### 10. Real on-chain proof, not a mockup
-Two genuine transactions are confirmed on Solana devnet right now: the original pre-kickoff commit (Argentina–Switzerland draw, anchored hours before the result), and a second proof exercising the exact transaction shape the browser wallet flow signs (confirmed in 555ms). The app has a "recompute the hash → prove it matches on-chain" button that lets anyone verify the mechanism is real by checking the actual blockchain, live, in the browser.
-
-### 11. GO LIVE — true push SSE
-One button switches the app from replay to **live**: it opens EventSource connections to the relay's proxied TxLINE streams (real push frames — no polling, no page reload) and merges every new score and odds message into the live fixture's tape through the exact same tested pipeline every replay uses. France vs England (fixture 18257865) ran through it for real on match night, 2026-07-18. Live goals, red cards, and VAR reviews can fire **desktop notifications**, and a deterministic 🎙 pundit lane adds commentary (templates, no LLM — it never claims intelligence it doesn't have).
-
-### 12. Landing gate — real sign-in, never a wall
-A particle-canvas hero fronts the app with **Clerk sign-in: Google OAuth and Sign-in-with-Solana** (wallet-signature auth, enabled on the instance — the publishable key in the page is public by design). Guest entry always works, so nobody is ever blocked by auth, and `?nogate=1` skips the gate entirely.
-
-## The five things that make it unfakeable
-
-| Layer | What it stops |
-|---|---|
-| **Timestamp** | Backdating — a commit's hash is anchored with a timestamp nobody controls |
-| **Anchored price** | Cherry-picking — the market price you "beat" is sealed inside the hash at commit time |
-| **Reveal-or-burn** | Hiding losers — an unrevealed pick grades as a full loss |
-| **Trustless grading** | Rigged results — grading reads the same verifiable data a smart contract would check |
-| **Market-relative scoring** | Luck — you're scored against the market's own odds, so sustained positive results are provably skill |
-
-## Business model
-
-Foresight monetizes trust, not wagers:
-1. **Free forever** core league; a paid "Pro" tier for deeper analytics and private leagues
-2. **Copy-follow fees** — a cut of premium auto-follow subscriptions once a prophet builds a real following
-3. **B2B / partnerships** — sportsbooks pay for verified-sharp discovery and high-intent traffic; tipster platforms license "Foresight-verified" as an anti-fraud layer
-4. Deliberately **never** custody wagers or take a cut of bets — that would make Foresight a gambling operator requiring licensing in every market. Staying out of that business is the moat, not a limitation.
-
-## Live on match night (2026-07-18)
-
-France vs England streamed **live in-app**: the deployed relay proxied TxLINE's real SSE streams into the page — true push, no polling or reload — and the live tape merged through the same tested pipeline as every replay, so everything above (radar, probability tape, live feed, portfolio, agents) worked on the real match as it happened. The background poller that originally built the France–England tape file remains as the CLI tape-builder; for in-app live use it's superseded by the relay.
-
-## What's next
-
-- **Wire every commit to real on-chain by default** (currently opt-in via wallet-connect; sim-mode remains for frictionless demos)
-- **Shareable public profile pages** — streaks, calibration bars, and the edge sparkline are in-app today; permalinks and sharing are next
-- **Real payment processing** for the premium follow tier
-- **Relay hardening** — rate limiting and a durable JWT cache (today's refresh cache is per-isolate, best-effort)
-- **Multi-tournament history** — reputations that compound across seasons, not just one World Cup
-- **Mobile app** — the web app is fully responsive today; a native app is the natural next step given how much of this is "check your leaderboard rank on your phone"
-
-## Try it yourself
-
-**https://foresight-txline.vercel.app** — open it, sign in with Google or a Solana wallet, or just enter as a guest (`?nogate=1` skips the gate); it boots straight into a live match, no setup needed. Click any radar tile to pick a match, hit "Commit a call" to make a prediction, click "🤖 Build an agent" to test an automated strategy, click any name on the leaderboard for their full verified record (streaks, calibration, edge), or hit "🔴 GO LIVE" (`?live=1`) to stream real TxLINE data through the relay.
-
----
-
-*Built solo (with Claude Code) for the TxODDS/Solana World Cup Hackathon, July 2026.*
+`npm run verify-wallet-flow` is not part of routine verification. It requires a user-provided funded devnet key at `_keys/wallet.json` and **broadcasts a transaction**, paying a devnet fee and mutating chain state. Use only a throwaway devnet key. See [README.md](README.md) for the complete setup, integration table, and limitations.

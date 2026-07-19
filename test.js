@@ -35,7 +35,12 @@ throws(() => F.canonicalPick({ ...basePick, fixtureId: Infinity }), /fixtureId/,
 throws(() => F.canonicalPick({ ...basePick, fixtureId: 1.5 }), /fixtureId/, "canonical rejects fractional fixture id");
 throws(() => F.canonicalPick({ ...basePick, oddsTs: NaN }), /oddsTs/, "canonical rejects non-finite odds timestamp");
 throws(() => F.canonicalPick({ ...basePick, mkt: { home: 0.8, draw: 0.3, away: 0.2 } }), /sum/, "canonical rejects a non-normalized probability triple");
-throws(() => F.canonicalPick({ ...basePick, mkt: { home: 0.98999, draw: 0.01, away: 0.00001 } }), /between 0.01 and 1/, "canonical rejects attacker-supplied near-zero price");
+ok(F.canonicalPick({ ...basePick, pick: "part1", mkt: { home: 0.98999, draw: 0.01, away: 0.00001 } }).includes('"away":0.00001'),
+  "canonical preserves a legitimate sub-1% unselected outcome");
+ok(F.canonicalPick({ ...basePick, pick: "part2", mkt: { home: 0.98999, draw: 0.01, away: 0.00001 } }).includes('"away":0.00001'),
+  "canonical quote serialization does not apply the selected-side grading floor");
+throws(() => F.canonicalPick({ ...basePick, mkt: { home: 0.99999, draw: 0.01, away: 0 } }), /positive/, "canonical rejects a zero price");
+throws(() => F.canonicalPick({ ...basePick, mkt: { home: 1.01, draw: 0.01, away: 0.01 } }), /between 0 and 1/, "canonical rejects a price above 1");
 throws(() => F.canonicalPick({ ...basePick, mkt: { home: Infinity, draw: 0.2, away: 0.2 } }), /finite/, "canonical rejects infinite price");
 
 /* ---------------- legacy anchored-artifact compatibility ---------------- */
@@ -134,6 +139,9 @@ throws(() => F.gradePick("part1", { home: 0.5, draw: 0.3, away: 0.2 }, "part1", 
   eq(c1.status, "INVALID", "invalid reveal stays INVALID (not graded)");
   throws(() => L.commit({ wallet: "@a", fixtureId: 1, pick: "part1", salt: "s", tCommit: Infinity, mkt, oddsTs: 1 }), /tCommit/,
     "league rejects a non-finite commit timestamp");
+  throws(() => L.commit({ wallet: "@a", fixtureId: 1, pick: "part2", salt: "s", tCommit: 10,
+    mkt: { home: 0.98999, draw: 0.01, away: 0.00001 }, oddsTs: 1 }), /acceptance floor/,
+    "league acceptance rejects only a selected side below the 1% payout floor");
 }
 
 /* ---------------- per-fixture settlement (multi-match league) ---------------- */
@@ -291,13 +299,23 @@ throws(() => F.gradePick("part1", { home: 0.5, draw: 0.3, away: 0.2 }, "part1", 
   const local = fs.existsSync(path.join(__dirname, "shared", "txline-real.js"));
   const shared = local ? path.join(__dirname, "shared") : path.join(__dirname, "..", "shared");
   const tapeDir = local ? path.join(__dirname, "real-data") : path.join(shared, "real-data");
-  const src = fs.readFileSync(path.join(tapeDir, "18222446.tape.js"), "utf8");
-  const bundle = JSON.parse(src.slice(src.indexOf("=") + 1).trim().replace(/;\s*$/, ""));
   const TxReal = require(path.join(shared, "txline-real.js"));
-  TxReal.load({ data: bundle });
   const SA = local ? require(path.join(shared, "agent.js"))
     : require(path.join(__dirname, "..", "t3-surprise-index", "agent.js"));
-  const tape = SA.buildRealTape(TxReal.EVENTS, TxReal.state.oddsTimeline);
+  const exactFixtureIds = [18222446, 18237038, 18241006, 18257865];
+  const exactTapes = exactFixtureIds.map(fixtureId => {
+    const src = fs.readFileSync(path.join(tapeDir, fixtureId + ".tape.js"), "utf8");
+    const bundle = JSON.parse(src.slice(src.indexOf("=") + 1).trim().replace(/;\s*$/, ""));
+    TxReal._reset();
+    TxReal.load({ data: bundle });
+    return { fixtureId, tape: SA.buildRealTape(TxReal.EVENTS, TxReal.state.oddsTimeline) };
+  });
+  exactTapes.forEach(({ fixtureId, tape }) => {
+    ok(tape && tape.real, fixtureId + " exact real tape builds");
+    const endT = tape && Math.max(tape.ticks[tape.ticks.length - 1].t, tape.events[tape.events.length - 1].t);
+    ok(Number.isFinite(endT), fixtureId + " exact real tape has a finite end time");
+  });
+  const tape = exactTapes[0].tape;
   ok(tape && tape.real, "real tape builds");
   ok(tape.ticks[0].sourceTs === tape.ticks[0].ts && Number.isFinite(tape.ticks[0].sourceTs),
     "real ticks preserve absolute quote timestamp separately from relative t");
@@ -365,6 +383,26 @@ throws(() => F.gradePick("part1", { home: 0.5, draw: 0.3, away: 0.2 }, "part1", 
     // determinism
     const L3 = F.createLeague(); F.agentField(L3, [{ fixtureId: 18222446, tape }], 4242); L3.gradeAll(outcome.winner, 100, 18222446);
     eq(JSON.stringify(L3.leaderboard(1)), JSON.stringify(L2.leaderboard(1)), "agentField deterministic across runs");
+  }
+
+  // Browser resetLeague equivalent: all exact tapes must populate the field
+  // together without a thin (<1%) unselected quote leg aborting startup.
+  {
+    const startupLeague = F.createLeague();
+    let deployed = null, startupError = null;
+    try { deployed = F.agentField(startupLeague, exactTapes, 4242); }
+    catch (err) { startupError = err; }
+    ok(!startupError, "agentField starts across all four exact tapes without throwing");
+    eq(deployed && deployed.length, F.AGENT_ROSTER.length, "reset-equivalent deploys the full agent roster");
+    ok(exactFixtureIds.every(fixtureId => startupLeague.commits.some(c => c.fixtureId === fixtureId)),
+      "reset-equivalent creates expected commits for every exact fixture");
+    let settlementError = null;
+    try {
+      exactTapes.forEach(({ fixtureId, tape }) => startupLeague.gradeAll(F.outcomeFromTape(tape.events).winner, 100, fixtureId));
+    } catch (err) { settlementError = err; }
+    ok(!settlementError, "accepted exact-tape commits settle without violating the selected-side payout cap");
+    ok(startupLeague.commits.every(c => !c.grade || Number.isFinite(c.grade.pnl)),
+      "reset-equivalent settlement produces only finite P&L");
   }
 
   // earliness on a real move for a skilled sim commit

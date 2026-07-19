@@ -5,13 +5,20 @@
   "description": "Provable prediction reputation on TxLINE + Solana — verified prediction league for the TxODDS World Cup Hackathon.",
   "main": "foresight.js",
   "scripts": {
-    "test": "node test.js",
+    "test": "npm run test:all",
+    "test:core": "node test.js",
+    "test:inline": "node test-inline.js",
+    "test:ui": "node test-ui-logic.js",
+    "test:smoke": "node test/smoke.js",
+    "test:wallet": "node verify-wallet-flow.js --dry-run",
+    "test:all": "npm run test:core && npm run test:inline && npm run test:ui && npm run test:smoke && npm run test:wallet",
+    "test:live": "node test/smoke.js --live",
     "anchor": "node anchor-commit.js",
     "verify-wallet-flow": "node verify-wallet-flow.js",
     "live-poll": "node shared/live-poll.js"
   },
   "dependencies": {
-    "@solana/web3.js": "^1.95.3"
+    "@solana/web3.js": "1.95.3"
   },
   "engines": {
     "node": ">=18"
