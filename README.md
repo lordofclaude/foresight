@@ -85,8 +85,9 @@ committed proof artifacts -> browser verification/explorer links
 
 AUTH / IDENTITY
 browser -> Clerk sign-in UI
-        -> entry succeeds, but the returned Clerk user is not bound to @you,
-           commits, follows, profiles, or any persisted Foresight record
+        -> authenticated user maps to a sanitized in-memory handle
+        -> new commits in that session include the handle in canonicalPick
+        -> no durable account, wallet binding, or persisted record follows
 ```
 
 There is no application database in this repository. League state, follow state, built agents, and profiles are browser-memory demo state; reloading resets them. `localStorage` is used for entry/relay preferences, not as a verified record store.
@@ -101,7 +102,7 @@ There is no application database in this repository. League state, follow state,
 | **REAL / SHIPPED** | Post-match mechanism anchor | `anchored-proof.json` contains a real devnet memo for Argentina–Switzerland. | Its block time is `2026-07-18T17:42:55Z`, while kickoff was `2026-07-12T01:00:00Z`; it is post-match and proves only memo/hash plumbing. |
 | **REAL / SHIPPED** | Atomic settlement receipt | `settlement-proof.json` records a successful devnet transaction that composed TxLINE `validateStatV2` for England–Argentina and a `FSGHT1-SETTLE` grade memo in the same transaction. | This is client-side instruction composition, not a custom Foresight-program CPI. The referenced commit was made after the match, so this is a settlement mechanism proof, not evidence of foresight. The grade is not written to a persisted Foresight profile. |
 | **REAL / OPTIONAL** | Browser wallet commit | For an eligible future or verified-live fixture, the browser can ask a connected Solana wallet to sign and send the memo transaction. | Completed/captured fixtures remain practice-only. Wallet UI was not covered by the automated suites above. |
-| **REAL / PARTIAL** | Clerk | The landing gate loads Clerk and can open its hosted Google/Solana sign-in UI. | Clerk is currently entry/auth UI only. Its user ID is not bound to `@you` or to persisted prediction records. |
+| **REAL / PARTIAL** | Clerk | The landing gate loads Clerk; an authenticated user maps to a sanitized in-memory handle, and new commits in that session hash the handle into `canonicalPick`. | The handle is not a durable identity record: there is no database, stable Clerk-ID profile, account-wallet binding, or history that survives a rebuild/reload. |
 | **REAL / OUTBOUND LINK** | Polymarket | The UI opens a Polymarket search in a new tab. | Foresight does not query positions, place orders, verify execution, or touch funds. |
 | **PRACTICE / LOCAL** | Human replay calls | Hash, reveal, burn, grade, verify, forge demo, and notional P&L run locally against real captured inputs. | No external timestamp unless an eligible wallet flow is used; no persistence after reload. |
 | **PRACTICE / SIM** | League field and agents | Rule, prompt, API-labeled, and manual identities traverse the same local league functions and populate the UI. | These are deterministic demo identities. They are not users or imported performance records. |
@@ -139,7 +140,7 @@ Separately, the committed `anchored-proof.json` transaction was posted days afte
 | Relay `GET /api/scores/stream?fixtureId=...` | browser live mode | Proxies TxLINE score SSE with server-held credentials. |
 | Relay `GET /api/odds/stream?fixtureId=...` | browser live mode | Proxies TxLINE odds SSE with server-held credentials. |
 | Relay `GET /api/news?teams=...` | browser live mode | Fetches public RSS, deduplicates titles, and applies deterministic keyword tags. |
-| Clerk hosted JavaScript | landing gate | Opens authentication UI; no Foresight record binding follows. |
+| Clerk hosted JavaScript | landing gate | Authenticates entry and labels subsequent in-memory commits with a sanitized session handle; it does not create a durable profile or account-wallet binding. |
 | Solana devnet RPC | wallet/CLI proof flows | Sends memo transactions and queries confirmations. |
 | Polymarket web search | outbound link | Opens a search page only. |
 

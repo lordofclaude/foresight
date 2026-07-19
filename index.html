@@ -41,8 +41,9 @@ canvas{width:100%;display:block}
 .ctl{display:flex;gap:.4rem;margin-top:.4rem}
 select{flex:1;background:#0f2233;border:1px solid #1d3a52;color:var(--txt);font:inherit;padding:.4rem;border-radius:6px}
 .pickrow{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.4rem;margin:.4rem 0}
-.pick{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:.45rem .3rem;text-align:center;cursor:pointer}
+.pick{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:.45rem .3rem;text-align:center;cursor:pointer;color:inherit;font:inherit}
 .pick:hover{border-color:#2b4a63}
+.pick:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
 .pick.sel{border-color:var(--violet);background:#160f26}
 .pick .nm{font-size:.66rem;color:var(--mut)}.pick .pr{font-size:.95rem;margin-top:.15rem}
 .mut{color:var(--mut)}.small{font-size:.66rem}
@@ -100,6 +101,32 @@ select{flex:1;background:#0f2233;border:1px solid #1d3a52;color:var(--txt);font:
 .calbar .ca{height:4px;top:auto}
 .calbar .ca.up{background:#c2f04a}
 .calbar .ca.dn{background:#ff5a74}
+/* ---- ticker tape (TradingView idiom) ---- */
+#tickerbar{overflow:hidden;white-space:nowrap;background:#060b13;border-bottom:1px solid #14263a;font:700 11px Consolas,ui-monospace,monospace;color:#8fa8bd;padding:5px 0;cursor:default}
+#tickerbar .inner{display:inline-block;will-change:transform;animation:tickscroll 45s linear infinite}
+#tickerbar:hover .inner{animation-play-state:paused}
+@keyframes tickscroll{to{transform:translateX(-50%)}}
+@media(prefers-reduced-motion:reduce){#tickerbar .inner{animation:none}}
+#tickerbar .tk{display:inline-flex;gap:.45rem;align-items:baseline;padding:0 1.1rem;border-right:1px solid #14263a}
+#tickerbar .tk b{color:#e6f1f8;font-style:italic}
+#tickerbar .tk .u{color:#c2f04a}#tickerbar .tk .d{color:#ff5a74}#tickerbar .tk .n{color:#5d7285}
+#tickerbar .tk .lv{color:#ff8ba0;font-weight:900}
+/* ---- markets bar + terminal table view (OpenBB idiom) ---- */
+#radarBar{display:flex;align-items:center;justify-content:space-between;margin:.5rem 0 .3rem}
+#radarBar .rb-l{font:800 .68rem var(--fdisp,inherit);font-style:italic;letter-spacing:.1em;color:#7c93a6}
+.viewtoggle button{cursor:pointer;border:1px solid #22334a;background:#0a141f;color:#7c93a6;font:700 .64rem Consolas,monospace;padding:.2rem .6rem;border-radius:5px 0 0 5px}
+.viewtoggle button+button{border-left:0;border-radius:0 5px 5px 0}
+.viewtoggle button.on{background:#c2f04a;border-color:#c2f04a;color:#0a1322}
+table.mkt{width:100%;border-collapse:collapse;font:600 10.5px Consolas,ui-monospace,monospace;background:#0a141f;border:1px solid #16283a;border-radius:8px;overflow:hidden}
+.mkt th{font-size:.58rem;letter-spacing:.09em;text-transform:uppercase;color:#5f7890;text-align:right;padding:.4rem .55rem;border-bottom:1px solid #16283a;background:#0c1826}
+.mkt th:first-child,.mkt td:first-child{text-align:left}
+.mkt td{padding:.38rem .55rem;text-align:right;border-bottom:1px solid #101d2c;color:#c7d6e2;font-variant-numeric:tabular-nums;cursor:pointer}
+.mkt tr:hover td{background:#0e1c2c}
+.mkt tr.sel td{background:#101f14;border-left:2px solid #c2f04a}
+.mkt tr.sel td:not(:first-child){border-left:0}
+.mkt .u{color:#c2f04a}.mkt .d{color:#ff5a74}.mkt .n{color:#5d7285}
+.mkt .live-cell{color:#ff8ba0;font-weight:900}
+.mkt td svg{vertical-align:middle}
 /* market-volatility chip on radar tiles */
 .volchip{margin-left:.4rem;padding:.05rem .35rem;border-radius:4px;font-size:.62rem;font-weight:700;background:#132030;border:1px solid #22334a;color:#7fb3d5}
 .volchip.hot{background:#2b1420;border-color:#5a2432;color:#ff8ba0}
@@ -380,6 +407,11 @@ footer,footer code,.card,.prow,.commitrow,.receipt,.stratbox,.vd,.abprev{overflo
   <details class="live-ctl" id="liveCtl"><summary>Live / diagnostics</summary><div class="live-panel"><div class="row"><button id="goLiveBtn" type="button">🔴 GO LIVE</button><input id="relayUrl" aria-label="Allowed TxLINE relay URL"></div><div id="liveStatus" role="status" aria-live="polite">Checking relay…</div></div></details>
 </header>
 
+<!-- TICKER TAPE (TradingView idiom): every market, scrolling — implied H/D/A,
+     10-min deltas, σ. Content doubled for a seamless CSS loop; static under
+     prefers-reduced-motion; pauses on hover so numbers can be read. -->
+<div id="tickerbar" title="live implied probabilities · Δ vs 10 min ago · σ volatility"><div class="inner" id="tickerInner"></div></div>
+
 <aside class="demo-rail" id="demoRail" hidden aria-label="Guided demo"><strong>90-second demo</strong><button class="demo-nav" data-demo-step="1" data-focus="pickrow">1 · Commit practice call</button><button class="demo-nav" data-demo-step="2" data-focus="run">2 · Run / instant</button><button class="demo-nav" data-demo-step="3" data-focus="forgeBtn">3 · Verify / forge</button><button class="demo-nav" data-demo-step="4" data-focus="anchorCard">4 · Real anchor</button></aside>
 <section class="mode-stack" aria-label="Current proof mode"><div class="mode-banner" id="modeBanner" role="status" aria-live="polite"><strong id="globalMode">PRACTICE REPLAY</strong><span id="globalModeCopy">Historical TxLINE tape · local demo commits.</span></div><div class="proof-flow"><div class="proof-head"><h2>Truth-labeled data flow</h2><span id="proofMode">Current mode: PRACTICE REPLAY</span></div><div class="proof-steps"><div class="proof-step"><b>TxLINE quotes/events</b><span class="truth-tag">[REAL]</span></div><div class="proof-step"><b>Commit + hash</b><span class="truth-tag practice" id="commitTruth">[PRACTICE · LOCAL]</span></div><div class="proof-step"><b>Solana timestamp</b><span class="truth-tag">[WALLET / PRE-KICKOFF]</span></div><div class="proof-step"><b>TxLINE final statKeys</b><span class="truth-tag">[REAL]</span></div><div class="proof-step"><b>Deterministic grade/profile</b><span class="truth-tag practice">[LOCAL DEMO]</span></div></div></div></section>
 
@@ -400,6 +432,8 @@ footer,footer code,.card,.prow,.commitrow,.receipt,.stratbox,.vd,.abprev{overflo
 </div>
 
 <!-- THE RADAR: every pulled match at the current replay moment; click to select -->
+<div id="radarBar"><span class="rb-l">MARKETS</span>
+  <span class="viewtoggle"><button id="viewTiles" class="on">tiles</button><button id="viewTable">terminal</button></span></div>
 <div class="radar" id="radar"></div>
 
 <main>
@@ -419,9 +453,9 @@ footer,footer code,.card,.prow,.commitrow,.receipt,.stratbox,.vd,.abprev{overflo
   <div class="card" id="commitCard">
     <h3>Commit a call <span class="r2">hash locks the call now</span></h3>
     <div class="pickrow" id="pickrow" tabindex="-1">
-      <div class="pick" data-pick="part1"><div class="nm" id="n1">HOME</div><div class="pr" id="p1">—</div></div>
-      <div class="pick" data-pick="draw"><div class="nm">DRAW</div><div class="pr" id="pX">—</div></div>
-      <div class="pick" data-pick="part2"><div class="nm" id="n2">AWAY</div><div class="pr" id="p2">—</div></div>
+      <button type="button" class="pick" data-pick="part1" aria-pressed="false"><span class="nm" id="n1">HOME</span><span class="pr" id="p1">—</span></button>
+      <button type="button" class="pick" data-pick="draw" aria-pressed="false"><span class="nm">DRAW</span><span class="pr" id="pX">—</span></button>
+      <button type="button" class="pick" data-pick="part2" aria-pressed="false"><span class="nm" id="n2">AWAY</span><span class="pr" id="p2">—</span></button>
     </div>
     <button class="btn violet" id="commitBtn" disabled>◆ COMMIT — select a side</button>
     <a class="btn poly-btn" id="polyBtn" target="_blank" rel="noopener">🔷 Trade this on Polymarket ↗</a>
@@ -690,7 +724,7 @@ function selectFixture(i) {
   // live mode: browsing another fixture releases the auto-pin; clicking the
   // live match back re-engages it (liveRebuild only re-pins when !liveBrowse)
   if (liveOn) liveBrowse = FIXTURES[i].id !== LIVE_FIXTURE_ID;
-  document.querySelectorAll('.pick').forEach(p => p.classList.remove('sel'));
+  document.querySelectorAll('.pick').forEach(p => { p.classList.remove('sel'); p.setAttribute('aria-pressed', 'false'); });
   $('commitBtn').disabled = true; $('commitBtn').textContent = "◆ COMMIT — select a side";
   renderAll();
 }
@@ -714,7 +748,60 @@ function marketVol(F, t) {
   const mean = ds.reduce((a, b) => a + b, 0) / ds.length;
   return (F._volV = Math.sqrt(ds.reduce((a, b) => a + (b - mean) * (b - mean), 0) / ds.length));
 }
+/* ---- ticker tape content (updated on the same 1s throttle as the monitor) ---- */
+function tickerHtml() {
+  const parts = FIXTURES.map(F => {
+    const t = fxT(F);
+    const q = FO.devig(oddsAt(F, t)), q0 = FO.devig(oddsAt(F, Math.max(0, t - 600)));
+    const ev = F.tape.events.filter(e => e.t <= t);
+    const sc = ev.length ? ev[ev.length - 1].stats : { g1: 0, g2: 0 };
+    const cell = (k) => {
+      const d = (q[k] - q0[k]) * 100, cls = Math.abs(d) < 0.05 ? "n" : d > 0 ? "u" : "d";
+      return `${k === "home" ? "H" : k === "draw" ? "D" : "A"} ${(q[k] * 100).toFixed(1)} <span class="${cls}">${d > 0 ? "▲" : d < 0 ? "▼" : "·"}${Math.abs(d).toFixed(1)}</span>`;
+    };
+    const vol = F.settled ? 0 : marketVol(F, t);
+    return `<span class="tk">${F.liveMatch ? '<span class="lv">● LIVE</span> ' : ""}<b>${F.p1} ${sc.g1}–${sc.g2} ${F.p2}</b> ${cell("home")} ${cell("draw")} ${cell("away")}${vol >= 0.15 ? ` <span class="n">σ${vol.toFixed(1)}</span>` : ""}</span>`;
+  }).join("");
+  return parts + parts;                                  // doubled → seamless -50% loop
+}
+function renderTicker() { const el = $('tickerInner'); if (el) el.innerHTML = tickerHtml(); }
+
+/* ---- markets: broadcast tiles ⇄ OpenBB-style terminal table ---- */
+let radarView = (new URLSearchParams(location.search)).get("view") || localStorage.getItem("foresight_radar_view") || "tiles";
+function setRadarView(v) {
+  radarView = v; localStorage.setItem("foresight_radar_view", v);
+  $('viewTiles').classList.toggle("on", v === "tiles");
+  $('viewTable').classList.toggle("on", v === "table");
+  renderRadar();
+}
+function renderRadarTable() {
+  const rows = FIXTURES.map((F, i) => {
+    const t = fxT(F);
+    const r = FO.upsetRisk(F.tape.ticks, F.tape.events, t);
+    const done = !F.liveMatch && simT >= F.endT;
+    const q = FO.devig(oddsAt(F, t)), q0 = FO.devig(oddsAt(F, Math.max(0, t - 600)));
+    const ev = F.tape.events.filter(e => e.t <= t);
+    const sc = ev.length ? ev[ev.length - 1].stats : { g1: 0, g2: 0 };
+    const vol = done ? 0 : marketVol(F, t);
+    const dcell = (k) => {
+      const d = (q[k] - q0[k]) * 100, cls = Math.abs(d) < 0.05 ? "n" : d > 0 ? "u" : "d";
+      return `<td>${(q[k] * 100).toFixed(1)}<span class="${cls}"> ${d > 0 ? "▲" : d < 0 ? "▼" : "·"}${Math.abs(d).toFixed(1)}</span></td>`;
+    };
+    const riskCol = r.risk > 55 ? "d" : r.risk > 30 ? "" : "u";
+    return `<tr class="${i === sel ? "sel" : ""}" onclick="selectFixture(${i})">
+      <td>${F.liveMatch ? '<span class="live-cell">●</span> ' : ""}${F.f1} ${F.p1} ${sc.g1}–${sc.g2} ${F.p2} ${F.f2}</td>
+      <td>${done ? "FT" : Math.floor(t / 60) + "′"}</td>
+      ${dcell("home")}${dcell("draw")}${dcell("away")}
+      <td>${vol >= 0.05 ? "σ" + vol.toFixed(1) : '<span class="n">—</span>'}</td>
+      <td class="${riskCol}">${done ? "✓" : r.risk}</td>
+      <td>${monSpark(F.tape.ticks, "home", t, "#c2f04a")}</td></tr>`;
+  }).join("");
+  $('radar').innerHTML = `<table class="mkt"><thead><tr>
+    <th>match</th><th>min</th><th>home %</th><th>draw %</th><th>away %</th><th>σ 10m</th><th>risk</th><th>tape</th>
+  </tr></thead><tbody>${rows}</tbody></table>`;
+}
 function renderRadar() {
+  if (radarView === "table") return renderRadarTable();
   $('radar').innerHTML = FIXTURES.map((F, i) => {
     const t = fxT(F);
     const r = FO.upsetRisk(F.tape.ticks, F.tape.events, t);
@@ -755,7 +842,11 @@ $('pickrow').onclick = e => {
   const F = FIXTURES[sel];
   if (simT >= F.endT) { toast("that match is settled — pick another from the radar", true); return; }
   selPick = el.dataset.pick;
-  document.querySelectorAll('.pick').forEach(p => p.classList.toggle('sel', p === el));
+  document.querySelectorAll('.pick').forEach(p => {
+    const selected = p === el;
+    p.classList.toggle('sel', selected);
+    p.setAttribute('aria-pressed', String(selected));
+  });
   $('commitBtn').disabled = false;
   $('commitBtn').textContent = `◆ COMMIT ${selPick === "part1" ? F.p1 : selPick === "part2" ? F.p2 : "DRAW"} @ ${(FO.devig(oddsAt(F, fxT(F)))[FO.PICK_SIDE[selPick]] * 100).toFixed(1)}%`;
   updatePolyBtn();
@@ -866,7 +957,7 @@ $('commitBtn').onclick = async () => {
     myCommits.push(c);
     toast(`${solWallet && !onChainEligible ? "PRACTICE ONLY — historical/captured fixtures cannot be signed. " : ""}◆ local commit on ${F.p1}–${F.p2} — ${c.hash.slice(0, 16)}…`);
   }
-  selPick = null; document.querySelectorAll('.pick').forEach(p => p.classList.remove('sel'));
+  selPick = null; document.querySelectorAll('.pick').forEach(p => { p.classList.remove('sel'); p.setAttribute('aria-pressed', 'false'); });
   btn.classList.remove('wallet-pending'); btn.disabled = true; btn.textContent = "◆ COMMIT — select a side";
   $('verifyBtn').disabled = false;
   setDemoDone(1);
@@ -1194,8 +1285,8 @@ function renderBoard() {
 }
 /* ---------------- real on-chain anchors (proof the mechanism is not a mock) ----------------
    HERO = the World Cup FINAL anchor: committed ~19h BEFORE kickoff, so the
-   outcome is genuinely unknown as you read this — the validator blockTime IS
-   the proof. Secondary = the first anchor (Argentina–Switzerland), honestly
+   validator blockTime predates the scheduled kickoff and proves the payload
+   existed before play. Secondary = the first anchor (Argentina–Switzerland), honestly
    labeled: it was made AFTER that match ended while wiring the pipeline, so
    it proves the mechanism, not foresight. */
 function renderAnchor() {
@@ -1206,7 +1297,7 @@ function renderAnchor() {
   if (P) {
     const q = (P.pick.mkt.away * 100).toFixed(1);
     const hrs = Math.round((P.match.kickoff - P.blockTime * 1000) / 3600e3);
-    html += `<div><b>${P.match.competition}</b> — ${P.match.participant1} v ${P.match.participant2}: <b>${P.pick.sideTeam}</b> (the de-vigged underdog @ ${q}%) — anchored on <b>Solana devnet</b> ~${hrs}h <b>BEFORE kickoff</b>. The outcome is unknown as you read this; the timestamp is the proof.</div>
+    html += `<div><b>${P.match.competition}</b> — ${P.match.participant1} v ${P.match.participant2}: <b>${P.pick.sideTeam}</b> (the de-vigged underdog @ ${q}%) — anchored on <b>Solana devnet</b> ~${hrs}h <b>BEFORE kickoff</b>. The validator blockTime predates the scheduled kickoff; that timestamp proves the committed payload existed before play.</div>
       <div style="margin:.4rem 0"><span class="anchor-live">● ON-CHAIN</span> blockTime <b>${(P.blockTimeISO || "").replace("T", " ").replace(".000Z", " UTC")}</b> · kickoff <b>${(P.match.kickoffISO || "").replace("T", " ").replace(".000Z", " UTC")}</b></div>
       <div class="mut">commit hash</div><div class="anchor-hash">${P.hash}</div>
       <div class="mut" style="margin-top:.3rem">devnet tx (click to verify on explorer)</div>
@@ -1624,13 +1715,18 @@ function drawChart() {
   ctx.strokeStyle = "#c2f04a"; ctx.lineWidth = 2; ctx.beginPath();
   upto.forEach((k, i) => { const x = xOf(k.t), y = yOf(k.home); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.stroke(); ctx.lineWidth = 1;
   ctx.fillStyle = "#c2f04a"; ctx.fillText(F.p1 + " WIN PROBABILITY", PAD_L + 4, TOP + 10);
-  // floating last-value label on the right edge (lightweight-charts style)
+  // floating last-value labels on the right edge (lightweight-charts style) — both series
   if (upto.length) {
-    const last = upto[upto.length - 1], ly = yOf(last.home), txt = (last.home * 100).toFixed(1) + "%";
-    const tw = ctx.measureText(txt).width + 10;
-    ctx.fillStyle = "#c2f04a"; ctx.beginPath();
-    ctx.roundRect ? ctx.roundRect(W - PAD_R - tw, ly - 8, tw, 16, 4) : ctx.rect(W - PAD_R - tw, ly - 8, tw, 16); ctx.fill();
-    ctx.fillStyle = "#0a1322"; ctx.fillText(txt, W - PAD_R - tw + 5, ly + 3.5);
+    const last = upto[upto.length - 1];
+    const label = (v, bg, fg) => {
+      const y = yOf(v), txt = (v * 100).toFixed(1) + "%";
+      const tw = ctx.measureText(txt).width + 10;
+      ctx.fillStyle = bg; ctx.beginPath();
+      ctx.roundRect ? ctx.roundRect(W - PAD_R - tw, y - 8, tw, 16, 4) : ctx.rect(W - PAD_R - tw, y - 8, tw, 16); ctx.fill();
+      ctx.fillStyle = fg; ctx.fillText(txt, W - PAD_R - tw + 5, y + 3.5);
+    };
+    if (Math.abs(yOf(last.home) - yOf(last.away)) > 18) label(last.away, "#1c3f66", "#9fc6f5"); // skip if overlapping
+    label(last.home, "#c2f04a", "#0a1322");
   }
   for (const e of F.tape.events) {
     if (e.t > t) break;
@@ -1699,6 +1795,7 @@ function renderMonitor(force) {
   }
   if (monPend) { clearTimeout(monPend); monPend = 0; }
   monLast = now;
+  renderTicker();                                // ticker rides the same 1 Hz throttle
   const F = FIXTURES[sel], t = fxT(F);
   const q = FO.devig(oddsAt(F, t)), q0 = FO.devig(oddsAt(F, Math.max(0, t - 600)));
   const cells = [
@@ -1725,6 +1822,10 @@ function toast(txt, bad, cls) {
 }
 window.addEventListener("resize", () => { sizeCanvas(); drawChart(); });
 window.selectFixture = selectFixture;
+$('viewTiles').onclick = () => setRadarView("tiles");
+$('viewTable').onclick = () => setRadarView("table");
+$('viewTiles').classList.toggle("on", radarView === "tiles");
+$('viewTable').classList.toggle("on", radarView === "table");
 window.toggleInfo = id => { const el = $(id); el.classList.toggle('open'); };
 
 /* ================= LIVE SSE via relay (true push, no reload) =================

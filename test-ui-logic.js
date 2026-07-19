@@ -125,6 +125,9 @@ has("marketVol deltas stay intra-window", /if \(ticks\[lo\]\.t < t - 600\) lo\+\
 has("demo mode skips gate", /const skip = demoMode \|\| qs\.get\("nogate"\)/);
 has("demo mode waits for existing replay CTA", /if \(demoMode\) \{ restoreClerkSession\(\); return; \}/);
 has("guided demo focuses existing surfaces", /data-focus="pickrow"[\s\S]*data-focus="run"[\s\S]*data-focus="forgeBtn"[\s\S]*data-focus="anchorCard"/);
+has("prediction choices use native keyboard-accessible buttons", /<button type="button" class="pick" data-pick="part1" aria-pressed="false">[\s\S]*<button type="button" class="pick" data-pick="draw" aria-pressed="false">[\s\S]*<button type="button" class="pick" data-pick="part2" aria-pressed="false">/);
+has("prediction choice state is exposed to assistive technology", /p\.setAttribute\('aria-pressed', String\(selected\)\)/);
+has("prediction choices have a visible keyboard focus state", /\.pick:focus-visible\{outline:2px solid var\(--cyan\)/);
 lacks("known-missing final tape is not requested", /src="real-data\/18257739\.tape\.js"/);
 has("relay input assigned through DOM property", /\$\('relayUrl'\)\.value = RELAY_BASE/);
 has("relay URL is allowlisted", /throw new Error\("relay URL is not allowlisted"\)/);

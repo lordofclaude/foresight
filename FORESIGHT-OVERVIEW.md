@@ -72,7 +72,7 @@ That ending creates a credible bridge from prototype to product without implying
 | League and profiles | Compare notional, market-relative records and inspect history. | Populated by deterministic simulated identities and browser-local state. |
 | Agent builder | Express rule/prompt/API-shaped strategies and run them through the same replay functions. | Rule/prompt logic is local; API mode is a stand-in because no ingestion route exists. |
 | Follow / premium | Demonstrate a possible discovery and monetization loop. | Local UI simulation; no payment or real allocation. |
-| Clerk gate | Offer Google/Solana account entry. | Real Clerk entry/auth UI, not yet bound to `@you` or persisted records. |
+| Clerk gate | Offer Google/Solana account entry. | A real Clerk session maps to a sanitized in-memory handle used by new commits; there is no durable profile, stable Clerk-ID record, account-wallet binding, or persisted history. |
 | Wallet anchor | Give an eligible call a Solana devnet timestamp. | Browser wallet path exists; captured historical calls are deliberately practice-only. |
 | Settlement receipt | Show that TxLINE stat validation and a grade receipt can be atomic. | One real devnet composition artifact exists; profiles and normal replay grades remain local. |
 
@@ -102,7 +102,8 @@ settlement composition
 
 ENTRY
 browser -> Clerk hosted sign-in
-        -> no Foresight database/account binding yet
+        -> sanitized session handle labels new in-memory commits
+        -> no Foresight database or account-wallet binding yet
 ```
 
 The deploy repository is intentionally small: a static page, shared JavaScript, committed tapes, and a Worker relay. That makes the demo inspectable, but it also means durable reputation is not shipped yet.
@@ -117,7 +118,7 @@ The deploy repository is intentionally small: a static page, shared JavaScript, 
 | **REAL, POST-MATCH** | Argentina–Switzerland devnet memo/hash artifact. | That artifact predates kickoff or proves foresight. |
 | **REAL MECHANISM RECEIPT** | England–Argentina `validateStatV2` plus grade memo composed atomically on devnet. | It is a custom Foresight-program CPI, a pre-match prediction, or a persisted profile grade. |
 | **REAL, OPTIONAL** | Connected-wallet memo path for eligible future/verified-live calls. | Every click in the replay is broadcast or automated wallet E2E has passed. |
-| **REAL, PARTIAL** | Clerk can authenticate entry through its hosted UI. | Clerk identity owns the displayed `@you` history or any record survives reload. |
+| **REAL, PARTIAL** | Clerk authenticates entry, maps the user to a sanitized session handle, and includes that handle in new in-memory commit payloads. | The handle is a durable Clerk-ID profile, is linked to a wallet, or owns history that survives reload/rebuild. |
 | **PRACTICE** | Human replay calls, local hash verification, reveal/burn, grade, notional portfolio. | A local practice call has an external timestamp or immutable storage. |
 | **SIM** | League identities, prompt/rule/API-labeled agents, follow, premium unlock. | These are real users, paid accounts, deployed strategies, or executed trades. |
 | **PLANNED** | `POST /api/agents/{id}/commit`, durable profiles, payments, public record URLs, program-owned reputation. | Those systems are present in the static app or Worker. |

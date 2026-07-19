@@ -20,6 +20,6 @@
   "blockTimeISO": "2026-07-18T17:42:55.000Z",
   "wallet": "CzRXXbfFk11w5Nue5izgL5VwQTkHY8e2mpfxSBssvc6j",
   "explorer": "https://explorer.solana.com/tx/5LGBfVQ9deCMyU7Po5A5soo81S69BGvKBf9tBwmkNRTPjJeQ5DjSSXbdTo6xR94948SDYfv5RWEUVb3g6WVCYdrM?cluster=devnet",
-  "outcomeAfter": "the pick was anchored before kickoff (StartTime 1783818000000); the 90' result settled hours later — the timestamp proves the call predates the outcome.",
+  "outcomeAfter": "post-match mechanism anchor: the transaction was posted after the 2026-07-12 kickoff and proves the memo/hash/Solana pipeline, not foresight.",
   "anchoredAt": "2026-07-18T17:42:55.895Z"
 }

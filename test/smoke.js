@@ -128,6 +128,19 @@ function checkStaticFile(file) {
   if (file === "index.html") checkProductLabels(html);
 }
 
+function checkProofMetadata() {
+  const legacy = JSON.parse(fs.readFileSync(path.join(ROOT, "anchored-proof.json"), "utf8"));
+  const final = JSON.parse(fs.readFileSync(path.join(ROOT, "anchored-proof-final.json"), "utf8"));
+  const settlement = JSON.parse(fs.readFileSync(path.join(ROOT, "settlement-proof.json"), "utf8"));
+  const legacyKickoff = 1783818000000; // Argentina–Switzerland fixture 18222446
+
+  check(legacy.blockTime * 1000 > legacyKickoff, "legacy anchor blockTime is post-match");
+  check(/post-match|posted after/i.test(legacy.outcomeAfter) && !/before kickoff/i.test(legacy.outcomeAfter), "legacy anchor metadata says post-match");
+  check(final.blockTime * 1000 < final.match.kickoff, "FINAL anchor blockTime predates kickoff");
+  check(/predates|before kickoff/i.test(final.outcomeAfter), "FINAL anchor metadata says pre-kickoff");
+  check(settlement.kind === "atomic-onchain-settlement" && /same transaction/i.test(settlement.claim), "settlement metadata describes atomic composition");
+}
+
 async function fetchWithTimeout(url) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 10000);
@@ -164,6 +177,7 @@ async function main() {
   const { live } = parseArgs(process.argv.slice(2));
   console.log("Foresight smoke checks (" + (live ? "static + live" : "offline static") + ")");
   checkStaticFile("index.html");
+  checkProofMetadata();
   if (fs.existsSync(path.join(ROOT, "pitch.html"))) checkStaticFile("pitch.html");
   else console.log("  skip pitch.html (not present)");
   if (live) await checkLive();
