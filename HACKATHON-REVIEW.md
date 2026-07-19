@@ -31,7 +31,7 @@ The winning demo should lead with one sentence, one problem, one live product lo
 - Desktop/mobile/accessibility risks in the main interaction path.
 - README, overview, pitch narrative, demo script, judge one-pager, and submission copy.
 
-No wallet broadcast, payment enablement, D1 provisioning, or credentialed OAuth automation was performed by this review. The relay **was** intentionally deployed and verified at `1.2.1-shared-state-2026-07-18`; its Durable Object state, proof-route rejection, and one valid fixture-proof response were checked publicly. The ledger, agent-ingestion, proof-page backend, and Billing seams remain local/fail-closed until their production bindings are supplied. The static app changes in the current working tree still require one intentional reviewed commit/deploy.
+No wallet broadcast, payment enablement, D1 provisioning, or credentialed OAuth automation was performed by this review. The redesigned static app and relay **were** intentionally deployed; relay `1.3.0-market-intelligence-2026-07-18`, its Durable Object state, proof routes, public Polymarket history, news, and production-origin allowlist were checked publicly. The ledger, agent-ingestion, proof-page backend, and Billing seams remain local/fail-closed until their production bindings are supplied.
 
 ## Exact ranked top 20 improvements implemented
 
@@ -66,7 +66,7 @@ Fifteen additional worker assignments converted the original limitation list int
 
 The deployment boundary is intentional and judge-safe:
 
-- **Deployed:** the `1.2.1` relay, shared state/freshness telemetry, and proof routes.
+- **Deployed:** the redesigned static app and `1.3.0` relay, including public market/news context, shared state/freshness telemetry, proof routes, and origin allowlist.
 - **In the static app:** evidence-based live modes, safe follow language, explicit replay start, keyboard/focus/chart alternatives, reduced-motion/render budgets, and responsive hardening.
 - **Implemented and tested, not configured/deployed:** D1 ledger, production identity binding, signed agent ingestion, public proof pages backed by that ledger, and Clerk Billing entitlements/webhooks.
 - **Research result:** the evaluation pipeline works, but the eligible dataset is below its predeclared minimum, so it explicitly refuses an “edge” claim.
@@ -87,7 +87,7 @@ The deployment boundary is intentional and judge-safe:
 | Historical wallet guard | Works | Completed/captured replay calls stay practice-only even if a wallet is connected. |
 | Wallet construction | Works in dry-run | Default verifier builds and validates without a private key or network write; broadcast requires explicit key, flag, and acknowledgement. |
 | Clerk identity label | Works at session level | An existing authenticated Clerk user maps to a sanitized handle used by subsequent in-memory commits. |
-| Relay implementation | Works and is deployed | Health, score/odds SSE, news, three proof routes, Durable Object limits, and freshness telemetry have automated coverage; public health reports `1.2.1-shared-state-2026-07-18`. |
+| Relay implementation | Works and is deployed | Health, score/odds SSE, news, timestamp-honest Polymarket history, three proof routes, Durable Object limits, origin filtering, and freshness telemetry have automated coverage; public health reports `1.3.0-market-intelligence-2026-07-18`. |
 | Accessibility/performance | Works in the main judge path | Native controls, visible focus, modal trap/return, semantic table and chart summary, reduced motion, render budgets, and 390px reflow are regression-tested. |
 | Automated checks | Pass locally | The root suite now includes core/UI/smoke/wallet plus identity, proof, live-state, capture, follow, accessibility, ledger, relay, evaluation, agent-ingest, proof-page, and monetization modules without chain mutation. |
 | Public judge URL | Works | The deployed `?demo=1` skips the gate, stays at 0′ without autoplay, uses native pick buttons, exposes the FINAL and atomic explorer links, and logged no browser errors during review. |
@@ -145,7 +145,7 @@ Clerk authentication [REAL]
 | Integration | Source/runtime status | Honest claim | Must not be claimed |
 |---|---|---|---|
 | TxLINE captured tapes | Real checked-in inputs | The UI replays real captured event and StablePrice observations. | Four fixtures prove predictive edge. |
-| Relay `/health` | Deployed at `1.2.1-shared-state-2026-07-18` | Reports configuration, proof capabilities, shared-state readiness, and freshness telemetry. | Health alone means an upstream match is actively producing frames. |
+| Relay `/health` | Deployed at `1.3.0-market-intelligence-2026-07-18` | Reports configuration, comparison/proof capabilities, shared-state readiness, origin mode, and freshness telemetry. | Health alone means an upstream match is actively producing frames. |
 | Relay score/odds SSE | Shipped and used by optional live UI | Credentials remain server-side and frames feed the shared model. | A connected stream guarantees an active match. |
 | Relay news | Shipped and used | Public RSS is deduplicated and deterministically tagged. | This is proprietary or an LLM/news intelligence model. |
 | Relay validation routes | Deployed; not wired into normal browser receipts | Return explicitly unverified API receipts for deadline, price, and score/stat claims. | The current local replay grade is cryptographically validated. |

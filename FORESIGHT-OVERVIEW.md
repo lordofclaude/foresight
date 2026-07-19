@@ -14,7 +14,7 @@ Prediction reputations are easy to edit after the result: winners stay visible, 
 
 The current build proves important pieces of that mechanism. It now contains tested implementations for an append-only ledger, public proof/profile views, stable Clerk/wallet binding, signed external-agent commits, and leakage-safe evaluation. Those production services are not yet deployed/configured, the eligible evaluation sample remains below the claim threshold, and there is still no evidence that the demo agents have repeatable edge.
 
-The deployed relay is `1.2.1-shared-state-2026-07-18`: its proof routes, Durable Object rate/concurrency controls, and freshness telemetry are live. The static judge path remains deliberately useful without a live match, wallet popup, OAuth callback, or backend write.
+The deployed relay is `1.3.0-market-intelligence-2026-07-18`: its Polymarket comparison, proof routes, Durable Object rate/concurrency controls, freshness telemetry, and production-origin allowlist are live. The static judge path remains deliberately useful without a live match, wallet popup, OAuth callback, or backend write.
 
 ## 30-second judge path
 
@@ -94,7 +94,7 @@ browser
      -> TxLINE /api/scores/stream
      -> TxLINE /api/odds/stream
      -> public football RSS for /api/news
-     -> public Polymarket Gamma + CLOB history for /api/polymarket (updated Worker deployment pending)
+     -> public Polymarket Gamma + CLOB history for /api/polymarket (deployed read-only route)
   -> the same normalization and rendering pipeline
 
 OPTIONAL TIMESTAMP / RECEIPT
@@ -116,7 +116,7 @@ The deploy repository is intentionally small: a static page, shared JavaScript, 
 | Label | Shipped evidence | Do not imply |
 |---|---|---|
 | **REAL** | Four checked-in TxLINE-derived fixture tapes and a shared normalization pipeline. | Four fixtures prove predictive edge, significance, or generalization. |
-| **REAL** | Deployed Worker routes: `/health`, `/api/scores/stream`, `/api/odds/stream`, `/api/news`. The working tree additionally implements and tests `/api/polymarket`. | The public deployment already includes the new comparison route, or that an open stream always has fresh data. |
+| **REAL** | Deployed Worker routes: `/health`, `/api/scores/stream`, `/api/odds/stream`, `/api/news`, `/api/polymarket`, and the three fixed validation routes. | An open stream always has fresh data, or public market availability implies execution/custody. |
 | **REAL** | World Cup Final devnet memo anchored before kickoff. | One timestamp is a completed track record or a winning prediction. |
 | **REAL, POST-MATCH** | Argentina–Switzerland devnet memo/hash artifact. | That artifact predates kickoff or proves foresight. |
 | **REAL MECHANISM RECEIPT** | England–Argentina `validateStatV2` plus grade memo composed atomically on devnet. | It is a custom Foresight-program CPI, a pre-match prediction, or a persisted profile grade. |
@@ -148,7 +148,7 @@ Argentina–Switzerland is particularly useful for settlement correctness. Argen
 - `GET /api/scores/stream?fixtureId=...` proxied to TxLINE SSE.
 - `GET /api/odds/stream?fixtureId=...` proxied to TxLINE SSE.
 - `GET /api/news?teams=...` backed by public RSS with deterministic dedup/tagging.
-- `GET /api/polymarket?home=...&away=...&atMs=...` implemented locally for timestamp-aligned public moneyline comparisons. Missing history stays null and partial coverage is explicit; current or post-target prices are never substituted. Worker deployment pending.
+- `GET /api/polymarket?home=...&away=...&atMs=...` is deployed for timestamp-aligned public moneyline comparisons. Missing history stays null and partial coverage is explicit; current or post-target prices are never substituted.
 - Clerk-hosted sign-in UI.
 - Solana devnet RPC for optional memo commits and proof receipts.
 - Lazy official X timeline widget and matchup search links; no X API credentials or sentiment ingestion.

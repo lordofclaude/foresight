@@ -5,7 +5,7 @@
 
 This is a working snapshot, not a claim of finality — a few items below are mid-flight in a parallel work session and marked as such.
 
-> **2026-07-18 consolidation update:** the previously mid-flight identity, proof, ledger, evaluation, ingestion, E2E, follow, monetization, and accessibility work has now been reviewed and incorporated into the root verification path. The relay is deployed at `1.2.1-shared-state-2026-07-18` with Durable Object coordination and all three proof routes. The working tree now contains `1.3.0-market-intelligence-2026-07-18`, including timestamp-honest Polymarket comparison, and passes the Wrangler dry run, but it is **not deployed**. The ledger, public proof/profile backend, production identity binding, agent ingestion, and Billing seam are implemented and fail-closed but **not deployed/configured**. Where older sections below say those sources were unreviewed or that the relay is v1.1, this update supersedes them.
+> **2026-07-18 consolidation update:** the previously mid-flight identity, proof, ledger, evaluation, ingestion, E2E, follow, monetization, and accessibility work has now been reviewed and incorporated into the root verification path. The redesigned static app and relay `1.3.0-market-intelligence-2026-07-18` are deployed, including Durable Object coordination, all three proof routes, timestamp-honest Polymarket comparison, news, and a production-origin allowlist. The ledger, public proof/profile backend, production identity binding, agent ingestion, and Billing seam are implemented and fail-closed but **not deployed/configured**. Where older sections below say those sources were unreviewed or that the relay is v1.1, this update supersedes them.
 
 ---
 
@@ -57,8 +57,8 @@ Single self-contained HTML/JS file (`index.html`), no build step, no framework, 
 
 ### Foresight relay (Cloudflare Worker, deployed)
 `https://foresight-relay.lordofclaude.workers.dev` — the one server-side piece, by design. TxLINE's live streams require credentials that must never reach a public browser page, so this Worker holds them and re-emits the *same real SSE body*, mirroring TxLINE's own paths so the existing tested client (`TxReal.streamLive()`) needs only a host swap. It also serves a merged, deduplicated, keyword-categorized football-news lane (`/api/news`).
-- **Hardened (v1.2.1):** Durable Object-coordinated rate/concurrency limits, persistent freshness telemetry, fixture validation, request IDs, sanitized upstream failures, and an optional origin allowlist.
-- **Verified deployed:** `/health` reports `{ok:true, hasCreds:true, version:"1.2.1-shared-state-2026-07-18", capabilityStatus:{stateScope:"durable_object_shared", stateStatus:"ready"}}`; a public proof-route rejection and valid fixture validation response were checked after deployment.
+- **Hardened (v1.3.0):** Durable Object-coordinated rate/concurrency limits, persistent freshness telemetry, fixture validation, request IDs, sanitized upstream failures, timestamp-honest Polymarket history, and a production origin allowlist.
+- **Verified deployed:** `/health` reports `{ok:true, hasCreds:true, version:"1.3.0-market-intelligence-2026-07-18", corsMode:"allowlist", capabilityStatus:{stateScope:"durable_object_shared", stateStatus:"ready"}}`; the public Polymarket route returned an exact event with all quote timestamps at or before the requested TxLINE time.
 
 ### Solana (devnet)
 Three genuine, independently-verified transactions — not diagrams, not mocks:
@@ -87,8 +87,8 @@ No database, no persisted backend state. The "backend" for on-chain parts is the
 | UI-logic suite (chart y-range, live-fixture routing, etc.) | 58 passed, 0 failed |
 | Smoke suite | 15 passed, 0 failed |
 | Sibling SurpriseIndex agent suite (shared dependency) | 70 passed, 0 failed |
-| Production site | HTTP 200; current working-tree accessibility/service changes are not yet deployed |
-| Relay `/health` | `ok:true, hasCreds:true`, v1.2.1 shared state ready |
+| Production site | HTTP 200; redesigned dashboard, match timeline, market intelligence, news, and World Cup assets deployed |
+| Relay `/health` | `ok:true, hasCreds:true`, v1.3.0 shared state ready, origin allowlist active |
 | All 3 devnet transactions | `finalized`, `err:null`, independently confirmed via RPC |
 | GitHub repo | public (was private — fixed; a private repo is an automatic disqualifier per the rules) |
 | Vercel bot-challenge | disabled (was returning 403 to automated screeners) |
