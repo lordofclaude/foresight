@@ -1,0 +1,17 @@
+name = "foresight-ledger"
+main = "worker.js"
+compatibility_date = "2026-07-01"
+
+# Replace this placeholder after `npm run db:create`. It is deliberately not a
+# credential; D1 database IDs are deployment configuration.
+[[d1_databases]]
+binding = "DB"
+database_name = "foresight-ledger"
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
+
+# AUTH_VERIFY_URL is a non-secret configuration value. Set it in the
+# Cloudflare dashboard or with `wrangler vars`. The verifier
+# URL is intentionally absent here so writes fail closed by default.
+
+[observability]
+enabled = true

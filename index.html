@@ -364,6 +364,7 @@ footer,footer code,.card,.prow,.commitrow,.receipt,.stratbox,.vd,.abprev{overflo
 .wallet-btn.connected{background:#0e2236;color:var(--lime);border:1px solid #2a4a2a}
 .wallet-pending{position:relative;color:transparent!important}
 .wallet-pending::after{content:"";position:absolute;inset:0;margin:auto;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#0a1322;border-radius:50%;animation:spin .7s linear infinite}
+.identity-chip{display:flex;align-items:center;gap:5px;max-width:220px;color:var(--mut);font:9px var(--fmono)}.identity-chip[data-state="VERIFIED"]{color:var(--lime)}.identity-chip[data-state="PENDING_BACKEND"]{color:var(--amber)}.identity-chip button{display:none;border:0;background:none;color:inherit;text-decoration:underline;cursor:pointer;font:inherit;padding:0}.identity-chip[data-linked="1"] button{display:inline}
 @keyframes spin{to{transform:rotate(360deg)}}
 .real-tag{font-size:.58rem;letter-spacing:.05em;padding:.06rem .32rem;border-radius:3px;border:1px solid #2a4a2a;color:var(--lime);background:rgba(20,241,149,.08)}
 .mode-stack{margin:0 16px 14px;display:grid;gap:8px}.mode-banner{display:flex;gap:10px;padding:9px 12px;border:1px solid #70591d;background:#19160d;border-radius:10px;color:#dec98b}.mode-banner strong{color:var(--amber);white-space:nowrap}.mode-banner.verified{border-color:#236348;background:#0b1d18}.mode-banner.verified strong{color:var(--lime)}
@@ -405,6 +406,7 @@ footer,footer code,.card,.prow,.commitrow,.receipt,.stratbox,.vd,.abprev{overflo
     <span class="trust-badge"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>Wallet anchor</span>
   </div>
   <button class="btn wallet-btn" id="walletBtn">🔗 Connect Wallet</button>
+  <span class="identity-chip" id="identityState" role="status" aria-live="polite" data-state="GUEST" data-linked="0"><span>Guest · wallet unlinked</span><button type="button" id="unlinkIdentityBtn">unlink</button></span>
   <button class="btn google-btn" id="googleLoginBtn">
     <svg viewBox="0 0 24 24" width="16" height="16"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.99.66-2.26 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0012 23z"/><path fill="#FBBC05" d="M5.84 14.09A6.6 6.6 0 015.5 12c0-.73.13-1.43.34-2.09V7.07H2.18A11 11 0 001 12c0 1.77.43 3.45 1.18 4.93z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1a11 11 0 00-9.82 6.07L5.84 9.9C6.71 7.31 9.14 5.38 12 5.38z"/></svg>
     Sign in with Google
@@ -563,6 +565,7 @@ footer,footer code,.card,.prow,.commitrow,.receipt,.stratbox,.vd,.abprev{overflo
 <!-- No static 18257739 request: the registry-backed live bundle streams into existence without a known 404. -->
 <script src="shared/txline-real.js"></script>
 <script src="shared/agent.js"></script>
+<script src="shared/identity-binding.js"></script>
 <script src="foresight.js"></script>
 <script src="anchored-proof.js"></script><!-- REAL Solana devnet tx: a genuine Foresight commit hash anchored on-chain (mechanism demo, anchored post-match) -->
 <script src="anchored-proof-final.js"></script><!-- REAL pre-kickoff anchor: World Cup FINAL pick, anchored ~19h BEFORE kickoff -->
@@ -625,11 +628,26 @@ let agentRegistry = {}, following = {};      // deployed agents + who you follow
 let followTier = { "@polyquant-ml": { mode: "paid", price: 9 }, "@two-nil-shield": { mode: "paid", price: 4 } };
 let tracking = {};
 let myTier = { mode: "free", price: 0 };     // your own prophet setting
-/* Your identity. Guest = "@you". Signing in with Clerk (Google or Solana
-   wallet) rebinds ME to your Clerk-derived handle — from then on every commit
-   hashes YOUR identity into canonicalPick (L1: the signed statement names its
-   author). Existing guest commits keep their original label in this session. */
-let ME = "@you";
+/* Your identity. Guest = "@you". Clerk sessions use the immutable user.id as
+   the domain key; the friendly label is display-only. Wallet possession is a
+   separate claim and stays pending until the nonce-verification seam succeeds. */
+let ME = "@you", ME_LABEL = "@you";
+const identityBinding = IdentityBinding.createController({
+  // Production may inject a same-origin backend seam. Without it, a valid
+  // wallet signature is labeled pending and never promoted to a durable link.
+  finalizeOnServer: typeof window.FORESIGHT_IDENTITY_FINALIZE === "function" ? window.FORESIGHT_IDENTITY_FINALIZE : null
+});
+function renderIdentityState() {
+  const el = $('identityState'), state = identityBinding.snapshot(); if (!el) return;
+  let copy = "Guest · wallet unlinked";
+  if (state.status === "ACCOUNT_ONLY") copy = `${ME_LABEL} · Clerk session · wallet unlinked`;
+  if (state.status === "CHALLENGE_PENDING") copy = `${ME_LABEL} · awaiting wallet signature`;
+  if (state.status === "PENDING_BACKEND") copy = `${ME_LABEL} · signature checked · backend link pending (session-only)`;
+  if (state.status === "VERIFIED") copy = `${ME_LABEL} ↔ ${state.walletAddress.slice(0, 4)}…${state.walletAddress.slice(-4)} · verified (session-only)`;
+  if (state.status === "GUEST" && solWallet) copy = `${solWallet.slice(0, 4)}…${solWallet.slice(-4)} · wallet connected · not account-linked`;
+  el.dataset.state = state.status; el.dataset.linked = state.walletAddress ? "1" : "0";
+  el.querySelector('span').textContent = copy;
+}
 function tierOf(wallet) { return wallet === ME ? myTier : (followTier[wallet] || { mode: "free", price: 0 }); }
 function oddsAt(F, t) {
   let c = F.tape.ticks[0];
@@ -875,6 +893,36 @@ const MEMO_PROGRAM_ID = "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr";
 const DEVNET_RPC = "https://api.devnet.solana.com";
 let solWallet = null, solConn = null;
 
+async function requestWalletIdentityLink() {
+  if (!CLERK_USER) { renderIdentityState(); return; }
+  if (!window.solana || typeof window.solana.signMessage !== "function") {
+    identityBinding.unlink(); renderIdentityState();
+    toast("wallet connected, but this provider cannot sign the account-link challenge", true);
+    return;
+  }
+  try {
+    const challenge = identityBinding.beginLink({ accountId: CLERK_USER.id, walletAddress: solWallet });
+    renderIdentityState();
+    const signed = await window.solana.signMessage(new TextEncoder().encode(challenge.message), "utf8");
+    const state = await identityBinding.submitProof({
+      challengeId: challenge.id, accountId: CLERK_USER.id, walletAddress: solWallet,
+      signature: signed && signed.signature
+    });
+    renderIdentityState();
+    if (state.status === "VERIFIED") toast("✓ Clerk account and wallet verified for this session", false, "act");
+    else toast("wallet signature verified; account link awaits the backend seam (session-only)", false, "act");
+  } catch (e) {
+    identityBinding.unlink(); renderIdentityState();
+    toast("wallet connected but account link was not verified: " + (e.message || e), true);
+  }
+}
+
+function unlinkWalletIdentity() {
+  identityBinding.unlink(); renderIdentityState();
+  toast("account-wallet link removed; the wallet connection remains separate");
+}
+$('unlinkIdentityBtn').onclick = unlinkWalletIdentity;
+
 async function connectWallet() {
   if (!window.solana || !window.solana.isPhantom) {
     $('modalbox').innerHTML = `<h4>Connect Wallet <span onclick="document.getElementById('modal').classList.remove('open')">✕ close</span></h4>
@@ -893,6 +941,7 @@ async function connectWallet() {
     $('walletBtn').classList.remove('wallet-pending'); $('walletBtn').disabled = false;
     $('walletBtn').classList.add('connected');
     $('walletBtn').textContent = `⛓ ${solWallet.slice(0, 4)}…${solWallet.slice(-4)} · ${sol.toFixed(3)} SOL`;
+    await requestWalletIdentityLink();
     if (sol < 0.001) {
       toast(`connected — 0 devnet SOL. Fund ${solWallet.slice(0, 8)}… at faucet.solana.com to sign real commits`, true);
     } else {
@@ -913,7 +962,11 @@ async function commitRealOnChain(F, pick, t, mkt) {
   if (!walletCommitEligible(F, Date.now(), isVerifiedLiveFixture(F))) throw new Error("historical/captured fixtures are practice-only");
   const salt = "you-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
   const oddsTs = Math.round(t * 1000);
-  const { memo, hash } = FO.memoFor({ wallet: ME, fixtureId: F.id, pick, mkt, oddsTs, salt });
+  const linked = identityBinding.snapshot();
+  // A pending/unlinked address proves only wallet possession, not ownership of
+  // the Clerk account. Keep the on-chain author honest until backend finalized.
+  const commitActor = linked.status === "VERIFIED" && linked.walletAddress === solWallet ? ME : "solana:" + solWallet;
+  const { memo, hash } = FO.memoFor({ wallet: commitActor, fixtureId: F.id, pick, mkt, oddsTs, salt });
   const owner = new solanaWeb3.PublicKey(solWallet);
   const ix = new solanaWeb3.TransactionInstruction({
     keys: [], programId: new solanaWeb3.PublicKey(MEMO_PROGRAM_ID), data: new TextEncoder().encode(memo),
@@ -937,7 +990,7 @@ async function commitRealOnChain(F, pick, t, mkt) {
     sim: false, signature, slot: txInfo && txInfo.slot, blockTime: txInfo && txInfo.blockTime,
     explorer: `https://explorer.solana.com/tx/${signature}?cluster=devnet`,
   };
-  const c = league.commit({ wallet: ME, fixtureId: F.id, pick, salt, tCommit: t, mkt, oddsTs, anchor });
+  const c = league.commit({ wallet: commitActor, fixtureId: F.id, pick, salt, tCommit: t, mkt, oddsTs, anchor });
   // memo/hash must match what the league just computed independently — the
   // whole point is one canonical hash function, never two implementations drifting.
   if (c.hash !== hash) console.warn("hash mismatch between memoFor and league.commit — should never happen");
@@ -1468,14 +1521,12 @@ function toggleFollow(wallet) {
 window.toggleFollow = toggleFollow;
 
 /* ---------------- Google sign-in (header shortcut) ----------------
-   The real sign-in lives on the landing gate: Clerk-powered Google OAuth +
-   Sign-in-with-Solana, wired and working. This static dashboard keeps no
-   session of its own, so the header button routes back to the gate instead
-   of faking a second login surface. */
+   The real sign-in lives on the landing gate. This static dashboard keeps no
+   durable account-wallet record, so the header routes back to that surface. */
 $('googleLoginBtn').onclick = () => {
   $('modalbox').innerHTML = `<h4>Sign in with Google <span onclick="document.getElementById('modal').classList.remove('open')">✕ close</span></h4>
     <div class="stratbox">Google + Solana sign-in is live on the landing gate (Clerk-powered — Google OAuth + Sign-in-with-Solana). Sign in there; this dashboard never asks for a password itself.</div>
-    <div class="small mut" style="margin-top:.5rem">Signed in or not, on this dashboard you're <b>@you</b> — every commit, follow and portfolio action is tracked under that identity. Wallet-linking your Foresight identity for real on-chain commits stays the production plan.</div>
+    <div class="small mut" style="margin-top:.5rem">Clerk sessions use the real immutable <code>user.id</code>. Wallet linking requires an expiring nonce signature and backend verification; without that backend, the UI stays explicitly session-only and pending.</div>
     <button class="btn violet" style="margin-top:.6rem" onclick="localStorage.removeItem('foresight_entered');location.reload()">↩ Back to the gate to sign in</button>
     <button class="btn" style="margin-top:.4rem" onclick="document.getElementById('modal').classList.remove('open')">Continue as @you</button>`;
   $('modal').classList.add('open');
@@ -1852,9 +1903,10 @@ const qs = new URLSearchParams(location.search);
 /* ================= Clerk session (shared by gate + boot restore) =================
    Google OAuth + Sign-in-with-Solana (web3_solana_signature), both enabled on
    the Foresight instance. The fixed publishable key loads only from a trusted
-   CDN. Signing in REBINDS ME — every subsequent commit hashes the
-   Clerk-derived handle into canonicalPick, so the provable statement names its
-   author. Guest commits made before sign-in keep their "@you" label forever. */
+   CDN. Signing in REBINDS ME to the stable Clerk user.id, never a mutable or
+   collision-prone display name. Guest commits made before sign-in keep their
+   "@you" label forever. Account-wallet links additionally require a signed,
+   expiring nonce and backend verification. */
 const CLERK_PK = "pk_test_Y2VydGFpbi1lbXUtNjMuY2xlcmsuYWNjb3VudHMuZGV2JA";
 let CLERK_USER = null;
 /** Clerk user → league handle: username > firstName > email local-part, sanitized. */
@@ -1865,12 +1917,14 @@ function clerkLabel(u) {
   return "@" + s;
 }
 function bindClerkUser(user) {
-  if (!user) return;
+  if (!user || !user.id) return;
   CLERK_USER = user;
-  const label = clerkLabel(user);
-  if (label !== ME) ME = label;
+  ME_LABEL = clerkLabel(user);
+  identityBinding.signIn(user.id);
+  ME = IdentityBinding.accountKey(user.id);
   localStorage.setItem("foresight_clerk_session", "1");
-  toast("✓ signed in as " + ME + " — new commits bind to this identity", false, "act");
+  renderIdentityState();
+  toast("✓ signed in as " + ME_LABEL + " — new commits use the stable Clerk account ID", false, "act");
   renderAll();
 }
 async function ensureClerk() {

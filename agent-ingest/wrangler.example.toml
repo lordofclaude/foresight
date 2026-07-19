@@ -1,0 +1,27 @@
+name = "foresight-agent-ingest"
+main = "worker.mjs"
+compatibility_date = "2026-07-01"
+
+[vars]
+MAX_AGE_MS = "300000"
+MAX_FUTURE_SKEW_MS = "15000"
+MAX_QUOTE_AGE_MS = "600000"
+
+[[durable_objects.bindings]]
+name = "AGENT_COMMIT_STORE"
+class_name = "AgentCommitStore"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["AgentCommitStore"]
+
+[[services]]
+binding = "QUOTE_PROOF_SERVICE"
+service = "replace-with-proof-verifier"
+
+[[services]]
+binding = "RATE_LIMIT_SERVICE"
+service = "replace-with-rate-limiter"
+
+# Set AGENT_REGISTRY_JSON, OWNER_TOKENS_JSON, and FIXTURE_POLICY_JSON with
+# `wrangler secret put`. Never put tokens, private keys, or prompts in this file.

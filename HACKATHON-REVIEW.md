@@ -2,7 +2,7 @@
 
 Review date: 2026-07-18  
 Reviewed build: local working tree at `C:\Users\lordo\Desktop\Foresight`  
-Recommended judge URL after deployment: `https://foresight-txline.vercel.app/?demo=1`
+Verified judge URL: `https://foresight-txline.vercel.app/?demo=1`
 
 ## Founder verdict
 
@@ -31,7 +31,7 @@ The winning demo should lead with one sentence, one problem, one live product lo
 - Desktop/mobile/accessibility risks in the main interaction path.
 - README, overview, pitch narrative, demo script, judge one-pager, and submission copy.
 
-No deployment, wallet broadcast, production mutation, or credentialed OAuth automation was performed during the review.
+No deployment, wallet broadcast, production mutation, or credentialed OAuth automation was performed by this review. A concurrent project session deployed the current core app during the review; the public `?demo=1` path was then verified separately. The latest uncommitted flag-image polish, this report, and the companion pitch/submission changes still require an intentional commit/deploy. The public relay remains on `1.1.0-hardened-2026-07-18`; the local proof-route worker is `1.2.0-proof-relay-2026-07-18` and is not yet deployed.
 
 ## Exact ranked top 20 improvements implemented
 
@@ -79,6 +79,7 @@ All items below are present in the reviewed local build or its companion submiss
 | Relay implementation | Works in source/tests | Health, score/odds SSE, news, and three proof routes have automated route/hardening coverage. |
 | Accessibility | Improved | Pick choices are native buttons with keyboard activation, visible focus, and `aria-pressed`. |
 | Automated checks | Pass locally | Core, inline, UI, offline smoke, wallet dry-run, and relay tests run without chain mutation. |
+| Public judge URL | Works | The deployed `?demo=1` skips the gate, stays at 0′ without autoplay, uses native pick buttons, exposes the FINAL and atomic explorer links, and logged no browser errors during review. |
 
 ## What does not work yet
 
@@ -94,7 +95,8 @@ All items below are present in the reviewed local build or its companion submiss
 | Polymarket is a search link only | Foresight cannot verify a trade or place one. | Treat execution as later scope; the wedge is reputation, not another betting terminal. |
 | Four tapes do not prove edge | Accuracy, calibration, profitability, and generalization claims would be statistically indefensible. | Capture a larger multi-competition set and publish pre-registered out-of-sample metrics. |
 | Real Clerk, Phantom, and active-live paths are not automated E2E | Third-party popups/session callbacks and quiet feeds remain release risks. | Add isolated Playwright runs with Clerk testing tokens, wallet mocks, and a deterministic relay fixture. |
-| Public deployment may lag the local build | Judges could see the old experience even though source/tests are ready. | Deploy the exact reviewed SHA, then run the checklist below from an incognito browser. |
+| Some final artifacts still lag the public app | The core `?demo=1` experience is live, but the latest flag-image polish, review, deck, and submission-pack edits are not all published from a single reviewed revision. | Commit the intended files, deploy one reviewed revision, then run the checklist below from an incognito browser. |
+| Public relay is one version behind local proof-route code | Live SSE/health work, but judges cannot call the new fixed validation routes on the deployed Worker yet. | Deploy relay `1.2.0-proof-relay-2026-07-18`, then test one rejected and one valid proof request. |
 | Worker limits are per isolate | Rate/concurrency/JWT coordination is not globally durable. | Move abuse controls and freshness telemetry to shared durable infrastructure. |
 | Dependency audit still reports transitive advisories | Supply-chain risk remains despite exact pinning. | Track upstream fixes; do not force an incompatible Solana upgrade before judging. |
 | No restrictive CSP yet | Inline scripts and third-party runtime scripts keep the browser attack surface larger. | Remove inline dependencies, self-host/pin assets where feasible, then deploy/test CSP. |
@@ -132,7 +134,7 @@ Clerk authentication [REAL]
 | Integration | Source/runtime status | Honest claim | Must not be claimed |
 |---|---|---|---|
 | TxLINE captured tapes | Real checked-in inputs | The UI replays real captured event and StablePrice observations. | Four fixtures prove predictive edge. |
-| Relay `/health` | Shipped in Worker source | Reports configuration/capabilities. | Health means upstream frames are fresh. |
+| Relay `/health` | Deployed at v1.1; local source is v1.2 | Reports basic configuration now; local v1.2 adds explicit capabilities. | Health means upstream frames are fresh or proof routes are deployed. |
 | Relay score/odds SSE | Shipped and used by optional live UI | Credentials remain server-side and frames feed the shared model. | A connected stream guarantees an active match. |
 | Relay news | Shipped and used | Public RSS is deduplicated and deterministically tagged. | This is proprietary or an LLM/news intelligence model. |
 | Relay validation routes | Shipped in local source; not wired into normal browser receipts | Return explicitly unverified API receipts for deadline, price, and score/stat claims. | The current local replay grade is cryptographically validated. |
@@ -191,7 +193,7 @@ This follows the useful parts of [YC’s “How to Pitch Your Company”](https:
 
 ## Remaining work, in priority order
 
-1. Deploy and smoke-test the exact reviewed build.
+1. Commit/publish one reviewed revision, including the deck/submission pack, and deploy relay v1.2 proof routes.
 2. Persist an append-only ledger and public receipt/profile URL.
 3. Wire deadline, quote, and final-stat proof receipts into eligible commits/grades.
 4. Bind stable Clerk user IDs and wallet ownership to one recoverable account.

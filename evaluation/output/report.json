@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "generatedBy": "evaluation/evaluate.js",
+  "deterministicSeed": 20260718,
+  "status": "pipeline-demonstration",
+  "claimPolicy": {
+    "minimumHoldoutFixtures": 20,
+    "observedHoldoutFixtures": 1,
+    "performanceClaimAllowed": false,
+    "message": "Performance claims refused: 1 holdout fixtures is below the minimum of 20."
+  },
+  "methodology": {
+    "unitOfSplit": "fixture",
+    "ordering": "fixture StartTime ascending",
+    "holdout": "latest whole fixtures",
+    "holdoutRatio": 0.3,
+    "leakageCheck": "no fixture ID may occur in both train and holdout",
+    "prediction": "top probability from the last valid normalized pre-kickoff 1X2 consensus quote",
+    "outcome": "90-minute 1X2 from game_finalised stat keys 1001+3001 / 1002+3002",
+    "metrics": "top-1 accuracy, multiclass Brier (sum over 3 classes), natural-log loss, top-label ECE (5 bins)",
+    "uncertainty": "95% Wilson interval for accuracy; deterministic fixture bootstrap percentile intervals for continuous metrics when n >= 2"
+  },
+  "discoveredTapeCount": 4,
+  "eligibleFixtureCount": 3,
+  "excluded": [
+    {
+      "fixtureId": "18257865",
+      "file": "18257865.tape.js",
+      "reason": "no game_finalised regulation outcome"
+    }
+  ],
+  "split": {
+    "trainFixtureIds": [
+      "18222446",
+      "18237038"
+    ],
+    "holdoutFixtureIds": [
+      "18241006"
+    ]
+  },
+  "holdoutRecords": [
+    {
+      "fixtureId": "18241006",
+      "participants": [
+        "England",
+        "Argentina"
+      ],
+      "startTime": 1784142000000,
+      "quoteTs": 1784141985825,
+      "probabilities": {
+        "part1": 0.3547009828918819,
+        "draw": 0.33621301656817754,
+        "part2": 0.3090860005399406
+      },
+      "predicted": "part1",
+      "outcome": "part2",
+      "score90": [
+        1,
+        2
+      ]
+    }
+  ],
+  "metrics": {
+    "sampleSize": 1,
+    "accuracy": 0,
+    "accuracyWilson95": [
+      0,
+      0.7934506856227626
+    ],
+    "multiclassBrier": 0.7162141344242356,
+    "multiclassBrierBootstrap95": null,
+    "logLoss": 1.1741357219084274,
+    "logLossBootstrap95": null,
+    "topLabelCalibration": {
+      "expectedCalibrationError": 0.3547009828918819,
+      "bins": [
+        {
+          "lower": 0.2,
+          "upper": 0.4,
+          "count": 1,
+          "meanConfidence": 0.3547009828918819,
+          "accuracy": 0
+        }
+      ]
+    },
+    "calibrationBootstrap95": null,
+    "bootstrapMeaningful": false
+  }
+}

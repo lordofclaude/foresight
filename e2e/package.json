@@ -1,0 +1,17 @@
+{
+  "name": "foresight-browser-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "playwright test",
+    "test:guest": "playwright test --project=guest",
+    "test:auth": "playwright test --project=clerk-auth",
+    "test:headed": "playwright test --project=guest --headed",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@clerk/testing": "2.2.10",
+    "@playwright/test": "1.61.1"
+  }
+}

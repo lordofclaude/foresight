@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://foresight.invalid/schemas/agent-commit-v1.json",
+  "title": "Foresight signed agent commit envelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["payload", "signature"],
+  "properties": {
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "agentId", "ownerId", "fixtureId", "market", "selection", "nonce", "issuedAtMs", "quote", "proof"],
+      "properties": {
+        "version": { "const": 1 },
+        "agentId": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{2,79}$" },
+        "ownerId": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{2,79}$" },
+        "fixtureId": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,79}$" },
+        "market": { "type": "string", "pattern": "^[A-Z0-9_]{2,64}$" },
+        "selection": { "type": "string", "pattern": "^[a-z0-9_]{1,32}$" },
+        "nonce": { "type": "string", "pattern": "^[A-Za-z0-9_-]{16,128}$" },
+        "issuedAtMs": { "type": "integer" },
+        "quote": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["quoteId", "source", "observedAtMs", "pricesPpm"],
+          "properties": {
+            "quoteId": { "type": "string" },
+            "source": { "type": "string" },
+            "observedAtMs": { "type": "integer" },
+            "pricesPpm": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["part1", "draw", "part2"],
+              "properties": {
+                "part1": { "type": "integer", "minimum": 0, "maximum": 1000000 },
+                "draw": { "type": "integer", "minimum": 0, "maximum": 1000000 },
+                "part2": { "type": "integer", "minimum": 0, "maximum": 1000000 }
+              }
+            }
+          }
+        },
+        "proof": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "reference", "quoteDigest"],
+          "properties": {
+            "kind": { "type": "string" },
+            "reference": { "type": "string" },
+            "quoteDigest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+          }
+        }
+      }
+    },
+    "signature": { "type": "string", "pattern": "^[A-Za-z0-9_-]{40,512}$" }
+  }
+}

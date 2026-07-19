@@ -1,0 +1,13 @@
+{
+  "name": "foresight-evaluation",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Leakage-safe, low-sample-honest Foresight baseline evaluation",
+  "scripts": {
+    "evaluate": "node evaluate.js",
+    "test": "node --test test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
