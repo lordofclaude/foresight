@@ -11,6 +11,11 @@ function ok(cond, name) {
 }
 function eq(a, b, name) { ok(a === b, name + ` (got ${JSON.stringify(a)}, want ${JSON.stringify(b)})`); }
 function close(a, b, tol, name) { ok(Math.abs(a - b) <= tol, name + ` (got ${a}, want ~${b})`); }
+function throws(fn, pattern, name) {
+  let err = null;
+  try { fn(); } catch (e) { err = e; }
+  ok(!!err && (!pattern || pattern.test(String(err.message))), name + (err ? "" : " (did not throw)"));
+}
 
 /* ---------------- sha256 (FIPS vectors) ---------------- */
 eq(F.sha256("abc"), "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad", "sha256 'abc' FIPS vector");
@@ -25,6 +30,26 @@ const basePick = { wallet: "@me", fixtureId: 18222446, pick: "part1", mkt: { hom
 eq(F.canonicalPick(basePick), F.canonicalPick({ ...basePick }), "canonical stable across object copies");
 ok(F.canonicalPick(basePick) !== F.canonicalPick({ ...basePick, pick: "part2" }), "canonical differs by pick");
 ok(F.commitHash("x", "s1") !== F.commitHash("x", "s2"), "salt changes hash");
+throws(() => F.canonicalPick({ ...basePick, pick: "part3" }), /unsupported pick side/, "canonical rejects unsupported side");
+throws(() => F.canonicalPick({ ...basePick, fixtureId: Infinity }), /fixtureId/, "canonical rejects non-finite fixture id");
+throws(() => F.canonicalPick({ ...basePick, fixtureId: 1.5 }), /fixtureId/, "canonical rejects fractional fixture id");
+throws(() => F.canonicalPick({ ...basePick, oddsTs: NaN }), /oddsTs/, "canonical rejects non-finite odds timestamp");
+throws(() => F.canonicalPick({ ...basePick, mkt: { home: 0.8, draw: 0.3, away: 0.2 } }), /sum/, "canonical rejects a non-normalized probability triple");
+throws(() => F.canonicalPick({ ...basePick, mkt: { home: 0.98999, draw: 0.01, away: 0.00001 } }), /between 0.01 and 1/, "canonical rejects attacker-supplied near-zero price");
+throws(() => F.canonicalPick({ ...basePick, mkt: { home: Infinity, draw: 0.2, away: 0.2 } }), /finite/, "canonical rejects infinite price");
+
+/* ---------------- legacy anchored-artifact compatibility ---------------- */
+{
+  const artifact = JSON.parse(fs.readFileSync(path.join(__dirname, "anchored-proof-final.json"), "utf8"));
+  const originalCanonical = artifact.canonical, originalHash = artifact.hash;
+  const imported = F.importAnchoredArtifact(artifact, "foresight-final-onchain-v1");
+  eq(imported.rawPick, "away", "v1 anchor retains its raw legacy side in signed bytes");
+  eq(imported.pick, "part2", "v1 anchor normalizes away to canonical part2 after verification");
+  ok(imported.hashVerified, "v1 anchor hash verifies with its original salt");
+  eq(imported.canonical, originalCanonical, "v1 anchor import does not rewrite canonical bytes");
+  eq(imported.hash, originalHash, "v1 anchor import does not rewrite hash");
+  ok(F.gradePick(imported.pick, imported.mkt, "part2").won, "imported legacy anchor grades through canonical side semantics");
+}
 
 /* ---------------- memoFor (on-chain memo — shared by CLI anchor + browser wallet) ---------------- */
 {
@@ -49,6 +74,11 @@ ok(gWin.upsetCall, "non-favorite pick flagged as upset call");
 const gLose = F.gradePick("part1", { home: 0.5, draw: 0.3, away: 0.2 }, "part2");
 close(gLose.pnl, -100, 1e-9, "loss costs stake");
 ok(!F.gradePick("part1", { home: 0.5, draw: 0.3, away: 0.2 }, "part1").upsetCall, "favorite pick is not an upset call");
+throws(() => F.gradePick("part2", { home: 0.99998, draw: 0.00001, away: 0.00001 }, "part2"), /grading floor/,
+  "grading rejects near-zero selected probability instead of manufacturing P&L");
+throws(() => F.gradePick("bogus", { home: 0.5, draw: 0.3, away: 0.2 }, "part1"), /unsupported pick side/, "grading rejects unsupported pick side");
+throws(() => F.gradePick("part1", { home: 0.5, draw: NaN, away: 0.2 }, "part1"), /finite/, "grading rejects non-finite market input");
+throws(() => F.gradePick("part1", { home: 0.5, draw: 0.3, away: 0.2 }, "part1", Infinity), /stake/, "grading rejects non-finite stake");
 
 /* ---------------- mark-to-market ---------------- */
 {
@@ -102,6 +132,8 @@ ok(!F.gradePick("part1", { home: 0.5, draw: 0.3, away: 0.2 }, "part1").upsetCall
   eq(c3.status, "BURNED", "unrevealed → BURNED (reveal-or-burn)");
   close(c3.grade.pnl, -100, 1e-9, "burn costs full stake");
   eq(c1.status, "INVALID", "invalid reveal stays INVALID (not graded)");
+  throws(() => L.commit({ wallet: "@a", fixtureId: 1, pick: "part1", salt: "s", tCommit: Infinity, mkt, oddsTs: 1 }), /tCommit/,
+    "league rejects a non-finite commit timestamp");
 }
 
 /* ---------------- per-fixture settlement (multi-match league) ---------------- */
@@ -267,6 +299,21 @@ ok(!F.gradePick("part1", { home: 0.5, draw: 0.3, away: 0.2 }, "part1").upsetCall
     : require(path.join(__dirname, "..", "t3-surprise-index", "agent.js"));
   const tape = SA.buildRealTape(TxReal.EVENTS, TxReal.state.oddsTimeline);
   ok(tape && tape.real, "real tape builds");
+  ok(tape.ticks[0].sourceTs === tape.ticks[0].ts && Number.isFinite(tape.ticks[0].sourceTs),
+    "real ticks preserve absolute quote timestamp separately from relative t");
+
+  const provenanceTimeline = Array.from({ length: 50 }, (_, i) => TxReal.normalizeOddsPayload({
+    Ts: 100000 + i * 1000, MessageId: "quote-" + i, Bookmaker: "TXStable",
+    Market: "1X2", MarketPeriod: "FT", SuperOddsType: "1X2_PARTICIPANT_RESULT", Pct: [40, 30, 30],
+  }));
+  const provenanceTape = SA.buildRealTape([{ ts: 100000 }, { ts: 149000 }], provenanceTimeline);
+  ok(!!provenanceTape, "synthetic provenance tape builds");
+  eq(provenanceTape.ticks[0].t, 0, "real tick keeps relative playback t");
+  eq(provenanceTape.ticks[0].sourceTs, 100000, "real tick preserves source Ts");
+  eq(provenanceTape.ticks[0].messageId, "quote-0", "real tick preserves MessageId");
+  eq(provenanceTape.ticks[0].bookmaker, "TXStable", "real tick preserves bookmaker");
+  eq(provenanceTape.ticks[0].market, "1X2", "real tick preserves market");
+  eq(provenanceTape.ticks[0].period, "FT", "real tick preserves period");
 
   const outcome = F.outcomeFromTape(tape.events);
   eq(outcome.winner, "draw", "90' outcome from statKeys: 1-1 draw (ET win does NOT settle FT 1X2)");
@@ -329,5 +376,48 @@ ok(!F.gradePick("part1", { home: 0.5, draw: 0.3, away: 0.2 }, "part1").upsetCall
   ok(risks.every(r => r >= 0 && r <= 100), "real-tape risk bounded");
 }
 
-console.log(`\n${passed} passed, ${failed} failed`);
-process.exit(failed ? 1 : 0);
+async function runAsyncIntegrityTests() {
+  const TxReal = require("./shared/txline-real.js");
+
+  TxReal._reset();
+  TxReal.configure({ fixtureId: 7, jwt: "test", apiToken: "test", fetchImpl: () => Promise.reject(new Error("offline")) });
+  const fallback = await TxReal.proofFor(1001, 1, 9);
+  eq(fallback.proofStatus, "offline_simulated", "offline proof is explicitly labeled simulated");
+  eq(fallback.verified, false, "offline proof never claims verification");
+  eq(fallback.cryptographicallyVerified, false, "offline proof never claims crypto verification");
+  eq(fallback.txSig, null, "offline proof does not expose a fake tx signature as real");
+  ok(!!fallback.simulatedProof && !!fallback.simulatedProof.pseudoTxSig, "offline diagnostics remain available under simulatedProof");
+
+  TxReal._reset();
+  TxReal.configure({ fixtureId: 7, jwt: "test", apiToken: "test", fetchImpl: () => Promise.resolve({
+    ok: true, status: 200, json: () => Promise.resolve({ leaf: "api-leaf", root: "api-root", subTreeProof: { path: ["api-node"] } }),
+  }) });
+  const received = await TxReal.proofFor(1001, 1, 9);
+  eq(received.proofStatus, "api_received", "API proof is labeled received, not verified");
+  eq(received.verified, false, "unverified API response does not claim crypto verification");
+  ok(received.apiReceived && received.real, "API proof retains genuine response provenance");
+
+  let requestSignal = null, readerCancelled = false;
+  TxReal._reset();
+  TxReal.configure({ fixtureId: 7, jwt: "test", apiToken: "test", fetchImpl: (_url, opts) => {
+    requestSignal = opts.signal;
+    return Promise.resolve({ ok: true, status: 200, body: { getReader: () => ({
+      read: () => new Promise(() => {}),
+      cancel: () => { readerCancelled = true; return Promise.resolve(); },
+    }) } });
+  } });
+  const stream = TxReal.streamLive("odds", { fixtureId: 7 });
+  await new Promise(resolve => setImmediate(resolve));
+  stream.stop();
+  await Promise.resolve();
+  ok(requestSignal && requestSignal.aborted, "streamLive.stop aborts the in-flight fetch");
+  ok(readerCancelled, "streamLive.stop cancels the active response reader");
+}
+
+runAsyncIntegrityTests().then(() => {
+  console.log(`\n${passed} passed, ${failed} failed`);
+  process.exit(failed ? 1 : 0);
+}).catch(err => {
+  console.error(err);
+  process.exit(1);
+});

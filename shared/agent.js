@@ -439,7 +439,15 @@ const SurpriseAgent = (() => {
       if (o.ts >= t0 && o.ts <= endTs + 60000) seen.set(o.ts, o);
     }
     const ticks = [...seen.values()].sort((a, b) => a.ts - b.ts)
-      .map(o => ({ t: (o.ts - t0) / 1000, minute: (o.ts - t0) / 60000, home: o.home, away: o.away }));
+      .map(o => ({
+        t: (o.ts - t0) / 1000, minute: (o.ts - t0) / 60000,
+        // Relative playback time stays in t; these fields retain the exact
+        // third-party quote identity needed for odds-validation receipts.
+        sourceTs: o.sourceTs != null ? o.sourceTs : o.ts, ts: o.ts,
+        messageId: o.messageId, bookmaker: o.bookmaker, market: o.market,
+        period: o.period, superOddsType: o.superOddsType, inRunning: o.inRunning,
+        home: o.home, draw: o.draw, away: o.away,
+      }));
     if (ticks.length < 50) return null;
     const events = evs.map(e => ({ ...e, t: (e.ts - t0) / 1000 }));
     return { ticks, events, real: true };

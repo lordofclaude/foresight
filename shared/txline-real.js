@@ -306,22 +306,29 @@
     opts = opts || {};
     var fixtureId = opts.fixtureId, onMessage = opts.onMessage, onStatus = opts.onStatus;
     var stopped = false, lastEventId = opts.lastEventId || null, attempt = 0;
+    var activeController = null, activeReader = null, reconnectTimer = null;
     (function loop() {
       if (stopped) return;
       resolve();
       var f = getFetch();
       var pre = state.jwt ? Promise.resolve() : auth();
       pre.then(function () {
+        if (stopped) return null;
         var headers = buildHeaders({ Accept: "text/event-stream", "Cache-Control": "no-cache" });
         try { headers["Accept-Encoding"] = "gzip"; } catch (e) { /* browsers manage this themselves */ }
         if (lastEventId) headers["Last-Event-ID"] = lastEventId;
-        return f(state.host + "/api/" + kind + "/stream" + buildQs({ fixtureId: fixtureId }), { headers: headers });
+        activeController = typeof AbortController !== "undefined" ? new AbortController() : null;
+        var request = { headers: headers };
+        if (activeController) request.signal = activeController.signal;
+        return f(state.host + "/api/" + kind + "/stream" + buildQs({ fixtureId: fixtureId }), request);
       }).then(function (res) {
+        if (stopped || !res) return;
         if (res.status === 401) { return auth().then(loop); }
         if (!res.ok) throw TxRealError(res.status, kind + " stream rejected");
         onStatus && onStatus({ state: "open", attempt: attempt });
         attempt = 0;
         var reader = res.body.getReader();
+        activeReader = reader;
         var decoder = typeof TextDecoder !== "undefined" ? new TextDecoder() : null;
         var buf = "";
         function pump() {
@@ -337,15 +344,25 @@
         }
         return pump();
       }).catch(function (e) {
-        onStatus && onStatus({ state: "error", error: String(e && e.message || e), attempt: attempt });
+        if (!stopped && (!e || e.name !== "AbortError")) {
+          onStatus && onStatus({ state: "error", error: String(e && e.message || e), attempt: attempt });
+        }
       }).then(function () {
         if (stopped) return;
+        activeReader = null; activeController = null;
         attempt++;
         onStatus && onStatus({ state: "reconnecting", attempt: attempt });
-        setTimeout(loop, Math.min(30000, 1000 * Math.pow(2, attempt)));
+        reconnectTimer = setTimeout(loop, Math.min(30000, 1000 * Math.pow(2, attempt)));
       });
     })();
-    return { stop: function () { stopped = true; } };
+    return { stop: function () {
+      stopped = true;
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      if (activeReader && activeReader.cancel) {
+        try { Promise.resolve(activeReader.cancel()).catch(function () {}); } catch (e) { /* already closed */ }
+      }
+      if (activeController) activeController.abort();
+    } };
   }
 
   // ---------------------------------------------------------- action mapping (real soccer feed → mock event types)
@@ -547,10 +564,14 @@
     }
     if (!vals || isNaN(ts)) return null;
     return {
-      ts: ts, home: vals[0], draw: vals[1], away: vals[2],
+      ts: ts, sourceTs: ts, home: vals[0], draw: vals[1], away: vals[2],
       superOddsType: pick(p, "SuperOddsType", "superOddsType"),
       inRunning: pick(p, "InRunning", "inRunning"),
       messageId: pick(p, "MessageId", "messageId"),
+      bookmaker: pick(p, "Bookmaker", "bookmaker", "BookmakerName", "bookmakerName", "BookmakerId", "bookmakerId"),
+      market: pick(p, "Market", "market", "MarketName", "marketName", "MarketType", "marketType"),
+      period: pick(p, "MarketPeriod", "marketPeriod", "Period", "period"),
+      priceNames: pick(p, "PriceNames", "priceNames"),
       raw: p,
     };
   }
@@ -576,7 +597,11 @@
       if (timeline[i].ts <= ts) best = timeline[i]; else break;
     }
     var o = best || timeline[0];
-    return { home: o.home, draw: o.draw, away: o.away, ts: o.ts, superOddsType: o.superOddsType };
+    return {
+      home: o.home, draw: o.draw, away: o.away, ts: o.ts, sourceTs: o.sourceTs,
+      messageId: o.messageId, bookmaker: o.bookmaker, market: o.market, period: o.period,
+      superOddsType: o.superOddsType, inRunning: o.inRunning, priceNames: o.priceNames,
+    };
   }
 
   // ---------------------------------------------------------- TxReplay tape builder
@@ -799,24 +824,30 @@
 
   /**
    * Real proof via GET /api/scores/stat-validation (mock-compatible fields kept).
-   * Async (the mock's is sync — await it). Network failure → pseudo-proof with offline:true.
+   * Async (the mock's is sync — await it). Network failure returns explicitly
+   * labeled simulated data and never claims cryptographic verification.
    */
   function proofFor(statKey, value, seq) {
     resolve();
     var fixtureId = (state.fixture && state.fixture.FixtureId) || state.fixtureId;
     var network = state.network || "devnet";
-    function pseudo(extra) {
+    function offlineFallback(error) {
       var leaf = hash("leaf:" + fixtureId + ":" + statKey + ":" + value + ":" + seq);
       var path = [1, 2, 3, 4].map(function (i) { return { hash: hash("node:" + leaf + ":" + i), isRightSibling: i % 2 === 0 }; });
       var rootHash = hash("root:" + leaf + ":" + path.map(function (p) { return p.hash; }).join(""));
-      var base = {
+      return {
         fixtureId: fixtureId, statKey: statKey, value: value, seq: seq,
-        leaf: leaf, path: path, onChainRoot: rootHash,
-        rootPda: PROGRAM_IDS[network] + "/daily_scores_roots/" + epochDayOf(Date.now()),
-        txSig: fakeSig("settle:" + statKey + ":" + seq), verified: true, offline: false, real: null,
+        leaf: null, path: null, onChainRoot: null, rootPda: null, txSig: null,
+        proofStatus: "offline_simulated", verificationStatus: "not_verified",
+        verified: false, cryptographicallyVerified: false,
+        offline: true, simulated: true, apiReceived: false, real: null,
+        simulatedProof: {
+          leaf: leaf, path: path, rootHash: rootHash,
+          rootPda: PROGRAM_IDS[network] + "/daily_scores_roots/" + epochDayOf(Date.now()),
+          pseudoTxSig: fakeSig("settle:" + statKey + ":" + seq),
+        },
+        error: error,
       };
-      for (var k in extra) base[k] = extra[k];
-      return base;
     }
     return statValidation(fixtureId, seq, [statKey]).then(function (real) {
       var sub = real && (pick(real, "subTreeProof", "SubTreeProof") || null);
@@ -825,16 +856,15 @@
       var path = (sub && (pick(sub, "path", "Path", "proof", "Proof") || (Array.isArray(sub) ? sub : null))) || null;
       var rootHash = (real && pick(real, "root", "Root", "mainTreeRoot", "MainTreeRoot")) ||
         (main && pick(main, "root", "Root")) || null;
-      var p = pseudo({});           // mock-compatible defaults…
-      p.real = real;                // …with the genuine API response attached
-      if (leaf) p.leaf = leaf;
-      if (path) p.path = path;
-      if (rootHash) p.onChainRoot = rootHash;
-      p.txSig = null;               // a real settlement tx sig only exists after validateStatV2 on-chain
-      p.offline = false;
-      return p;
+      return {
+        fixtureId: fixtureId, statKey: statKey, value: value, seq: seq,
+        leaf: leaf, path: path, onChainRoot: rootHash, rootPda: null, txSig: null,
+        proofStatus: "api_received", verificationStatus: "not_verified",
+        verified: false, cryptographicallyVerified: false,
+        offline: false, simulated: false, apiReceived: true, real: real,
+      };
     }).catch(function (e) {
-      return pseudo({ offline: true, error: String(e && e.message || e) });
+      return offlineFallback(String(e && e.message || e));
     });
   }
 

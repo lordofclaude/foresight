@@ -77,11 +77,31 @@ eq("no param, exactly kickoff-2h -> the final", liveFixturePick(null, KICK - 2 *
 eq("no param, during the final -> the final", liveFixturePick(null, KICK + 3600e3), 18257739);
 eq("unknown fixture id falls back to the time rule", liveFixturePick("999", KICK - 3 * 3600e3), 18257865);
 
+/* ---------- wallet signing: historical captures are practice-only ---------- */
+const walletCommitEligible = extractFn("walletCommitEligible");
+const fixture = (start, finalised = false) => ({ fx: { StartTime: start }, tape: { events: finalised ? [{ type: "game_finalised" }] : [] } });
+eq("completed historical fixture is never wallet-eligible", walletCommitEligible(fixture(KICK - 86400e3, true), KICK, true), false);
+eq("incomplete past capture is practice without verified live state", walletCommitEligible(fixture(KICK - 86400e3), KICK, false), false);
+eq("future fixture is pre-kickoff wallet-eligible", walletCommitEligible(fixture(KICK + 3600e3), KICK, false), true);
+eq("active verified-live fixture is wallet-eligible", walletCommitEligible(fixture(KICK - 3600e3), KICK, true), true);
+
+/* ---------- relay allowlist ---------- */
+const safeRelayBase = extractFn("safeRelayBase");
+eq("deployed relay is allowed", safeRelayBase("https://foresight-relay.lordofclaude.workers.dev/"), "https://foresight-relay.lordofclaude.workers.dev");
+eq("localhost relay is allowed", safeRelayBase("http://127.0.0.1:8799/"), "http://127.0.0.1:8799");
+let blockedRelay = false;
+try { safeRelayBase("https://evil.example/?x=<img>"); } catch (e) { blockedRelay = true; }
+eq("untrusted relay host/query is blocked", blockedRelay, true);
+
 /* ---------- static invariants of the fixed behaviors ----------
    Not pure functions, so assert their load-bearing source survives edits. */
 function has(name, re) {
   if (re.test(html)) { passed++; console.log(`  ok  ${name}`); }
   else { failed++; console.log(`FAIL  ${name} — pattern gone: ${re}`); }
+}
+function lacks(name, re) {
+  if (!re.test(html)) { passed++; console.log(`  ok  ${name}`); }
+  else { failed++; console.log(`FAIL  ${name} — forbidden pattern present: ${re}`); }
 }
 has("sizeCanvas uses chartYRange (not home-only)", /chartYRange\(FIXTURES\[sel\]\.tape\.ticks\)/);
 has("live pin respects browse flag", /liveOn && !liveBrowse\) \{ sel = FIXTURES\.indexOf\(F\)/);
@@ -92,7 +112,7 @@ has("gate honors prefers-reduced-motion", /matchMedia\('\(prefers-reduced-motion
 has("tape crosshair bound to pointer events", /addEventListener\("pointermove", xhairPtr\)/);
 has("replay deferred until gate closes", /__onGateClosed = \(\) => \{ if \(!liveOn\) startReplay\(\); \}/);
 has("empty live bundle created from registry meta", /TX_TAPES\.push\(\{ fixture: meta, historical: \[\], odds: \[\] \}\)/);
-has("live status names the fixture", /LIVE · \$\{liveName\(\)\}/);
+has("live status names the fixture", /\$\{stale \? "STALE" : "LIVE"\} · \$\{liveName\(\)\}/);
 has("Clerk pk passed via script attribute", /data-clerk-publishable-key/);
 has("Clerk prefers the self-initialized instance", /window\.Clerk\.load \? window\.Clerk : new window\.Clerk\(CLERK_PK\)/);
 has("streak badge uses best streak", /s\.best >= 2 \? ` <span class="g" title="best win streak/);
@@ -102,6 +122,14 @@ has("old anchor honestly labeled post-match", /Anchored <b>post-match<\/b>/);
 has("newsDriver requires a team keyword", /if \(!teamHit\) continue;/);
 has("newsDriver recency bonus capped at 1", /Math\.min\(1, Math\.max\(0, 1 - dt \/ \(45 \* 60000\)\)\)/);
 has("marketVol deltas stay intra-window", /if \(ticks\[lo\]\.t < t - 600\) lo\+\+;/);
+has("demo mode skips gate", /const skip = demoMode \|\| qs\.get\("nogate"\)/);
+has("demo mode waits for existing replay CTA", /if \(demoMode\) return;\s+\/\/ \?demo=1 skips the gate/);
+has("guided demo focuses existing surfaces", /data-focus="pickrow"[\s\S]*data-focus="run"[\s\S]*data-focus="forgeBtn"[\s\S]*data-focus="anchorCard"/);
+lacks("known-missing final tape is not requested", /src="real-data\/18257739\.tape\.js"/);
+has("relay input assigned through DOM property", /\$\('relayUrl'\)\.value = RELAY_BASE/);
+has("relay URL is allowlisted", /throw new Error\("relay URL is not allowlisted"\)/);
+lacks("Clerk query override removed", /qs\.get\("clerk_pk"\)/);
+has("Clerk loads from fixed trusted CDN", /s\.src = "https:\/\/cdn\.jsdelivr\.net\/npm\/@clerk\/clerk-js@5\/dist\/clerk\.browser\.js"/);
 
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

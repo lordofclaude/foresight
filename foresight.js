@@ -93,11 +93,54 @@
     if (Array.isArray(o)) return "[" + o.map(stableStringify).join(",") + "]";
     return "{" + Object.keys(o).sort().map(k => JSON.stringify(k) + ":" + stableStringify(o[k])).join(",") + "}";
   }
+  const CANONICAL_VERSION = 1;
+  const CANONICAL_SIDES = new Set(["part1", "draw", "part2"]);
+  const LEGACY_V1_SIDES = { home: "part1", away: "part2" };
+  const MIN_CANONICAL_PROBABILITY = 0.01; // caps fair-odds grading at 100x
+  const CANONICAL_SUM_TOLERANCE = 0.05;
+  function normalizePickSide(side, version = CANONICAL_VERSION) {
+    if (CANONICAL_SIDES.has(side)) return side;
+    if (version === 1 && LEGACY_V1_SIDES[side]) return LEGACY_V1_SIDES[side];
+    throw new RangeError("unsupported pick side for v" + version + ": " + side);
+  }
+  function validateMarket(mkt, opts = {}) {
+    if (!mkt || typeof mkt !== "object") throw new TypeError("market probabilities are required");
+    const values = [mkt.home, mkt.draw, mkt.away];
+    if (!values.every(Number.isFinite)) throw new RangeError("market probabilities must be finite numbers");
+    if (!values.every(x => x > 0)) throw new RangeError("market probabilities must be positive");
+    const sum = values[0] + values[1] + values[2];
+    if (!Number.isFinite(sum) || sum <= 0) throw new RangeError("market probability sum must be finite and positive");
+    if (opts.canonical) {
+      if (!values.every(x => x >= MIN_CANONICAL_PROBABILITY && x <= 1)) {
+        throw new RangeError("canonical market probabilities must be between 0.01 and 1");
+      }
+      if (Math.abs(sum - 1) > CANONICAL_SUM_TOLERANCE) {
+        throw new RangeError("canonical market probabilities must sum to approximately 1");
+      }
+    }
+    return sum;
+  }
+  function validateCanonicalPick(p) {
+    if (!p || typeof p !== "object") throw new TypeError("pick is required");
+    const version = p.v == null ? CANONICAL_VERSION : p.v;
+    if (version !== CANONICAL_VERSION) throw new RangeError("unsupported canonical pick version: " + version);
+    if (typeof p.wallet !== "string" || !p.wallet.trim()) throw new TypeError("wallet must be a non-empty string");
+    if (!Number.isFinite(p.fixtureId) || !Number.isInteger(p.fixtureId) || p.fixtureId <= 0) {
+      throw new RangeError("fixtureId must be a finite positive integer");
+    }
+    if (!Number.isFinite(p.oddsTs) || p.oddsTs < 0) throw new RangeError("oddsTs must be a finite non-negative timestamp");
+    const normalizedPick = normalizePickSide(p.pick, version);
+    validateMarket(p.mkt, { canonical: true });
+    return { version, normalizedPick };
+  }
   /** The signed statement. mkt = StablePrice implied triple AT COMMIT (L2);
       oddsTs = the anchored odds message timestamp (provable third-party). */
   function canonicalPick(p) {
+    const validated = validateCanonicalPick(p);
     return stableStringify({
-      v: 1, wallet: p.wallet, fixtureId: p.fixtureId, market: "1X2_FT",
+      v: validated.version, wallet: p.wallet, fixtureId: p.fixtureId, market: "1X2_FT",
+      // Keep the supplied v1 token in the signed bytes. Legacy anchors used
+      // home/away; normalize only after verifying those immutable bytes.
       pick: p.pick, mkt: { home: round5(p.mkt.home), draw: round5(p.mkt.draw), away: round5(p.mkt.away) },
       oddsTs: p.oddsTs,
     });
@@ -115,6 +158,31 @@
     return { canonical, hash, memo: "FSGHT1|" + hash + "|fx" + p.fixtureId };
   }
 
+  /** Verify/import a persisted v1 anchor without rewriting its signed bytes. */
+  function importAnchoredArtifact(artifact, salt) {
+    if (!artifact || typeof artifact !== "object") throw new TypeError("anchored artifact is required");
+    if (artifact.version !== CANONICAL_VERSION) throw new RangeError("unsupported anchored artifact version: " + artifact.version);
+    if (typeof artifact.canonical !== "string") throw new TypeError("anchored artifact canonical bytes are required");
+    let parsed;
+    try { parsed = JSON.parse(artifact.canonical); }
+    catch (_) { throw new TypeError("anchored artifact canonical bytes are not valid JSON"); }
+    if (stableStringify(parsed) !== artifact.canonical) throw new Error("anchored artifact canonical bytes are not canonical");
+    const validated = validateCanonicalPick(parsed);
+    if (parsed.v !== artifact.version) throw new Error("anchored artifact version does not match canonical bytes");
+    if (!/^[0-9a-f]{64}$/i.test(artifact.hash || "")) throw new Error("anchored artifact hash is invalid");
+    const expectedMemo = "FSGHT1|" + artifact.hash + "|fx" + parsed.fixtureId;
+    if (artifact.memo !== expectedMemo) throw new Error("anchored artifact memo does not bind its hash and fixture");
+    const hashVerified = salt == null ? null : commitHash(artifact.canonical, salt) === artifact.hash;
+    if (hashVerified === false) throw new Error("anchored artifact hash does not match canonical bytes and salt");
+    return {
+      version: artifact.version, canonical: artifact.canonical, hash: artifact.hash,
+      memo: artifact.memo, hashVerified,
+      rawPick: parsed.pick, pick: validated.normalizedPick,
+      wallet: parsed.wallet, fixtureId: parsed.fixtureId, mkt: { ...parsed.mkt }, oddsTs: parsed.oddsTs,
+      artifact,
+    };
+  }
+
   /* ---------------- de-vig + flat-stake scoring (L5) ----------------
      Multiplicative de-vig: q_i = p_i / Σp. The anchored triple is already
      demargined (TXLineStablePriceDemargined) so Σp ≈ 1; normalizing keeps
@@ -122,15 +190,21 @@
      $100 flat: win → +100·(fairOdds−1), lose → −100. EV under the market's
      own q is exactly 0 → avg return over many picks estimates pure edge. */
   function devig(mkt) {
-    const s = mkt.home + mkt.draw + mkt.away;
+    const s = validateMarket(mkt);
     return { home: mkt.home / s, draw: mkt.draw / s, away: mkt.away / s };
   }
   const PICK_SIDE = { part1: "home", draw: "draw", part2: "away" };
   function gradePick(pick, mktAtCommit, winner, stake = 100) {
+    const normalizedPick = normalizePickSide(pick);
+    const normalizedWinner = normalizePickSide(winner);
+    if (!Number.isFinite(stake) || stake <= 0) throw new RangeError("stake must be a finite positive number");
     const q = devig(mktAtCommit);
-    const qPick = q[PICK_SIDE[pick]];
+    const qPick = q[PICK_SIDE[normalizedPick]];
+    if (qPick < MIN_CANONICAL_PROBABILITY) {
+      throw new RangeError("selected market probability is below the 1% grading floor");
+    }
     const fairOdds = 1 / qPick;
-    const won = pick === winner;
+    const won = normalizedPick === normalizedWinner;
     const favProb = Math.max(q.home, q.draw, q.away);
     return {
       won, qPick, fairOdds,
@@ -157,8 +231,9 @@
     }
     const pick = commit.pick;
     if (!pick) return { value: stake, unrealizedPnl: 0, qNow: null, live: false };   // sealed: can't mark what we can't see
-    const qEntry = devig(commit.mktAtCommit)[PICK_SIDE[pick]];
-    const qNow = devig(mktNow)[PICK_SIDE[pick]];
+    const side = PICK_SIDE[normalizePickSide(pick)];
+    const qEntry = devig(commit.mktAtCommit)[side];
+    const qNow = devig(mktNow)[side];
     const value = stake * (qNow / qEntry);
     return { value, unrealizedPnl: value - stake, qNow, live: true };
   }
@@ -171,6 +246,7 @@
         (devnet memo); in replay-sim it is {t} on the tape axis, labeled SIM. */
     function commit(p) {
       const canonical = canonicalPick(p);
+      if (!Number.isFinite(p.tCommit) || p.tCommit < 0) throw new RangeError("tCommit must be a finite non-negative timestamp");
       const c = {
         id: nextId++, wallet: p.wallet, fixtureId: p.fixtureId,
         hash: commitHash(canonical, p.salt),
@@ -189,22 +265,27 @@
     function reveal(id, claim) {
       const c = commits.find(x => x.id === id);
       if (!c) return null;
-      const canonical = canonicalPick({
-        wallet: c.wallet, fixtureId: c.fixtureId, pick: claim.pick,
-        mkt: c.mktAtCommit, oddsTs: c.oddsTs,
-      });
+      let canonical;
+      try {
+        canonical = canonicalPick({
+          wallet: c.wallet, fixtureId: c.fixtureId, pick: claim.pick,
+          mkt: c.mktAtCommit, oddsTs: c.oddsTs,
+        });
+      } catch (_) { c.status = "INVALID"; return c; }
       if (commitHash(canonical, claim.salt) !== c.hash) { c.status = "INVALID"; return c; }
-      c.status = "REVEALED"; c.pick = claim.pick;
+      c.status = "REVEALED"; c.pick = normalizePickSide(claim.pick);
       return c;
     }
     /** L4: grade everything against the TxLINE outcome. Unrevealed → BURNED
         (full stake loss): hiding a loser costs exactly what losing costs.
         Pass fixtureId to settle one fixture of a multi-match league. */
     function gradeAll(winner, stake = 100, fixtureId) {
+      const normalizedWinner = normalizePickSide(winner);
+      if (!Number.isFinite(stake) || stake <= 0) throw new RangeError("stake must be a finite positive number");
       for (const c of commits) {
         if (fixtureId != null && c.fixtureId !== fixtureId) continue;
         if (c.status === "REVEALED") {
-          c.grade = gradePick(c.pick, c.mktAtCommit, winner, stake);
+          c.grade = gradePick(c.pick, c.mktAtCommit, normalizedWinner, stake);
           c.status = "GRADED";
         } else if (c.status === "COMMITTED") {
           c.grade = { won: false, pnl: -stake, burned: true, upsetCall: false };
@@ -516,8 +597,10 @@
 
   return {
     sha256, utf8Bytes, stableStringify, canonicalPick, commitHash, memoFor,
+    normalizePickSide, validateMarket, validateCanonicalPick, importAnchoredArtifact,
     devig, gradePick, markToMarket, createLeague, earliness, upsetRisk,
     simulatedProphets, outcomeFromTape, mulberry32, SIM_NAMES, PICK_SIDE,
+    CANONICAL_VERSION, MIN_CANONICAL_PROBABILITY,
     compilePrompt, runAgentOnTape, agentField, AGENT_ROSTER,
     openingFavourite, matchStateAt, resolveSide, condTrue,
   };

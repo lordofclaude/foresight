@@ -520,6 +520,7 @@ footer,footer code,.card,.prow,.commitrow,.receipt,.stratbox,.vd,.abprev{overflo
 <script src="foresight.js"></script>
 <script src="anchored-proof.js"></script><!-- REAL Solana devnet tx: a genuine Foresight commit hash anchored on-chain (mechanism demo, anchored post-match) -->
 <script src="anchored-proof-final.js"></script><!-- REAL pre-kickoff anchor: World Cup FINAL pick, anchored ~19h BEFORE kickoff -->
+<script src="settlement-proof.js"></script><!-- REAL atomic on-chain settlement: validateStatV2 + grade memo in ONE devnet tx -->
 <script src="https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script><!-- exposes window.solanaWeb3 — for real wallet-signed commits -->
 
 
@@ -570,8 +571,14 @@ let agentRegistry = {}, following = {};      // deployed agents + who you follow
    sees the calls, following mirrors them into your portfolio. */
 let followTier = { "@polyquant-ml": { mode: "paid", price: 9 }, "@two-nil-shield": { mode: "paid", price: 4 } };
 let tracking = {};
-let myTier = { mode: "free", price: 0 };     // @you's own prophet setting
-function tierOf(wallet) { return wallet === "@you" ? myTier : (followTier[wallet] || { mode: "free", price: 0 }); }
+let myTier = { mode: "free", price: 0 };     // your own prophet setting
+/* Your identity. Guest = "@you". Signing in with Clerk (Google or Solana
+   wallet) rebinds ME to your Clerk-derived handle — from then on every commit
+   hashes YOUR identity into canonicalPick (L1: the signed statement names its
+   author). Existing guest commits keep their original label — history is
+   immutable here, by design. */
+let ME = "@you";
+function tierOf(wallet) { return wallet === ME ? myTier : (followTier[wallet] || { mode: "free", price: 0 }); }
 function oddsAt(F, t) {
   let c = F.tape.ticks[0];
   for (const k of F.tape.ticks) { if (k.t <= t) c = k; else break; }
@@ -775,7 +782,7 @@ $('walletBtn').onclick = connectWallet;
 async function commitRealOnChain(F, pick, t, mkt) {
   const salt = "you-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
   const oddsTs = Math.round(t * 1000);
-  const { memo, hash } = FO.memoFor({ wallet: "@you", fixtureId: F.id, pick, mkt, oddsTs, salt });
+  const { memo, hash } = FO.memoFor({ wallet: ME, fixtureId: F.id, pick, mkt, oddsTs, salt });
   const owner = new solanaWeb3.PublicKey(solWallet);
   const ix = new solanaWeb3.TransactionInstruction({
     keys: [], programId: new solanaWeb3.PublicKey(MEMO_PROGRAM_ID), data: new TextEncoder().encode(memo),
@@ -799,7 +806,7 @@ async function commitRealOnChain(F, pick, t, mkt) {
     sim: false, signature, slot: txInfo && txInfo.slot, blockTime: txInfo && txInfo.blockTime,
     explorer: `https://explorer.solana.com/tx/${signature}?cluster=devnet`,
   };
-  const c = league.commit({ wallet: "@you", fixtureId: F.id, pick, salt, tCommit: t, mkt, oddsTs, anchor });
+  const c = league.commit({ wallet: ME, fixtureId: F.id, pick, salt, tCommit: t, mkt, oddsTs, anchor });
   // memo/hash must match what the league just computed independently — the
   // whole point is one canonical hash function, never two implementations drifting.
   if (c.hash !== hash) console.warn("hash mismatch between memoFor and league.commit — should never happen");
@@ -825,7 +832,7 @@ $('commitBtn').onclick = async () => {
     }
   } else {
     const salt = "you-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
-    const c = league.commit({ wallet: "@you", fixtureId: F.id, pick, salt, tCommit: t, mkt, oddsTs: Math.round(t * 1000), anchor: { sim: true, t } });
+    const c = league.commit({ wallet: ME, fixtureId: F.id, pick, salt, tCommit: t, mkt, oddsTs: Math.round(t * 1000), anchor: { sim: true, t } });
     mySecrets[c.id] = { pick, salt };
     myCommits.push(c);
     toast(`◆ committed on ${F.p1}–${F.p2} — hash ${c.hash.slice(0, 16)}… anchored at ${fmtMin(t)} (sim-slot)`);
@@ -872,7 +879,7 @@ let announcedIds = new Set();
 function tickActivity(prevT) {
   const fresh = [];
   for (const c of league.commits) {
-    if (c.wallet === "@you" || announcedIds.has(c.id)) continue;
+    if (c.wallet === ME || announcedIds.has(c.id)) continue;
     if (c.tCommit > prevT && c.tCommit <= simT) { announcedIds.add(c.id); fresh.push(c); }
   }
   if (!fresh.length) return;
@@ -1016,7 +1023,7 @@ function renderStats() {
   $('riskBar').style.width = r.risk + "%";
   $('riskBar').style.background = $('riskNum').style.color;
   $('riskWhy').innerHTML = `favorite <b>${r.favSide === "home" ? F.p1 : F.p2}</b> ${(r.qFav0 * 100).toFixed(0)}%→${(r.qFavT * 100).toFixed(0)}% · ${r.trailing === 1 ? "<span class='r'>TRAILING</span>" : r.trailing ? "level late" : "not trailing"} · underdog pressure ${r.pressure}/10min`;
-  const p = league.profile("@you");
+  const p = league.profile(ME);
   $('sScore').textContent = p.n ? (p.pnl >= 0 ? "+$" : "−$") + Math.abs(p.pnl).toFixed(0) : "—";
   $('sScore').className = "v " + (p.pnl >= 0 ? "v2" : "r");
   $('fixture').textContent = `${F.fx.Competition || "World Cup"} · fixture ${F.id}${F.liveMatch ? " · LIVE, not replay" : ""}`;
@@ -1046,7 +1053,7 @@ function renderPicks() {
 }
 // provenance badge: human vs the three agent kinds, public vs private
 function kindBadge(p) {
-  if (p.wallet === "@you") return '';
+  if (p.wallet === ME) return '';
   if (p.by === "human") return ' <span class="tag human">👤 human</span>';
   const lock = p.visibility === "private" ? ' 🔒' : '';
   if (p.by === "api") return ` <span class="tag api">🛰️ API algo${lock}</span>`;
@@ -1068,7 +1075,7 @@ function liveLeaderboard(minN = 1) {
     let value = 0, n = 0, wins = 0, burned = 0, upsetsLanded = 0, resolved = 0;
     for (const c of mine) {
       const F = commitFixture(c);
-      const pick = c.pick || (w === "@you" ? (mySecrets[c.id] || {}).pick : null);
+      const pick = c.pick || (w === ME ? (mySecrets[c.id] || {}).pick : null);
       if (!pick) continue;                                    // sealed: not yet part of the count
       const mtm = FO.markToMarket({ status: c.status, pick, grade: c.grade, mktAtCommit: c.mktAtCommit }, oddsAt(F, fxT(F)));
       value += mtm.value; n++;
@@ -1147,7 +1154,7 @@ function renderBoard() {
   $('boardLive').innerHTML = allDone ? '<span class="tag human" style="color:var(--lime);border-color:#3a5a1d">FINAL</span>'
     : '<span class="tag api">● LIVE STANDINGS</span>';
   // ranks are within the CURRENT filter view
-  $('board').innerHTML = board.length ? board.map((p, i) => `<div class="prophet${p.wallet === "@you" ? " you" : ""}" onclick="openProfile('${p.wallet}')" title="click for full record">
+  $('board').innerHTML = board.length ? board.map((p, i) => `<div class="prophet${p.wallet === ME ? " you" : ""}" onclick="openProfile('${p.wallet}')" title="click for full record">
     <span class="rank">${i + 1}</span><span class="name">${following[p.wallet] ? "⭐ " : tracking[p.wallet] ? "👁 " : ""}${p.wallet}${tierOf(p.wallet).mode === "paid" ? " 💎" : ""}${kindBadge(p)}</span>
     <span class="${p.shrunk >= 0 ? 'g' : 'r'}">${p.shrunk >= 0 ? "+" : ""}${p.shrunk.toFixed(0)}</span>
     <span class="mut">${p.wins}/${p.resolved || 0}${p.resolved < p.n ? "·" + (p.n - p.resolved) + " open" : ""}${p.burned ? " 🔥" + p.burned : ""}${p.upsetsLanded ? " ⚡" + p.upsetsLanded : ""}${(s => s.best >= 2 ? ` <span class="g" title="best win streak — ${s.best} graded wins in a row">🎯${s.best}</span>` : "")(streakOf(p.wallet))}</span></div>`).join('')
@@ -1180,6 +1187,10 @@ function renderAnchor() {
     const q = (FO.devig(D.pick.mkt).draw * 100).toFixed(1);
     html += `<div class="small mut" style="margin-top:.55rem;border-top:1px solid #16283c;padding-top:.45rem"><b>Mechanism demo</b> — Argentina–Switzerland ${side} @ ${q}%: the first anchor, made while wiring the pipeline. Anchored <b>post-match</b> (its blockTime shows exactly that — nothing here pretends otherwise); it proves the memo→hash→chain pipeline works, the FINAL anchor above proves foresight. <a href="${D.explorer}" target="_blank" rel="noopener">tx ↗</a></div>`;
   }
+  const S = window.SETTLEMENT_PROOF;
+  if (S) html += `<div class="small" style="margin-top:.55rem;border-top:1px solid #16283c;padding-top:.45rem">
+    <b>⚖ SETTLED ON-CHAIN</b> — the anchored England–Argentina pick (<span class="anchor-hash" style="font-size:.62rem">${S.commitHash.slice(0, 18)}…</span>, Argentina) was graded <b class="g">${S.result}</b> in an <b>atomic devnet transaction</b>: TxLINE's <code>validateStatV2</code> verified the final score <b>${S.values[0]}–${S.values[1]}</b> against the on-chain Merkle root, and the grade memo landed <b>in the same transaction</b> — the grade record can only exist because the chain verified the outcome first. Instruction composition from the client (not a custom-program CPI), and the docs say so.
+    <a href="${S.explorer}" target="_blank" rel="noopener">settlement tx ↗</a></div>`;
   html += `<div class="small mut" style="margin-top:.35rem">Not just these — click <b>🔗 Connect Wallet</b> above and your own commits sign live memo transactions the same way.</div>`;
   el.innerHTML = html;
   const btn = $('anchorVerify');
@@ -1208,8 +1219,8 @@ function openProfile(wallet) {
       <span class="hash">${c.hash.slice(0, 22)}…</span></div>`;
   }).join('');
   const reg = agentRegistry[wallet];
-  const isYou = wallet === "@you";
-  const kindLine = isYou ? '<span class="tag human">👤 you</span>'
+  const isYou = wallet === ME;
+  const kindLine = isYou ? ('<span class="tag human">👤 you</span>' + (CLERK_USER ? ' <span class="tag api" title="identity bound via Clerk — hashed into every new commit">🔐 ' + ME + ' · Clerk</span>' : ''))
     : p.by === "human" ? '<span class="tag human">👤 manual human</span>'
     : p.by === "api" ? `<span class="tag api">🛰️ external algo / ML via API${p.visibility === "private" ? " · 🔒 black box" : ""}</span>`
     : `<span class="tag agent">🤖 ${p.by} agent${p.visibility === "private" ? " · 🔒 private" : " · 🔓 public"}</span>`;
@@ -1264,7 +1275,7 @@ function openProfile(wallet) {
 window.openProfile = openProfile;
 $('modal').onclick = e => { if (e.target.id === "modal") $('modal').classList.remove('open'); };
 addEventListener('keydown', e => { if (e.key === "Escape") $('modal').classList.remove('open'); });
-window.setMyTier = mode => { myTier.mode = mode; openProfile("@you"); toast(mode === "paid" ? "💎 your auto-follow is now premium" : "🆓 your auto-follow is free", false, "act"); };
+window.setMyTier = mode => { myTier.mode = mode; openProfile(ME); toast(mode === "paid" ? "💎 your auto-follow is now premium" : "🆓 your auto-follow is free", false, "act"); };
 function toggleTrack(wallet) {
   if (tracking[wallet]) { delete tracking[wallet]; toast(`stopped tracking ${wallet}`); }
   else { tracking[wallet] = true; toast(`👁 tracking ${wallet} — free, no auto-copy`, false, "act"); }
@@ -1297,7 +1308,7 @@ function toggleFollow(wallet) {
   if (following[wallet]) {
     myCommits = myCommits.filter(c => !(c.copiedFrom === wallet));
     for (let i = league.commits.length - 1; i >= 0; i--) {        // splice in place — profile/leaderboard close over this array
-      if (league.commits[i].wallet === "@you" && league.commits[i].copiedFrom === wallet) league.commits.splice(i, 1);
+      if (league.commits[i].wallet === ME && league.commits[i].copiedFrom === wallet) league.commits.splice(i, 1);
     }
     delete following[wallet];
     toast(`unfollowed ${wallet} — mirrored picks removed`);
@@ -1309,7 +1320,7 @@ function toggleFollow(wallet) {
       if (F.settled) continue;                        // can't copy a call after it settled
       if (myCommits.some(c => c.copiedFrom === wallet && c.fixtureId === src.fixtureId)) continue;
       const salt = "copy:" + wallet + ":" + src.fixtureId + ":" + Date.now();
-      const c = league.commit({ wallet: "@you", fixtureId: src.fixtureId, pick: src.pick, salt,
+      const c = league.commit({ wallet: ME, fixtureId: src.fixtureId, pick: src.pick, salt,
         tCommit: src.tCommit, mkt: src.mktAtCommit, oddsTs: src.oddsTs, anchor: { sim: true, t: src.tCommit }, copiedFrom: wallet });
       mySecrets[c.id] = { pick: src.pick, salt }; league.reveal(c.id, mySecrets[c.id]);
       myCommits.push(c); n++;
@@ -1603,7 +1614,7 @@ function drawChart() {
   }
   for (const c of league.commits) {
     if (c.fixtureId !== F.id || c.tCommit > t) continue;
-    const you = c.wallet === "@you";
+    const you = c.wallet === ME;
     const pk = c.pick || (you ? (mySecrets[c.id] || {}).pick : null);
     const y = yOf(c.mktAtCommit.home);
     ctx.fillStyle = you ? "#c2f04a" : "rgba(194,240,74,.35)";
@@ -1691,6 +1702,60 @@ window.toggleInfo = id => { const el = $(id); el.classList.toggle('open'); };
    The relay streams ANY fixture via ?fixtureId=, so switching targets is pure
    client-side selection. */
 const qs = new URLSearchParams(location.search);
+
+/* ================= Clerk session (shared by gate + boot restore) =================
+   Google OAuth + Sign-in-with-Solana (web3_solana_signature), both enabled on
+   the Foresight instance. Publishable key is public by design (?clerk_pk=
+   overrides). Signing in REBINDS ME — every subsequent commit hashes the
+   Clerk-derived handle into canonicalPick, so the provable statement names its
+   author. Guest commits made before sign-in keep their "@you" label forever. */
+const CLERK_PK = qs.get("clerk_pk") || window.CLERK_PUBLISHABLE_KEY || localStorage.getItem("foresight_clerk_pk")
+  || "pk_test_Y2VydGFpbi1lbXUtNjMuY2xlcmsuYWNjb3VudHMuZGV2JA";
+let CLERK_USER = null;
+/** Clerk user → league handle: username > firstName > email local-part, sanitized. */
+function clerkLabel(u) {
+  const base = (u && (u.username || u.firstName
+    || ((u.primaryEmailAddress && u.primaryEmailAddress.emailAddress) || "").split("@")[0])) || "you";
+  const s = String(base).toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 16) || "you";
+  return "@" + s;
+}
+function bindClerkUser(user) {
+  if (!user) return;
+  CLERK_USER = user;
+  const label = clerkLabel(user);
+  if (label !== ME) ME = label;
+  localStorage.setItem("foresight_clerk_session", "1");
+  toast("✓ signed in as " + ME + " — new commits bind to this identity", false, "act");
+  renderAll();
+}
+async function ensureClerk() {
+  if (window.__clerkInst) return window.__clerkInst;
+  await new Promise((res, rej) => {
+    if (window.Clerk) return res();
+    const s = document.createElement("script");
+    let host = null;                       // pk encodes the frontend-API host (public info)
+    try { host = atob(CLERK_PK.replace(/^pk_(test|live)_/, "")).replace(/\$$/, ""); } catch (e) { /* fall back to CDN */ }
+    s.src = host ? "https://" + host + "/npm/@clerk/clerk-js@5/dist/clerk.browser.js"
+      : "https://cdn.jsdelivr.net/npm/@clerk/clerk-js@5/dist/clerk.browser.js";
+    // the accounts.dev-hosted bundle SELF-INITIALIZES on load and reads the pk
+    // from this attribute — without it, it throws and window.Clerk becomes a
+    // broken instance ("not a constructor").
+    s.setAttribute("data-clerk-publishable-key", CLERK_PK);
+    s.crossOrigin = "anonymous"; s.onload = res; s.onerror = () => rej(new Error("clerk-js failed to load"));
+    document.head.appendChild(s);
+  });
+  // hosted bundle → window.Clerk is the READY instance (has .load); jsdelivr CDN → constructor
+  const clerk = window.Clerk.load ? window.Clerk : new window.Clerk(CLERK_PK);
+  await clerk.load({});
+  window.__clerkInst = clerk;
+  return clerk;
+}
+/** Silent session restore for returning users (only if they signed in before). */
+async function restoreClerkSession() {
+  if (localStorage.getItem("foresight_clerk_session") !== "1") return;
+  try { const c = await ensureClerk(); if (c.user) bindClerkUser(c.user); }
+  catch (e) { /* offline / blocked — stay guest, honestly */ }
+}
 let RELAY_BASE = (qs.get("relay") || window.FORESIGHT_RELAY || localStorage.getItem("foresight_relay")
   || "https://foresight-relay.lordofclaude.workers.dev").replace(/\/$/, "");  // ?relay=http://127.0.0.1:8799 for local wrangler dev
 /* GO LIVE fixture registry: id → null (a preloaded tape on disk carries the
@@ -1947,39 +2012,14 @@ function stopLive() {
   else { addEventListener("resize", resize); addEventListener("mousemove", onMove); addEventListener("mouseout", onOut); resize(); step(); }
 
   $('gateEnter').onclick = () => closeGate(true);
-  /* Clerk sign-in — Google OAuth + Sign-in-with-Solana (web3_solana_signature),
-     both enabled on the Foresight instance (app_3GhA9XHffDlbG5EBxci2463msnp).
-     The publishable key is public by design; override via ?clerk_pk= if needed. */
-  const CLERK_PK = qs.get("clerk_pk") || window.CLERK_PUBLISHABLE_KEY || localStorage.getItem("foresight_clerk_pk")
-    || "pk_test_Y2VydGFpbi1lbXUtNjMuY2xlcmsuYWNjb3VudHMuZGV2JA";
   $('gateGoogle').onclick = async () => {
-    if (!CLERK_PK) {
-      $('gateNote').innerHTML = `<b style="color:#f5b73d">Google sign-in is Clerk-powered and needs a publishable key</b> — it activates the moment one is configured (<code>?clerk_pk=pk_test_…</code>). No key yet, so no fake login screen: that's the deal here. <u style="cursor:pointer" onclick="$('gateEnter').click()">Enter as guest instead</u>.`;
-      return;
-    }
     try {
       if (qs.get("clerk_pk")) localStorage.setItem("foresight_clerk_pk", qs.get("clerk_pk"));
       $('gateNote').textContent = "loading Clerk…";
-      await new Promise((res, rej) => {
-        if (window.Clerk) return res();
-        const s = document.createElement("script");
-        let host = null;                       // pk encodes the frontend-API host (public info)
-        try { host = atob(CLERK_PK.replace(/^pk_(test|live)_/, "")).replace(/\$$/, ""); } catch (e) { /* fall back to CDN */ }
-        s.src = host ? "https://" + host + "/npm/@clerk/clerk-js@5/dist/clerk.browser.js"
-          : "https://cdn.jsdelivr.net/npm/@clerk/clerk-js@5/dist/clerk.browser.js";
-        // the accounts.dev-hosted bundle SELF-INITIALIZES on load and reads the pk
-        // from this attribute — without it, it throws and window.Clerk becomes a
-        // broken instance ("not a constructor" on the next line's old code).
-        s.setAttribute("data-clerk-publishable-key", CLERK_PK);
-        s.crossOrigin = "anonymous"; s.onload = res; s.onerror = () => rej(new Error("clerk-js failed to load"));
-        document.head.appendChild(s);
-      });
-      // hosted bundle → window.Clerk is the READY instance (has .load); jsdelivr CDN → it's the constructor
-      const clerk = window.Clerk.load ? window.Clerk : new window.Clerk(CLERK_PK);
-      await clerk.load({});
-      if (clerk.user) { toast("Signed in as " + (clerk.user.fullName || clerk.user.primaryEmailAddress || "user")); closeGate(true); return; }
+      const clerk = await ensureClerk();
+      if (clerk.user) { bindClerkUser(clerk.user); closeGate(true); return; }
       clerk.openSignIn({ afterSignInUrl: location.href, afterSignUpUrl: location.href });
-      clerk.addListener(({ user }) => { if (user) { toast("Signed in as " + (user.fullName || "user")); closeGate(true); } });
+      clerk.addListener(({ user }) => { if (user) { bindClerkUser(user); closeGate(true); } });
     } catch (e) {
       $('gateNote').innerHTML = `<b style="color:#ff5a74">Clerk failed to load:</b> ${String(e.message || e)} — <u style="cursor:pointer" onclick="$('gateEnter').click()">enter as guest</u>.`;
     }
@@ -2004,6 +2044,8 @@ renderAnchor();
   const g = $('gate');
   if (g && !g.classList.contains("hidden")) window.__onGateClosed = () => { if (!liveOn) startReplay(); };
   else startReplay();
+  restoreClerkSession();                       // returning Clerk users re-bind silently
+
 })();
 </script>
 </body></html>
