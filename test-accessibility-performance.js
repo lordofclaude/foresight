@@ -44,6 +44,9 @@ has("optional wallet CDN has failure fallback", /defer src="https:\/\/unpkg\.com
 has("flag images are lazy and fail locally", /loading="lazy" decoding="async"[\s\S]*onerror="this\.hidden=true;this\.nextElementSibling\.hidden=false"/);
 has("market table owns horizontal overflow", /\.mkt-scroll\{[^}]*overflow-x:auto/);
 has("390px controls reflow", /@media\(max-width:430px\)\{\.pickrow\{grid-template-columns:1fr\}/);
+has("detail pages expose native open and back controls", /id="detailBack"[\s\S]*id="portfolioOpen"[\s\S]*id="newsOpen"[\s\S]*id="leaderboardOpen"/);
+has("portfolio summary chart supports keyboard activation", /id="pfSpark" role="button" tabindex="0"[\s\S]*event\.key === "Enter" \|\| event\.key === " "/);
+has("mobile detail pages collapse KPI and news grids", /@media\(max-width:820px\)[^{]*\{[\s\S]*\.detail-kpis\{grid-template-columns:1fr 1fr\}[\s\S]*\.detail-news-layout\{grid-template-columns:1fr\}/);
 has("hydrated DOM budget is published", /hydratedDomElements: 1000/);
 const worldStageImages = fs.readdirSync(worldStageDir).filter(file => file.endsWith(".webp"));
 const worldStageBytes = worldStageImages.reduce((sum, file) => sum + fs.statSync(path.join(worldStageDir, file)).size, 0);

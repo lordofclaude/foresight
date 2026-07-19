@@ -167,6 +167,10 @@ has("guided demo focuses existing surfaces", /data-focus="pickrow"[\s\S]*data-fo
 has("prediction choices use native keyboard-accessible buttons", /<button type="button" class="pick" data-pick="part1" aria-pressed="false">[\s\S]*<button type="button" class="pick" data-pick="draw" aria-pressed="false">[\s\S]*<button type="button" class="pick" data-pick="part2" aria-pressed="false">/);
 has("prediction choice state is exposed to assistive technology", /p\.setAttribute\('aria-pressed', String\(selected\)\)/);
 has("prediction choices have a visible keyboard focus state", /\.pick:focus-visible\{outline:2px solid var\(--cyan\)/);
+has("leaderboard news and portfolio have URL-addressable detail views", /const DETAIL_VIEWS = new Set\(\["leaderboard", "news", "portfolio"\]\)[\s\S]*history\.pushState\(\{ foresightDetail: view \}/);
+has("detail pages reuse the live leaderboard portfolio and news state", /function renderLeaderboardDetail\(\)[\s\S]*liveLeaderboard\(1\)[\s\S]*function renderPortfolioDetail\(\)[\s\S]*portfolioSnapshot\(\)[\s\S]*function renderNewsDetail\(\)[\s\S]*newsByFixture\.get/);
+has("browser back synchronizes detail page state", /addEventListener\("popstate", syncDetailFromUrl\)/);
+has("replay refreshes an open detail page", /function renderAll\(\) \{[\s\S]*renderDetailView\(\); \}/);
 lacks("known-missing final tape is not requested", /src="real-data\/18257739\.tape\.js"/);
 has("relay input assigned through DOM property", /\$\('relayUrl'\)\.value = RELAY_BASE/);
 has("relay URL is allowlisted", /throw new Error\("relay URL is not allowlisted"\)/);

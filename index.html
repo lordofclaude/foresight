@@ -623,6 +623,14 @@ body:has(#demoRail:not([hidden])) .workspace-nav{display:none}
 }
 @media(max-width:430px){.radar{display:flex}.compare-head{display:none}.compare-row{grid-template-columns:minmax(96px,1fr) 70px 78px}.compare-div{grid-column:2/4}.pickrow{grid-template-columns:repeat(3,1fr)}.pick{min-height:68px}}
 @media(prefers-reduced-data:reduce){.compare-card,.intel-card{background-image:none}}
+
+/* dashboard drill-downs */
+.card-title-actions{display:flex;align-items:center;gap:8px;margin-left:auto}.drill-open{border:0;background:transparent;color:#69dcfb;font:800 .75rem var(--fbody);cursor:pointer;padding:.2rem 0}.drill-open:hover{text-decoration:underline;color:#9be9fc}.drill-open:focus-visible,#pfSpark[role="button"]:focus-visible,.detail-back:focus-visible,.detail-filter button:focus-visible,.detail-row-action:focus-visible{outline:2px solid #ffad49;outline-offset:3px}
+.drill-card{transition:border-color .16s,background .16s}.drill-card:hover{border-color:#465a73}#portfolioCard.is-empty{display:block}#pfSpark[role="button"]{cursor:pointer;border-radius:5px}
+.detail-view{width:min(calc(100% - 32px),1500px);margin:0 auto 18px}.detail-shell{min-height:640px;padding:22px;background:#090f17;border:1px solid #2d3b4e;border-radius:10px}.detail-topbar{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:18px;align-items:start;padding-bottom:18px;border-bottom:1px solid #283548}.detail-back{min-height:38px;padding:.5rem .75rem;border:1px solid #3b4c62;border-radius:6px;background:#101925;color:#d8e0eb;font:800 .78rem var(--fbody);cursor:pointer}.detail-back:hover{border-color:#687b95;background:#172333}.detail-eyebrow{margin-bottom:3px;color:#ffad49;font:800 .72rem var(--fmono);letter-spacing:.1em;text-transform:uppercase}.detail-title{margin:0;color:#f6f8fb;font:800 clamp(1.7rem,3vw,2.6rem) var(--fbody);letter-spacing:-.04em}.detail-subtitle{max-width:820px;margin:.4rem 0 0;color:#9eacbe;font-size:.86rem;line-height:1.55}.detail-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.detail-actions .btn{width:auto;min-width:140px;margin:0}.detail-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:18px 0}.detail-kpi{padding:14px;background:#0d1621;border:1px solid #29374a;border-radius:7px}.detail-kpi span{display:block;color:#91a0b4;font:750 .72rem var(--fbody);text-transform:uppercase;letter-spacing:.04em}.detail-kpi strong{display:block;margin-top:5px;color:#f4f7fb;font:800 1.65rem var(--fmono)}.detail-kpi small{display:block;margin-top:4px;color:#8090a4;font-size:.72rem}.detail-panel{padding:16px;background:#0b121b;border:1px solid #293648;border-radius:8px}.detail-toolbar{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px}.detail-toolbar h3{margin:0;color:#f1f4f8;font:800 1rem var(--fbody)}.detail-filter{display:flex;gap:6px;flex-wrap:wrap}.detail-filter button,.detail-fixture-chip{min-height:34px;padding:.4rem .7rem;border:1px solid #38475b;border-radius:5px;background:#101925;color:#a9b5c5;font:750 .76rem var(--fbody);cursor:pointer}.detail-filter button.on,.detail-fixture-chip.on{border-color:#ff9d2e;background:#25190d;color:#ffc278}.detail-table{overflow-x:auto;border:1px solid #263447;border-radius:6px}.detail-table-head,.detail-table-row{display:grid;align-items:center;min-width:880px;padding:10px 12px;gap:12px}.detail-table-head{background:#101925;color:#8999ae;font:800 .7rem var(--fbody);letter-spacing:.05em;text-transform:uppercase}.detail-table-row{min-height:58px;border-top:1px solid #253144;color:#d8e0eb;font-size:.8rem}.detail-table-row:hover{background:#101925}.leaderboard-cols{grid-template-columns:44px minmax(190px,1.5fr) 100px 92px 92px 92px 78px 88px}.portfolio-cols{grid-template-columns:minmax(180px,1.4fr) 110px 92px 92px 88px 88px 88px 110px}.detail-rank{color:#ffad49;font:900 1.1rem var(--fmono)}.detail-person{font-weight:800;color:#f1f4f8}.detail-person small{display:block;margin-top:3px;color:#8291a5;font-weight:600}.detail-row-action{min-height:32px;border:1px solid #3b4c62;border-radius:5px;background:#121d2b;color:#69dcfb;font:800 .73rem var(--fbody);cursor:pointer}.detail-empty{padding:34px;text-align:center;color:#94a2b4}.detail-empty strong{display:block;margin-bottom:8px;color:#f0f4f9;font-size:1rem}.portfolio-chart-wrap{margin-bottom:14px;padding:14px;border:1px solid #29374a;border-radius:7px;background:#0d1621}.portfolio-chart-head{display:flex;justify-content:space-between;gap:12px;margin-bottom:10px;color:#99a8ba;font-size:.76rem}.portfolio-chart-head strong{color:#f0f4f9}#portfolioDetailChart{display:block;width:100%;height:250px}.detail-news-layout{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(260px,.7fr);gap:12px}.detail-news-list{display:grid;gap:9px}.detail-news-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;padding:15px;border:1px solid #2b394c;border-radius:7px;background:#0d1621;color:inherit;text-decoration:none}.detail-news-item:hover{border-color:#53667f;background:#111d2a}.detail-news-item h4{margin:5px 0;color:#f0f4f8;font-size:.92rem;line-height:1.45}.detail-news-meta{color:#ffad49;font:800 .72rem var(--fmono);letter-spacing:.04em}.detail-news-context{color:#8999ad;font-size:.75rem;line-height:1.45}.detail-news-arrow{align-self:center;color:#69dcfb;font-size:1.2rem}.detail-side-note{padding:16px;border:1px solid #2b394c;border-radius:7px;background:#0d1621}.detail-side-note h3{margin:0 0 10px;color:#f0f4f8;font-size:.9rem}.detail-side-note p{color:#99a8ba;font-size:.78rem;line-height:1.55}.detail-side-note a{display:block;margin-top:8px;color:#69dcfb;font-size:.78rem;text-decoration:none}.detail-side-note a:hover{text-decoration:underline}
+body.detail-open>.workspace-nav,body.detail-open>#tickerbar,body.detail-open>.demo-rail,body.detail-open>.mode-stack,body.detail-open>.stats,body.detail-open>.hero,body.detail-open>#radarBar,body.detail-open>.radar,body.detail-open>main{display:none!important}
+@media(max-width:820px){.detail-shell{padding:14px}.detail-topbar{grid-template-columns:1fr}.detail-back{justify-self:start}.detail-actions{justify-content:flex-start}.detail-kpis{grid-template-columns:1fr 1fr}.detail-news-layout{grid-template-columns:1fr}}
+@media(max-width:480px){.detail-view{width:calc(100% - 20px)}.detail-kpis{grid-template-columns:1fr}.detail-kpi strong{font-size:1.4rem}.detail-title{font-size:1.7rem}.detail-shell{min-height:520px}}
 </style></head><body>
 
 <!-- Landing gate: AetherFlow-style particle hero (vanilla canvas port — this is
@@ -703,12 +711,24 @@ body:has(#demoRail:not([hidden])) .workspace-nav{display:none}
   <span class="viewtoggle" role="group" aria-label="Market display"><button type="button" id="viewTiles" class="on" aria-pressed="true">tiles</button><button type="button" id="viewTable" aria-pressed="false">terminal</button></span></div>
 <div class="radar" id="radar"></div>
 
+<section class="detail-view" id="detailView" aria-labelledby="detailTitle" hidden>
+  <div class="detail-shell">
+    <div class="detail-topbar">
+      <button type="button" class="detail-back" id="detailBack">← Back to dashboard</button>
+      <div><div class="detail-eyebrow" id="detailEyebrow">FORESIGHT DESK</div><h2 class="detail-title" id="detailTitle">Detail</h2><p class="detail-subtitle" id="detailSubtitle"></p></div>
+      <div class="detail-actions" id="detailActions"></div>
+    </div>
+    <div class="detail-kpis" id="detailKpis"></div>
+    <div id="detailBody"></div>
+  </div>
+</section>
+
 <main>
 <div class="left-column"><!-- LEFT: portfolio + selected-match radar detail + commit flow -->
-  <div class="card" id="portfolioCard">
-    <h3>Portfolio <span class="r2">Live receipt value</span></h3>
+  <div class="card drill-card" id="portfolioCard">
+    <h3><span>Portfolio</span><span class="card-title-actions"><span class="r2">Live receipt value</span><button type="button" class="drill-open" id="portfolioOpen">View →</button></span></h3>
     <div class="pfhead"><div class="pfval c" id="pfTotal">$0</div><div class="pfsub" id="pfUnreal">no open positions</div></div>
-    <canvas id="pfSpark" aria-hidden="true"></canvas>
+    <canvas id="pfSpark" role="button" tabindex="0" aria-label="Open detailed portfolio chart"></canvas>
     <div id="pfRows" class="small mut">No open receipts.</div>
   </div>
   <div class="card" id="riskCard">
@@ -779,9 +799,9 @@ body:has(#demoRail:not([hidden])) .workspace-nav{display:none}
 </div>
 
 <div><!-- RIGHT: league + verify -->
-  <div class="card intel-card" id="intelCard">
+  <div class="card intel-card drill-card" id="intelCard">
     <div class="section-kicker">LIVE CONTEXT</div>
-    <h3><span>News desk</span><span class="r2" id="intelStatus">Public sources</span></h3>
+    <h3><span>News desk</span><span class="card-title-actions"><span class="r2" id="intelStatus">Public sources</span><button type="button" class="drill-open" id="newsOpen">View all →</button></span></h3>
     <div class="intel-tabs" role="tablist" aria-label="Context sources">
       <button type="button" role="tab" aria-selected="true" class="on" data-intel-tab="news">News</button>
       <button type="button" role="tab" aria-selected="false" data-intel-tab="x">X pulse</button>
@@ -793,8 +813,8 @@ body:has(#demoRail:not([hidden])) .workspace-nav{display:none}
       <div class="x-links"><a id="xMatchLink" href="https://x.com/search?q=World%20Cup" target="_blank" rel="noopener">Search this matchup on X ↗</a></div>
     </div>
   </div>
-  <div class="card">
-    <h3>Leaderboard <span id="boardLive" class="r2"></span></h3>
+  <div class="card drill-card" id="leaderboardCard">
+    <h3><span>Leaderboard</span><span class="card-title-actions"><span id="boardLive" class="r2"></span><button type="button" class="drill-open" id="leaderboardOpen">View all →</button></span></h3>
     <button type="button" class="btn violet" id="buildAgentBtn" style="margin:0 0 .5rem">Build agent</button>
     <div class="bfilter" id="bfilter" role="group" aria-label="Prophet league filter">
       <button type="button" class="on" data-f="all" aria-pressed="true" onclick="setBoardFilter('all')">all</button>
@@ -1063,7 +1083,7 @@ function renderPortfolio() {
     const nm = pick === "part1" ? F.p1 : pick === "part2" ? F.p2 : "DRAW";
     const delta = mtm.live ? `<span class="${mtm.unrealizedPnl >= 0 ? 'g' : 'r'}">${mtm.unrealizedPnl >= 0 ? "+" : ""}$${mtm.unrealizedPnl.toFixed(0)}</span>` : `<span class="${mtm.value > 100 ? 'g' : mtm.value < 100 ? 'r' : 'mut'}">${mtm.value > 0 ? "settled" : "lost"}</span>`;
     return `<div class="posrow"><span class="m">${F.p1}–${F.p2}: ${nm}${mtm.live ? ' <span class="live">● LIVE</span>' : ''}</span><span>$${mtm.value.toFixed(0)}</span>${delta}</div>`;
-  }).join('') : '';
+  }).join('') : '<div class="detail-empty" style="padding:10px 0;text-align:left">No receipts yet. Commit a practice call to start the chart.</div>';
 }
 const pfCv = document.getElementById('pfSpark'), pfCtx = pfCv.getContext('2d');
 function drawSparkline() {
@@ -1719,7 +1739,7 @@ function kindBadge(p) {
   return ` <span class="tag agent">🤖 rule${lock}</span>`;
 }
 let boardFilter = "all", lastDeployedAgent = null;
-function setBoardFilter(f) { boardFilter = f; document.querySelectorAll('#bfilter button').forEach(s => { const on = s.dataset.f === f; s.classList.toggle('on', on); s.setAttribute('aria-pressed', String(on)); }); renderBoard(); }
+function setBoardFilter(f) { boardFilter = f; document.querySelectorAll('#bfilter button').forEach(s => { const on = s.dataset.f === f; s.classList.toggle('on', on); s.setAttribute('aria-pressed', String(on)); }); renderBoard(); renderDetailView(true); }
 window.setBoardFilter = setBoardFilter;
 /* Live standings: mark-to-market every open position, every tick — the board
    populates from kickoff, not just after full time. A GRADED/BURNED commit's
@@ -2158,7 +2178,7 @@ function shareCard(commitId) {
   toast("📤 receipt card saved — post it; the hash makes it checkable");
 }
 window.shareCard = shareCard;
-function renderAll() { renderRadar(); renderStats(); renderModeUI(); renderMonitor(); renderPicks(); renderMyCommits(); renderBoard(); renderPortfolio(); renderTimeline(); renderMarketCompare(); renderIntel(); sizeCanvas(); drawChart(); }
+function renderAll() { renderRadar(); renderStats(); renderModeUI(); renderMonitor(); renderPicks(); renderMyCommits(); renderBoard(); renderPortfolio(); renderTimeline(); renderMarketCompare(); renderIntel(); sizeCanvas(); drawChart(); renderDetailView(); }
 
 /* ---------------- verify / forge ---------------- */
 $('verifyBtn').onclick = () => {
@@ -2555,6 +2575,152 @@ function setIntelTab(tab) {
   if (showX) loadXTimeline();
 }
 document.querySelectorAll(".intel-tabs button").forEach(button => button.addEventListener("click", () => setIntelTab(button.dataset.intelTab)));
+/* ---------------- dashboard detail pages ---------------- */
+const DETAIL_VIEWS = new Set(["leaderboard", "news", "portfolio"]);
+let activeDetailView = "", detailRenderSignature = "", detailReturnFocusId = "";
+function detailMetric(label, value, note) {
+  return `<div class="detail-kpi"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong><small>${escapeHtml(note)}</small></div>`;
+}
+function detailUrl(view) {
+  const url = new URL(location.href);
+  if (view) url.searchParams.set("view", view); else url.searchParams.delete("view");
+  return url;
+}
+function applyDetailView(view, focusBack) {
+  activeDetailView = DETAIL_VIEWS.has(view) ? view : "";
+  detailRenderSignature = "";
+  document.body.classList.toggle("detail-open", Boolean(activeDetailView));
+  $("detailView").hidden = !activeDetailView;
+  if (activeDetailView) {
+    renderDetailView(true);
+    window.scrollTo({ top: 0, behavior: "auto" });
+    if (focusBack) $("detailBack").focus();
+  } else if (detailReturnFocusId && $(detailReturnFocusId)) {
+    $(detailReturnFocusId).focus(); detailReturnFocusId = "";
+  }
+}
+function openDetailView(view) {
+  if (!DETAIL_VIEWS.has(view)) return;
+  detailReturnFocusId = document.activeElement && document.activeElement.id || "";
+  history.pushState({ foresightDetail: view }, "", detailUrl(view));
+  applyDetailView(view, true);
+}
+function closeDetailView() {
+  if (!activeDetailView) return;
+  if (history.state && history.state.foresightDetail) history.back();
+  else { history.replaceState(history.state, "", detailUrl("")); applyDetailView("", false); }
+}
+function syncDetailFromUrl() { applyDetailView(new URL(location.href).searchParams.get("view") || "", false); }
+function detailScoreAt(F) {
+  const t = fxT(F); let score = { g1: 0, g2: 0 };
+  for (const event of F.tape.events) if (event.t <= t && event.stats && Number.isFinite(Number(event.stats.g1)) && Number.isFinite(Number(event.stats.g2))) score = { g1: Number(event.stats.g1), g2: Number(event.stats.g2) };
+  if (!F.liveMatch && simT >= F.endT && F.outcome) score = { g1: F.outcome.g1, g2: F.outcome.g2 };
+  return score;
+}
+function filteredLeaderboard() {
+  const board = liveLeaderboard(1);
+  return boardFilter === "human" ? board.filter(p => p.by === "human") : boardFilter === "agent" ? board.filter(p => p.by !== "human") : board;
+}
+function renderLeaderboardDetail() {
+  const all = liveLeaderboard(1), board = filteredLeaderboard();
+  const calls = all.reduce((sum, p) => sum + p.n, 0), resolved = all.reduce((sum, p) => sum + p.resolved, 0);
+  const agents = all.filter(p => p.by !== "human").length, leader = all[0];
+  $("detailEyebrow").textContent = "PROPHET LEAGUE · LIVE RECEIPTS";
+  $("detailTitle").textContent = "Leaderboard";
+  $("detailSubtitle").textContent = "Every trader and agent is ranked from the same timestamped World Cup calls. Scores are live mark-to-market and shrink small samples toward zero.";
+  $("detailActions").innerHTML = '<button type="button" class="btn violet" id="detailBuildAgent">Build an agent</button>';
+  $("detailKpis").innerHTML = detailMetric("Competitors", String(all.length), `${agents} agents · ${all.length - agents} humans`) +
+    detailMetric("Verified calls", `${resolved}/${calls}`, `${Math.max(0, calls - resolved)} still open`) +
+    detailMetric("Leading score", leader ? `${leader.shrunk >= 0 ? "+" : ""}${leader.shrunk.toFixed(1)}` : "—", leader ? leader.wallet : "Waiting for calls") +
+    detailMetric("Settlement", FIXTURES.every(F => F.settled) ? "FINAL" : "LIVE", "Same deterministic grade pipeline");
+  $("detailBody").innerHTML = `<div class="detail-panel"><div class="detail-toolbar"><h3>Full standings</h3><div class="detail-filter" role="group" aria-label="Detailed leaderboard filter">
+    <button type="button" data-detail-filter="all" class="${boardFilter === "all" ? "on" : ""}" aria-pressed="${boardFilter === "all"}">All</button>
+    <button type="button" data-detail-filter="human" class="${boardFilter === "human" ? "on" : ""}" aria-pressed="${boardFilter === "human"}">Humans</button>
+    <button type="button" data-detail-filter="agent" class="${boardFilter === "agent" ? "on" : ""}" aria-pressed="${boardFilter === "agent"}">Agents</button></div></div>
+    <div class="detail-table" role="table" aria-label="Detailed prophet league standings"><div class="detail-table-head leaderboard-cols" role="row"><span>Rank</span><span>Trader / strategy</span><span>Type</span><span>Calls</span><span>Win rate</span><span>ROI / call</span><span>Streak</span><span>Profile</span></div>
+    <div id="detailLeaderboardRows">${board.length ? board.map((p, i) => { const streak = streakOf(p.wallet), rate = p.resolved ? p.wins / p.resolved * 100 : 0; return `<div class="detail-table-row leaderboard-cols" role="row"><span class="detail-rank">${i + 1}</span><span class="detail-person">${escapeHtml(p.wallet)}${kindBadge(p)}<small>${p.visibility === "private" ? "Private logic · public receipts" : "Inspectable strategy"}</small></span><span>${escapeHtml(p.by === "human" ? "Human" : p.by === "api" ? "API / ML" : `${p.by} agent`)}</span><span>${p.resolved}/${p.n}${p.resolved < p.n ? ` · ${p.n - p.resolved} open` : ""}</span><span>${p.resolved ? rate.toFixed(0) + "%" : "—"}</span><span class="${p.avgReturnPct >= 0 ? "g" : "r"}">${p.avgReturnPct >= 0 ? "+" : ""}${p.avgReturnPct.toFixed(1)}%</span><span>${streak.best ? `🎯 ${streak.best}` : "—"}</span><button type="button" class="detail-row-action" data-detail-profile="${escapeHtml(p.wallet)}">Inspect</button></div>`; }).join("") : '<div class="detail-empty"><strong>No competitors in this filter</strong>Try another leaderboard segment.</div>'}</div></div>
+    <p class="small mut" style="margin:.75rem 0 0">Ranking score = average mark-to-market return × n/(n+6). Following is a local receipt-alert watchlist; it never copies or executes a position.</p></div>`;
+  $("detailBuildAgent").onclick = openAgentBuilder;
+  document.querySelectorAll("[data-detail-filter]").forEach(button => button.onclick = () => setBoardFilter(button.dataset.detailFilter));
+  document.querySelectorAll("[data-detail-profile]").forEach(button => button.onclick = () => openProfile(button.dataset.detailProfile));
+}
+function renderPortfolioDetail() {
+  const snap = portfolioSnapshot(), invested = snap.rows.length * 100, net = snap.totalValue - invested;
+  const resolved = snap.rows.filter(row => !row.mtm.live), wins = snap.rows.filter(row => row.c.grade && row.c.grade.won).length;
+  $("detailEyebrow").textContent = "RECEIPT PORTFOLIO · MARK TO MARKET";
+  $("detailTitle").textContent = "Portfolio";
+  $("detailSubtitle").textContent = "Track the notional value of every open prediction receipt and the final payout of every settled call. Foresight records proof and performance; it does not custody or move funds.";
+  $("detailActions").innerHTML = '<button type="button" class="btn violet" id="detailMakeCall">Make a call</button>';
+  $("detailKpis").innerHTML = detailMetric("Portfolio value", `$${snap.totalValue.toFixed(0)}`, `${snap.rows.length} receipt${snap.rows.length === 1 ? "" : "s"}`) +
+    detailMetric("Net P&L", `${net >= 0 ? "+" : "−"}$${Math.abs(net).toFixed(0)}`, `$${invested.toFixed(0)} notional committed`) +
+    detailMetric("Open value", `$${snap.rows.filter(row => row.mtm.live).reduce((sum, row) => sum + row.mtm.value, 0).toFixed(0)}`, `${snap.openCount} open position${snap.openCount === 1 ? "" : "s"}`) +
+    detailMetric("Resolved", String(resolved.length), resolved.length ? `${wins}/${resolved.length} winning calls` : "No final grades yet");
+  const rows = snap.rows.map(({ c, F, pick, mtm }) => {
+    const side = pick === "part1" ? F.p1 : pick === "part2" ? F.p2 : "DRAW";
+    const sideKey = FO.PICK_SIDE[pick], entry = sideKey ? FO.devig(c.mktAtCommit)[sideKey] : null, current = sideKey ? FO.devig(oddsAt(F, fxT(F)))[sideKey] : null;
+    const pnl = mtm.value - 100, proof = c.anchor && c.anchor.sim === false ? "ON-CHAIN" : "LOCAL";
+    return `<div class="detail-table-row portfolio-cols" role="row"><span class="detail-person">${escapeHtml(F.p1)}–${escapeHtml(F.p2)}<small>${fmtMin(c.tCommit)} · ${proof}</small></span><span>${escapeHtml(side || "Sealed")}</span><span>${entry == null ? "—" : (entry * 100).toFixed(1) + "%"}</span><span>${current == null ? "—" : (current * 100).toFixed(1) + "%"}</span><span>${escapeHtml(mtm.live ? "OPEN" : c.status)}</span><span>$100</span><span>$${mtm.value.toFixed(0)}</span><span class="${pnl >= 0 ? "g" : "r"}">${pnl >= 0 ? "+" : "−"}$${Math.abs(pnl).toFixed(0)}</span></div>`;
+  }).join("");
+  $("detailBody").innerHTML = `<div class="portfolio-chart-wrap"><div class="portfolio-chart-head"><strong>Portfolio value over replay time</strong><span>Notional USD · shared historical playhead</span></div><canvas id="portfolioDetailChart" height="250" aria-label="Portfolio value chart"></canvas></div>
+    <div class="detail-panel"><div class="detail-toolbar"><h3>Prediction receipts</h3><span class="small mut">Entry price is sealed in each commitment</span></div>${rows ? `<div class="detail-table" role="table" aria-label="Portfolio receipt details"><div class="detail-table-head portfolio-cols" role="row"><span>Fixture / proof</span><span>Call</span><span>Entry</span><span>Current</span><span>Status</span><span>Stake</span><span>Value</span><span>P&L</span></div><div id="detailPortfolioRows">${rows}</div></div>` : '<div class="detail-empty"><strong>Your portfolio starts with a timestamped call</strong>Return to the dashboard, choose a match outcome, and commit it. The chart and receipt table will populate immediately.</div>'}</div>`;
+  $("detailMakeCall").onclick = () => { closeDetailView(); setTimeout(() => $("commitCard").scrollIntoView({ behavior: "smooth", block: "start" }), 50); };
+  drawPortfolioDetailChart();
+}
+function drawPortfolioDetailChart() {
+  const cv = $("portfolioDetailChart"); if (!cv) return;
+  const ctx = cv.getContext("2d"), dpr = devicePixelRatio || 1, w = Math.max(300, cv.clientWidth || 900), h = 250;
+  cv.width = w * dpr; cv.height = h * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, w, h);
+  const history = portfolioHistory.length ? portfolioHistory : [{ t: simT, value: 0 }], values = history.map(point => point.value);
+  const lo = Math.min(...values, 0), hi = Math.max(...values, 100), range = Math.max(1, hi - lo), pad = 28;
+  const x = i => pad + (history.length < 2 ? 0 : i / (history.length - 1) * (w - pad * 2)), y = value => h - pad - (value - lo) / range * (h - pad * 2);
+  ctx.strokeStyle = "#26364a"; ctx.fillStyle = "#8190a4"; ctx.font = "11px SFMono-Regular,Consolas,monospace";
+  [lo, lo + range / 2, hi].forEach(value => { const py = y(value); ctx.beginPath(); ctx.moveTo(pad, py); ctx.lineTo(w - pad, py); ctx.stroke(); ctx.fillText(`$${value.toFixed(0)}`, 2, py + 4); });
+  if (!portfolioHistory.length) { ctx.fillStyle = "#91a0b4"; ctx.textAlign = "center"; ctx.fillText("Commit a call to start portfolio history", w / 2, h / 2); ctx.textAlign = "left"; return; }
+  ctx.strokeStyle = values[values.length - 1] >= values[0] ? "#44d18a" : "#ff5a74"; ctx.lineWidth = 2; ctx.beginPath(); history.forEach((point, i) => i ? ctx.lineTo(x(i), y(point.value)) : ctx.moveTo(x(i), y(point.value))); ctx.stroke();
+  ctx.fillStyle = ctx.strokeStyle; ctx.beginPath(); ctx.arc(x(history.length - 1), y(values[values.length - 1]), 4, 0, Math.PI * 2); ctx.fill();
+}
+function renderNewsDetail() {
+  const F = FIXTURES[sel], record = newsByFixture.get(F.id), items = record && record.items || [];
+  const sources = new Set(items.map(item => item.source || "News")), newest = items.map(item => Number(item.ts) || 0).sort((a, b) => b - a)[0], score = detailScoreAt(F);
+  $("detailEyebrow").textContent = "PUBLIC NEWS + X CONTEXT";
+  $("detailTitle").textContent = "News desk";
+  $("detailSubtitle").textContent = `Team-specific public context for ${F.fx.Participant1} vs ${F.fx.Participant2}. Headlines are shown beside odds and events, but are never presented as proven causes of a market move.`;
+  $("detailActions").innerHTML = '<button type="button" class="btn" id="detailRefreshNews">Refresh sources</button><a class="btn poly-btn" id="detailXSearch" target="_blank" rel="noopener">Search X ↗</a>';
+  $("detailKpis").innerHTML = detailMetric("Headlines", String(items.length), record ? "Matched to selected teams" : "Connecting to public RSS") +
+    detailMetric("Sources", String(sources.size), "Public, read-only links") +
+    detailMetric("Freshest", newest ? relativeNewsTime({ ts: newest }) : "—", newest ? new Date(newest).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "Waiting for source") +
+    detailMetric("Match minute", fmtMin(fxT(F)), `${F.p1} ${score.g1}–${score.g2} ${F.p2}`);
+  const fixtures = FIXTURES.map((fixture, i) => `<button type="button" class="detail-fixture-chip ${i === sel ? "on" : ""}" data-detail-fixture="${i}" aria-pressed="${i === sel}">${escapeHtml(fixture.p1)}–${escapeHtml(fixture.p2)}</button>`).join("");
+  const news = items.map(item => {
+    const title = item.title || "Football update", lower = title.toLowerCase(), matches = [F.fx.Participant1, F.fx.Participant2].filter(team => lower.includes(String(team).toLowerCase()));
+    const context = matches.length ? `Keyword matched: ${matches.join(" + ")}.` : "Selected-match context from the public football feed.";
+    return `<a class="detail-news-item" href="${escapeHtml(safeExternalHref(item.link))}" target="_blank" rel="noopener"><span><span class="detail-news-meta">${escapeHtml(item.source || "News")} · ${relativeNewsTime(item)} · ${escapeHtml(item.tag || "news")}</span><h4>${escapeHtml(title)}</h4><span class="detail-news-context">${escapeHtml(context)} Open the publisher to evaluate the full report.</span></span><span class="detail-news-arrow" aria-hidden="true">↗</span></a>`;
+  }).join("");
+  $("detailBody").innerHTML = `<div class="detail-panel"><div class="detail-toolbar"><h3>${escapeHtml(F.fx.Participant1)} vs ${escapeHtml(F.fx.Participant2)}</h3><div class="detail-filter" role="group" aria-label="News fixture">${fixtures}</div></div><div class="detail-news-layout"><div class="detail-news-list" id="detailNewsList">${record ? news || '<div class="detail-empty"><strong>No team-specific headlines right now</strong>The public RSS feed will be checked again when you refresh.</div>' : '<div class="detail-empty"><strong>Loading relevant football headlines</strong>Connecting to the configured public relay.</div>'}</div><aside class="detail-side-note"><h3>How to read this feed</h3><p>Foresight aligns public headlines with the selected match and replay state. A keyword or timestamp match is context—not proof that the story moved the odds.</p><a href="https://x.com/FIFAWorldCup" target="_blank" rel="noopener">FIFA World Cup on X ↗</a><a id="detailSideX" target="_blank" rel="noopener">Search this matchup on X ↗</a><p>${record && record.error ? `Feed error: ${escapeHtml(record.error)}` : "Sources refresh at most once per minute to protect the public relay."}</p></aside></div></div>`;
+  const xUrl = `https://x.com/search?q=${encodeURIComponent(`${F.fx.Participant1} ${F.fx.Participant2} World Cup`)}`;
+  $("detailXSearch").href = xUrl; $("detailSideX").href = xUrl;
+  $("detailRefreshNews").onclick = async () => { $("detailRefreshNews").disabled = true; await fetchNewsOnce(F); renderDetailView(true); };
+  document.querySelectorAll("[data-detail-fixture]").forEach(button => button.onclick = () => { selectFixture(Number(button.dataset.detailFixture)); renderDetailView(true); });
+  scheduleNewsForSelected();
+}
+function renderDetailView(force) {
+  if (!activeDetailView) return;
+  const newsRecord = newsByFixture.get(FIXTURES[sel].id), signature = `${activeDetailView}:${sel}:${Math.floor(simT / 60)}:${myCommits.length}:${league.commits.filter(c => c.status === "GRADED" || c.status === "BURNED").length}:${newsRecord && newsRecord.fetchedAt || 0}:${boardFilter}`;
+  if (!force && signature === detailRenderSignature) return;
+  detailRenderSignature = signature;
+  if (activeDetailView === "leaderboard") renderLeaderboardDetail();
+  else if (activeDetailView === "portfolio") renderPortfolioDetail();
+  else renderNewsDetail();
+}
+function wireDetailViews() {
+  [["portfolioOpen", "portfolio"], ["newsOpen", "news"], ["leaderboardOpen", "leaderboard"]].forEach(([id, view]) => $(id).onclick = event => { event.stopPropagation(); openDetailView(view); });
+  [["portfolioCard", "portfolio"], ["intelCard", "news"], ["leaderboardCard", "leaderboard"]].forEach(([id, view]) => $(id).addEventListener("click", event => { if (!event.target.closest("button,a,input,select,summary")) openDetailView(view); }));
+  $("pfSpark").onclick = event => { event.stopPropagation(); openDetailView("portfolio"); };
+  $("pfSpark").onkeydown = event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); openDetailView("portfolio"); } };
+  $("detailBack").onclick = closeDetailView;
+  addEventListener("popstate", syncDetailFromUrl);
+  addEventListener("keydown", event => { if (event.key === "Escape" && activeDetailView && $("modal").getAttribute("aria-hidden") === "true") closeDetailView(); });
+}
 /* GO LIVE fixture registry: id → null (a preloaded tape on disk carries the
    fixture meta) or minimal meta for fixtures with NO tape yet (the FINAL —
    its bundle starts empty and accumulates from the stream). */
@@ -2679,7 +2845,7 @@ async function fetchNewsOnce(target) {
     const r = await response.json(), items = r.items || [];
     newsByFixture.set(F.id, { items, fetchedAt: Date.now() });
     if (F.id === FIXTURES[sel].id || F.id === LIVE_FIXTURE_ID) newsCache = items;
-    if (F.id === FIXTURES[sel].id) renderIntel();
+    if (F.id === FIXTURES[sel].id) { renderIntel(); renderDetailView(true); }
     if (!liveOn || F.id !== LIVE_FIXTURE_ID) return;
     items.slice(0, 8).forEach(it => {
       const key = "news:" + (it.link || it.title);
@@ -2689,7 +2855,7 @@ async function fetchNewsOnce(target) {
     liveSetStatus();
   } catch (error) {
     newsByFixture.set(F.id, { items: [], fetchedAt: Date.now(), error: String(error && error.message || error) });
-    if (F.id === FIXTURES[sel].id) renderIntel();
+    if (F.id === FIXTURES[sel].id) { renderIntel(); renderDetailView(true); }
   }
 }
 /* Candidate driver for an UNEXPLAINED move (live fixture only — replay matches
@@ -2878,6 +3044,7 @@ function setDemoDone(step) { if (demoMode) document.querySelectorAll(`[data-demo
   };
 })();
 
+wireDetailViews();
 resetLeague();
 renderAnchor();
 // Normal entry lands on a useful in-progress snapshot. Guided demo entry starts
@@ -2889,6 +3056,7 @@ renderAnchor();
   tickSettlements();
   announcedIds = new Set(league.commits.filter(c => c.tCommit <= simT).map(c => c.id));
   renderAll();
+  syncDetailFromUrl();
   restoreClerkSession();
   if (demoMode && !getSolanaProvider()) {
     $('walletBtn').textContent = "◇ USE DEMO WALLET";
